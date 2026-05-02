@@ -1,14 +1,54 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// ═════════════════════════════════════════════════════
-/// TEXT FIELD
-/// ═════════════════════════════════════════════════════
-class BSTextField extends StatelessWidget {
+// ────────────────────────────────────────────────
+// SHOW BOTTOM SHEET (showBS)
+// ────────────────────────────────────────────────
+void showBS(BuildContext context, String message, {bool isError = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Row(
+        children: [
+          Icon(
+            isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
+            color: isError ? AppTheme.error : AppTheme.success,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+      backgroundColor: AppTheme.surface,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isError ? AppTheme.error.withOpacity(0.3) : AppTheme.success.withOpacity(0.3),
+        ),
+      ),
+      duration: const Duration(seconds: 4),
+      margin: const EdgeInsets.all(16),
+    ),
+  );
+}
+
+// ────────────────────────────────────────────────
+// BS TEXT FIELD — con validación, icono, toggle contraseña
+// ────────────────────────────────────────────────
+class BSTextField extends StatefulWidget {
   final String label;
   final String hint;
   final TextEditingController controller;
   final bool obscureText;
+  final TextInputType keyboardType;
+  final IconData? icon;
+  final String? Function(String?)? validator;
+  final TextCapitalization textCapitalization;
 
   const BSTextField({
     super.key,
@@ -16,76 +56,144 @@ class BSTextField extends StatelessWidget {
     required this.hint,
     required this.controller,
     this.obscureText = false,
+    this.keyboardType = TextInputType.text,
+    this.icon,
+    this.validator,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label.toUpperCase(),
-            style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          style: const TextStyle(color: AppTheme.text),
-          decoration: InputDecoration(hintText: hint),
-        ),
-      ],
-    );
-  }
+  State<BSTextField> createState() => _BSTextFieldState();
 }
 
-/// ═════════════════════════════════════════════════════
-/// GOOGLE BUTTON
-/// ═════════════════════════════════════════════════════
-class BSGoogleButton extends StatelessWidget {
-  final VoidCallback onPressed;
+class _BSTextFieldState extends State<BSTextField> {
+  late bool _obscure;
 
-  const BSGoogleButton({super.key, required this.onPressed});
+  @override
+  void initState() {
+    super.initState();
+    _obscure = widget.obscureText;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 50,
-      width: double.infinity,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-        ),
-        onPressed: onPressed,
-        child: const Text("Continuar con Google"),
+    return TextFormField(
+      controller: widget.controller,
+      obscureText: _obscure,
+      keyboardType: widget.keyboardType,
+      textCapitalization: widget.textCapitalization,
+      validator: widget.validator,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      style: const TextStyle(color: AppTheme.text, fontSize: 15),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        prefixIcon: widget.icon != null
+            ? Icon(widget.icon, color: AppTheme.hint, size: 20)
+            : null,
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: AppTheme.hint,
+                  size: 20,
+                ),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              )
+            : null,
       ),
     );
   }
 }
 
-/// ═════════════════════════════════════════════════════
-/// DIVIDER
-/// ═════════════════════════════════════════════════════
-class BSDivider extends StatelessWidget {
-  const BSDivider({super.key});
+// ────────────────────────────────────────────────
+// BS CAPTCHA WIDGET
+// Integra hCaptcha — añade el paquete: h_captcha_flutter
+// Mientras no lo tengas, este widget simula la verificación
+// ────────────────────────────────────────────────
+class BSCaptchaWidget extends StatefulWidget {
+  final void Function(String token) onVerified;
+
+  const BSCaptchaWidget({super.key, required this.onVerified});
+
+  @override
+  State<BSCaptchaWidget> createState() => _BSCaptchaWidgetState();
+}
+
+class _BSCaptchaWidgetState extends State<BSCaptchaWidget> {
+  bool _verified = false;
+
+  // TODO: Reemplazar con hCaptcha real:
+  // HCaptcha(
+  //   apiKey: 'TU_HCAPTCHA_SITE_KEY',
+  //   onVerify: (token) => widget.onVerified(token),
+  // )
+  void _simulate() {
+    setState(() => _verified = true);
+    // En producción, este token viene del widget de hCaptcha
+    widget.onVerified('simulated_captcha_token_dev');
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: Divider(color: Colors.white24)),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10),
-          child: Text("o", style: TextStyle(color: AppTheme.hint)),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _verified ? AppTheme.success.withOpacity(0.4) : AppTheme.border,
         ),
-        Expanded(child: Divider(color: Colors.white24)),
-      ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _verified ? null : _simulate,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _verified ? AppTheme.success : Colors.transparent,
+                border: Border.all(
+                  color: _verified ? AppTheme.success : AppTheme.hint,
+                  width: 2,
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: _verified
+                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                  : null,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              _verified ? 'Verificado ✓' : 'No soy un robot',
+              style: TextStyle(
+                color: _verified ? AppTheme.success : AppTheme.text,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          // Logo hCaptcha
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              const Text('hCaptcha', style: TextStyle(color: AppTheme.hint, fontSize: 10)),
+              const Text('Privacidad primero', style: TextStyle(color: Color(0xFF4b5563), fontSize: 9)),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// ═════════════════════════════════════════════════════
-/// FEATURE CARD (🔥 ESTE ERA EL PROBLEMA)
-/// ═════════════════════════════════════════════════════
+// ────────────────────────────────────────────────
+// FEATURE CARD (para WelcomeScreen)
+// ────────────────────────────────────────────────
 class FeatureCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -105,53 +213,46 @@ class FeatureCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardAlt,
-        borderRadius: BorderRadius.circular(14),
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(
-                        color: AppTheme.text,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 2),
-                Text(description,
-                    style: const TextStyle(color: AppTheme.hint)),
-              ],
-            ),
-          )
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+              Text(description, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+            ],
+          ),
         ],
       ),
     );
   }
 }
 
-/// ═════════════════════════════════════════════════════
-/// SNACKBAR (🔥 ESTE ERA EL OTRO ERROR)
-/// ═════════════════════════════════════════════════════
-void showBS(BuildContext context, String msg,
-    {bool isError = true}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(msg),
-      backgroundColor:
-          isError ? AppTheme.error : AppTheme.success,
-    ),
-  );
+// Divider y Google Button (compatibilidad)
+class BSDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      children: [
+        Expanded(child: Divider(color: AppTheme.border)),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Text('o', style: TextStyle(color: AppTheme.hint)),
+        ),
+        Expanded(child: Divider(color: AppTheme.border)),
+      ],
+    );
+  }
 }

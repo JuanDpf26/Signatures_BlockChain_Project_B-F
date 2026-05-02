@@ -18,7 +18,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'BlockSign',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
+      theme: AppTheme.dark,
+
       initialRoute: '/',
       routes: {
         '/': (_) => WelcomeScreen(),
