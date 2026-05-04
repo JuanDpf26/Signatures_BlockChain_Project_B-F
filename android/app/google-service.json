@@ -1,1 +1,47 @@
-{"installed":{"client_id":"652903067880-f2j29900pvqh5buejgs70vng503f1iro.apps.googleusercontent.com","project_id":"blocksign-495121","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"}}
+{
+  "project_info": {
+    "project_number": "652903067880",
+    "project_id": "blocksign-495121",
+    "storage_bucket": ""
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:652903067880:android:blocksign",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "652903067880-f2j29900pvqh5buejgs70vng503f1iro.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.frontend",
+            "certificate_hash": "6e549f7686065e27777b211b6a3d0ea59a044592"
+          }
+        },
+        {
+          "client_id": "652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDObg2W_awPs9MMF3lZpFAbKZHF140BSKI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

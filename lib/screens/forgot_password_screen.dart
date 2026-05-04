@@ -3,36 +3,33 @@ import '../widgets/widgets.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import '../theme/app_theme.dart';
- 
+import '../layout/responsive_layout.dart';
+
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
- 
+
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
- 
+
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   bool _isLoading = false;
   bool _emailSent = false;
- 
+
   @override
   void dispose() {
     _email.dispose();
     super.dispose();
   }
- 
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
- 
     setState(() => _isLoading = true);
- 
     try {
       final res = await AuthService.forgotPassword(_email.text.trim());
- 
       if (!mounted) return;
- 
       if (res.containsKey('error')) {
         showBS(context, res['error'], isError: true);
       } else {
@@ -42,9 +39,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
+    final isWeb = ResponsiveLayout.isWeb(context);
+
+    final content = SafeArea(
+      child: Center(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: isWeb ? 48 : 24,
+            vertical: 24,
+          ),
+          child: _emailSent
+              ? _SuccessView(email: _email.text.trim(), isWeb: isWeb)
+              : _FormView(
+                  formKey: _formKey,
+                  emailController: _email,
+                  isLoading: _isLoading,
+                  onSubmit: _submit,
+                  isWeb: isWeb,
+                ),
+        ),
+      ),
+    );
+
     return Scaffold(
       backgroundColor: AppTheme.background,
       appBar: AppBar(
@@ -55,57 +74,51 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: _emailSent ? _SuccessView(email: _email.text.trim()) : _FormView(
-            formKey: _formKey,
-            emailController: _email,
-            isLoading: _isLoading,
-            onSubmit: _submit,
-          ),
-        ),
-      ),
+      body: isWeb
+          ? ResponsiveLayout(maxWidth: 480, child: content)
+          : content,
     );
   }
 }
- 
+
 class _FormView extends StatelessWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
   final bool isLoading;
   final VoidCallback onSubmit;
- 
+  final bool isWeb;
+
   const _FormView({
     required this.formKey,
     required this.emailController,
     required this.isLoading,
     required this.onSubmit,
+    required this.isWeb,
   });
- 
+
   @override
   Widget build(BuildContext context) {
     return Form(
       key: formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(height: 24),
           Container(
-            width: 60,
-            height: 60,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(16),
+              color: AppTheme.primary.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.key_rounded, color: AppTheme.primary, size: 30),
+            child: const Icon(Icons.key_rounded, color: AppTheme.primary, size: 26),
           ),
           const SizedBox(height: 20),
           const Text(
             'Recuperar contraseña',
             style: TextStyle(
               color: AppTheme.text,
-              fontSize: 26,
+              fontSize: 24,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.5,
             ),
@@ -113,10 +126,10 @@ class _FormView extends StatelessWidget {
           const SizedBox(height: 10),
           const Text(
             'Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.',
-            style: TextStyle(color: AppTheme.hint, fontSize: 15, height: 1.5),
+            style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.6),
           ),
           const SizedBox(height: 32),
- 
+
           BSTextField(
             label: 'Correo electrónico',
             hint: 'correo@ejemplo.com',
@@ -126,25 +139,29 @@ class _FormView extends StatelessWidget {
             keyboardType: TextInputType.emailAddress,
           ),
           const SizedBox(height: 24),
- 
+
           SizedBox(
             width: double.infinity,
-            height: 56,
+            height: 52,
             child: ElevatedButton(
               onPressed: isLoading ? null : onSubmit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
                 elevation: 0,
               ),
               child: isLoading
                   ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5),
                     )
-                  : const Text('Enviar enlace', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  : const Text('Enviar enlace',
+                      style: TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
         ],
@@ -152,59 +169,65 @@ class _FormView extends StatelessWidget {
     );
   }
 }
- 
+
 class _SuccessView extends StatelessWidget {
   final String email;
-  const _SuccessView({required this.email});
- 
+  final bool isWeb;
+  const _SuccessView({required this.email, required this.isWeb});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 80,
-          height: 80,
+          width: 72,
+          height: 72,
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.15),
+            color: Colors.green.withOpacity(0.12),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.mark_email_read_rounded, color: Colors.green, size: 40),
+          child: const Icon(Icons.mark_email_read_rounded,
+              color: Colors.green, size: 36),
         ),
         const SizedBox(height: 24),
         const Text(
           'Revisa tu correo',
           style: TextStyle(
             color: AppTheme.text,
-            fontSize: 26,
+            fontSize: 24,
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 12),
         Text(
-          'Si $email está registrado, recibirás un enlace para restablecer tu contraseña en los próximos minutos.',
+          'Si $email está registrado, recibirás un enlace en los próximos minutos.',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppTheme.hint, fontSize: 15, height: 1.6),
+          style: const TextStyle(
+              color: AppTheme.hint, fontSize: 14, height: 1.6),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         const Text(
           'El enlace expira en 1 hora.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppTheme.hint, fontSize: 13),
+          style: TextStyle(color: AppTheme.hint, fontSize: 12),
         ),
-        const SizedBox(height: 40),
+        const SizedBox(height: 36),
         SizedBox(
           width: double.infinity,
-          height: 56,
+          height: 52,
           child: OutlinedButton(
-            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+            onPressed: () =>
+                Navigator.pushReplacementNamed(context, '/login'),
             style: OutlinedButton.styleFrom(
               side: const BorderSide(color: AppTheme.primary),
               foregroundColor: AppTheme.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
-            child: const Text('Volver al inicio de sesión', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: const Text('Volver al inicio de sesión',
+                style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ),
       ],

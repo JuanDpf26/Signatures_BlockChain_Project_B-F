@@ -10,9 +10,11 @@ class AuthService {
   static const _tokenKey = 'auth_token';
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-    // clientId solo necesario en iOS/Web, Android usa google-services.json
-  );
+  scopes: ['email', 'profile'],
+  clientId: kIsWeb
+      ? '652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com' // Web Client ID
+      : null, // Android usa google-services.json
+);
 
   static String get baseUrl {
     if (kIsWeb) return 'http://localhost:3000/api/auth';
@@ -110,38 +112,43 @@ class AuthService {
   // GOOGLE LOGIN
   // ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> loginWithGoogle() async {
-    try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return {'error': 'Inicio con Google cancelado'};
+  try {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return {'error': 'Inicio con Google cancelado'};
 
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
+    final googleAuth = await googleUser.authentication;
 
-      if (idToken == null) return {'error': 'No se pudo obtener token de Google'};
+    // En web viene accessToken, en móvil viene idToken
+    final idToken = googleAuth.idToken ?? googleAuth.accessToken;
 
-      final res = await http
-          .post(
-            Uri.parse('$baseUrl/google'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'idToken': idToken}),
-          )
-          .timeout(const Duration(seconds: 15));
+    if (idToken == null) return {'error': 'No se pudo obtener token de Google'};
 
-      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+    final res = await http
+        .post(
+          Uri.parse('$baseUrl/google'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'idToken': idToken,
+            'isWeb': kIsWeb,
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
 
-      final data = jsonDecode(res.body);
+    if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
 
-      if (data['token'] != null) {
-        await saveToken(data['token']);
-      }
+    final data = jsonDecode(res.body);
 
-      return data;
-    } on SocketException {
-      return {'error': 'Sin conexión a internet'};
-    } catch (e) {
-      return {'error': 'Error con Google: $e'};
+    if (data['token'] != null) {
+      await saveToken(data['token']);
     }
+
+    return data;
+  } on SocketException {
+    return {'error': 'Sin conexión a internet'};
+  } catch (e) {
+    return {'error': 'Error con Google: $e'};
   }
+}
 
   // ────────────────────────────────────────────────
   // FORGOT PASSWORD
