@@ -14,6 +14,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   flutter_recaptcha_v2_compat: ^1.0.5
   google_sign_in: ^6.2.1
+  file_picker: ^8.0.0
+http_parser: ^4.0.0
 
 dev_dependencies:
   flutter_test:

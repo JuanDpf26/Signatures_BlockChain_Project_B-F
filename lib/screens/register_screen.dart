@@ -6,6 +6,7 @@ import '../widgets/widgets.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import '../theme/app_theme.dart';
+import '../layout/responsive_layout.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -39,42 +40,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _checkCaptcha() {
-  if (kIsWeb) {
-    // Primero mostrar el popup de reCAPTCHA
-    js.context.callMethod('showCaptcha');
-    
-    // Verificar el token después de 30 segundos máximo
-    Future.delayed(const Duration(seconds: 1), _pollCaptchaToken);
-  } else {
-    setState(() {
-      _captchaVerified = true;
-      _captchaToken = 'mobile_bypass_dev';
-    });
+    if (kIsWeb) {
+      js.context.callMethod('showCaptcha');
+      Future.delayed(const Duration(seconds: 1), _pollCaptchaToken);
+    } else {
+      setState(() {
+        _captchaVerified = true;
+        _captchaToken = 'mobile_bypass_dev';
+      });
+    }
   }
-}
 
-void _pollCaptchaToken({int attempts = 0}) {
-  if (!mounted) return;
-  if (attempts > 30) return; // máximo 30 segundos
-
-  final token = js.context['captchaToken'];
-  if (token != null && token.toString().isNotEmpty) {
-    setState(() {
-      _captchaVerified = true;
-      _captchaToken = token.toString();
-    });
-  } else {
-    Future.delayed(
-      const Duration(seconds: 1),
-      () => _pollCaptchaToken(attempts: attempts + 1),
-    );
+  void _pollCaptchaToken({int attempts = 0}) {
+    if (!mounted) return;
+    if (attempts > 30) return;
+    final token = js.context['captchaToken'];
+    if (token != null && token.toString().isNotEmpty) {
+      setState(() {
+        _captchaVerified = true;
+        _captchaToken = token.toString();
+      });
+    } else {
+      Future.delayed(
+        const Duration(seconds: 1),
+        () => _pollCaptchaToken(attempts: attempts + 1),
+      );
+    }
   }
-}
 
   void _resetCaptcha() {
-    if (kIsWeb) {
-      js.context.callMethod('resetCaptcha');
-    }
+    if (kIsWeb) js.context.callMethod('resetCaptcha');
     setState(() {
       _captchaVerified = false;
       _captchaToken = null;
@@ -109,7 +104,7 @@ void _pollCaptchaToken({int attempts = 0}) {
       } else {
         showBS(
           context,
-          res['message'] ?? '¡Cuenta creada! Revisa tu correo para verificarla.',
+          res['message'] ?? '¡Cuenta creada! Revisa tu correo.',
           isError: false,
         );
         Future.delayed(const Duration(seconds: 2), () {
@@ -123,31 +118,86 @@ void _pollCaptchaToken({int attempts = 0}) {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.text),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Crear cuenta',
-          style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionLabel('Información personal'),
-                const SizedBox(height: 12),
+    final isWeb = ResponsiveLayout.isWeb(context);
 
+    final content = SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(
+          horizontal: isWeb ? 48 : 24,
+          vertical: 24,
+        ),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              if (isWeb) ...[
+                const Text(
+                  'Crear cuenta',
+                  style: TextStyle(
+                    color: AppTheme.text,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Completa los datos para registrarte',
+                  style: TextStyle(color: AppTheme.hint, fontSize: 14),
+                ),
+                const SizedBox(height: 32),
+              ] else ...[
+                const Text(
+                  'Crear cuenta',
+                  style: TextStyle(
+                    color: AppTheme.text,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Completa los datos para registrarte',
+                  style: TextStyle(color: AppTheme.hint, fontSize: 14),
+                ),
+                const SizedBox(height: 28),
+              ],
+
+              // Sección: Info personal
+              _SectionLabel('Información personal'),
+              const SizedBox(height: 12),
+
+              // En web: 2 columnas para nombre y email
+              if (isWeb)
+                Row(
+                  children: [
+                    Expanded(
+                      child: BSTextField(
+                        label: 'Nombre completo',
+                        hint: 'Juan Pérez',
+                        controller: _name,
+                        icon: Icons.person_outline_rounded,
+                        validator: Validators.name,
+                        textCapitalization: TextCapitalization.words,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: BSTextField(
+                        label: 'Correo electrónico',
+                        hint: 'correo@ejemplo.com',
+                        controller: _email,
+                        icon: Icons.email_outlined,
+                        validator: Validators.email,
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
                 BSTextField(
                   label: 'Nombre completo',
                   hint: 'Juan Pérez',
@@ -156,8 +206,7 @@ void _pollCaptchaToken({int attempts = 0}) {
                   validator: Validators.name,
                   textCapitalization: TextCapitalization.words,
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 14),
                 BSTextField(
                   label: 'Correo electrónico',
                   hint: 'correo@ejemplo.com',
@@ -166,31 +215,71 @@ void _pollCaptchaToken({int attempts = 0}) {
                   validator: Validators.email,
                   keyboardType: TextInputType.emailAddress,
                 ),
-                const SizedBox(height: 16),
+              ],
 
-                BSTextField(
-                  label: 'Número de cédula',
-                  hint: '1234567890',
-                  controller: _document,
-                  icon: Icons.badge_outlined,
-                  validator: Validators.documentId,
-                  keyboardType: TextInputType.number,
-                ),
-                const SizedBox(height: 16),
+              const SizedBox(height: 14),
 
-                BSTextField(
-                  label: 'Teléfono',
-                  hint: '3001234567',
-                  controller: _phone,
-                  icon: Icons.phone_outlined,
-                  validator: Validators.phone,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 24),
+              // Cédula y teléfono — siempre en fila
+              Row(
+                children: [
+                  Expanded(
+                    child: BSTextField(
+                      label: 'Cédula',
+                      hint: '1234567890',
+                      controller: _document,
+                      icon: Icons.badge_outlined,
+                      validator: Validators.documentId,
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: BSTextField(
+                      label: 'Teléfono',
+                      hint: '3001234567',
+                      controller: _phone,
+                      icon: Icons.phone_outlined,
+                      validator: Validators.phone,
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ),
+                ],
+              ),
 
-                _SectionLabel('Seguridad'),
-                const SizedBox(height: 12),
+              const SizedBox(height: 24),
 
+              // Sección: Seguridad
+              _SectionLabel('Seguridad'),
+              const SizedBox(height: 12),
+
+              if (isWeb)
+                Row(
+                  children: [
+                    Expanded(
+                      child: BSTextField(
+                        label: 'Contraseña',
+                        hint: '8+ chars, mayúscula y número',
+                        controller: _pass,
+                        icon: Icons.lock_outline_rounded,
+                        obscureText: true,
+                        validator: Validators.password,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: BSTextField(
+                        label: 'Confirmar contraseña',
+                        hint: 'Repite tu contraseña',
+                        controller: _confirmPass,
+                        icon: Icons.lock_outline_rounded,
+                        obscureText: true,
+                        validator: (v) =>
+                            Validators.confirmPassword(v, _pass.text),
+                      ),
+                    ),
+                  ],
+                )
+              else ...[
                 BSTextField(
                   label: 'Contraseña',
                   hint: '8+ caracteres, mayúscula y número',
@@ -199,8 +288,7 @@ void _pollCaptchaToken({int attempts = 0}) {
                   obscureText: true,
                   validator: Validators.password,
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 14),
                 BSTextField(
                   label: 'Confirmar contraseña',
                   hint: 'Repite tu contraseña',
@@ -209,76 +297,96 @@ void _pollCaptchaToken({int attempts = 0}) {
                   obscureText: true,
                   validator: (v) => Validators.confirmPassword(v, _pass.text),
                 ),
-                const SizedBox(height: 24),
-
-                _SectionLabel('Verificación'),
-                const SizedBox(height: 12),
-
-                // reCAPTCHA widget
-                _CaptchaWidget(
-                  verified: _captchaVerified,
-                  onTap: _captchaVerified ? _resetCaptcha : _checkCaptcha,
-                ),
-                const SizedBox(height: 24),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2.5),
-                          )
-                        : const Text(
-                            'Crear cuenta',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('¿Ya tienes cuenta? ',
-                        style: TextStyle(color: AppTheme.hint)),
-                    GestureDetector(
-                      onTap: () =>
-                          Navigator.pushReplacementNamed(context, '/login'),
-                      child: const Text(
-                        'Inicia sesión',
-                        style: TextStyle(
-                            color: AppTheme.primary,
-                            fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
               ],
-            ),
+
+              const SizedBox(height: 24),
+
+              // Sección: Captcha
+              _SectionLabel('Verificación'),
+              const SizedBox(height: 12),
+
+              _CaptchaWidget(
+                verified: _captchaVerified,
+                onTap: _captchaVerified ? _resetCaptcha : _checkCaptcha,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Botón registrar
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2.5),
+                        )
+                      : const Text('Crear cuenta',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w700)),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('¿Ya tienes cuenta? ',
+                      style: TextStyle(color: AppTheme.hint, fontSize: 14)),
+                  GestureDetector(
+                    onTap: () =>
+                        Navigator.pushReplacementNamed(context, '/login'),
+                    child: const Text(
+                      'Inicia sesión',
+                      style: TextStyle(
+                          color: AppTheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),
     );
+
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppTheme.text),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: isWeb
+          ? ResponsiveLayout(maxWidth: 560, child: content)
+          : content,
+    );
   }
 }
 
-// Widget visual del captcha
+// ─────────────────────────────────────────
+// CAPTCHA WIDGET
+// ─────────────────────────────────────────
 class _CaptchaWidget extends StatelessWidget {
   final bool verified;
   final VoidCallback onTap;
@@ -290,10 +398,10 @@ class _CaptchaWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: verified
                 ? AppTheme.success.withOpacity(0.5)
@@ -304,8 +412,8 @@ class _CaptchaWidget extends StatelessWidget {
           children: [
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 26,
-              height: 26,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 color: verified ? AppTheme.success : Colors.transparent,
                 border: Border.all(
@@ -315,17 +423,20 @@ class _CaptchaWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: verified
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 16)
+                  ? const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 15)
                   : null,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                verified ? 'Verificado ✓  (toca para resetear)' : 'No soy un robot — toca para verificar',
+                verified
+                    ? 'Verificado ✓  (toca para resetear)'
+                    : 'No soy un robot — toca para verificar',
                 style: TextStyle(
                   color: verified ? AppTheme.success : AppTheme.text,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: 13,
                 ),
               ),
             ),
@@ -333,9 +444,11 @@ class _CaptchaWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: const [
                 Text('reCAPTCHA',
-                    style: TextStyle(color: AppTheme.hint, fontSize: 10)),
+                    style:
+                        TextStyle(color: AppTheme.hint, fontSize: 10)),
                 Text('Google',
-                    style: TextStyle(color: Color(0xFF4b5563), fontSize: 9)),
+                    style: TextStyle(
+                        color: Color(0xFF4b5563), fontSize: 9)),
               ],
             ),
           ],
@@ -345,6 +458,9 @@ class _CaptchaWidget extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────
+// SECTION LABEL
+// ─────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String text;
   const _SectionLabel(this.text);
@@ -355,7 +471,7 @@ class _SectionLabel extends StatelessWidget {
       text,
       style: const TextStyle(
         color: AppTheme.hint,
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.8,
       ),

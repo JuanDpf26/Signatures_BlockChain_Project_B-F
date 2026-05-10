@@ -69,4 +69,43 @@
     </div>
   </div>
 
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" async></script> 
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<div id="g_id_onload"
+  data-client_id="652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com"
+  data-callback="onGoogleLogin"
+  data-auto_prompt="false">
+</div>
+
+<div id="google-btn-container" style="position:fixed;top:-9999px;left:-9999px;">
+  <div class="g_id_signin" data-type="standard" data-size="large"
+    data-theme="filled_black" data-text="signin_with" data-shape="rectangular">
+  </div>
+</div>
+
+<script>
+  window.googleIdToken = null;
+  function onGoogleLogin(response) {
+    window.googleIdToken = response.credential;
+  }
+  function triggerGoogleSignIn() {
+    document.getElementById('google-btn-container').style.cssText =
+      'position:fixed;top:0;left:0;width:100%;height:100%;' +
+      'background:rgba(0,0,0,0.75);z-index:9999;display:flex;' +
+      'justify-content:center;align-items:center;flex-direction:column;';
+    if (!document.getElementById('google-cancel-btn')) {
+      const btn = document.createElement('button');
+      btn.id = 'google-cancel-btn';
+      btn.innerText = 'Cancelar';
+      btn.style.cssText = 'margin-top:16px;background:transparent;border:1px solid #4b5563;' +
+        'color:#9ca3af;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:14px;';
+      btn.onclick = () => {
+        document.getElementById('google-btn-container').style.cssText =
+          'position:fixed;top:-9999px;left:-9999px;';
+      };
+      document.getElementById('google-btn-container').appendChild(btn);
+    }
+  }
+</script>
