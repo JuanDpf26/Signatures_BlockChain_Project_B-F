@@ -20,6 +20,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isGoogleLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Mostrar mensaje si viene de verificación de email
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final uri = Uri.base;
+      final verified = uri.queryParameters['verified'];
+      if (verified == 'true') {
+        showBS(context, '✅ ¡Cuenta verificada! Ya puedes iniciar sesión.');
+      } else if (verified == 'error') {
+        showBS(
+          context,
+          'El enlace de verificación es inválido o ya expiró.',
+          isError: true,
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _email.dispose();
     _pass.dispose();

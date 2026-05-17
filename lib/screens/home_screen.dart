@@ -4,6 +4,7 @@ import '../services/document_service.dart';
 import '../theme/app_theme.dart';
 import '../layout/responsive_layout.dart';
 import '../screens/document_screen.dart';
+import '../screens/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -87,12 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
           description: 'Próximamente podrás verificar la autenticidad\nde firmas digitales en la blockchain.',
         );
       case 3:
-        return _ComingSoonContent(
-          icon: Icons.person_rounded,
-          color: AppTheme.primary,
-          title: 'Perfil',
-          description: 'Próximamente podrás gestionar\ntu perfil y configuración.',
-        );
+        
+       return const ProfileScreen();
       default:
         return _DashboardContent(
           stats: _stats,
