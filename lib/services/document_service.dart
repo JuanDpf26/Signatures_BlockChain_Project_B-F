@@ -145,6 +145,28 @@ class DocumentService {
   }
 
   // ────────────────────────────────────────────────
+  // RE-ANALIZAR DOCUMENTO CON IA  ← AÑADIDO
+  // ────────────────────────────────────────────────
+  static Future<Map<String, dynamic>> reanalyzeDocument(String docId) async {
+    try {
+      final headers = await _authHeaders();
+      final res = await http
+          .post(
+            Uri.parse('$baseUrl/$docId/reanalyze'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } on SocketException {
+      return {'error': 'Sin conexión a internet'};
+    } catch (e) {
+      return {'error': 'Error al re-analizar: $e'};
+    }
+  }
+
+  // ────────────────────────────────────────────────
   // ELIMINAR DOCUMENTO
   // ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> deleteDocument(String docId) async {
