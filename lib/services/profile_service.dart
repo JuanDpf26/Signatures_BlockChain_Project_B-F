@@ -12,12 +12,6 @@ class ProfileService {
     return 'http://localhost:3000/api/profile';
   }
 
-  static String get signaturesUrl {
-    if (kIsWeb) return 'http://localhost:3000/api/signatures';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000/api/signatures';
-    return 'http://localhost:3000/api/signatures';
-  }
-
   static Future<Map<String, String>> _headers() async {
     final token = await AuthService.getToken();
     return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
@@ -124,14 +118,31 @@ class ProfileService {
     }
   }
 
-  // GUARDAR FIRMA
+  // GUARDAR FIRMA — usa /api/profile/signature (Supabase Storage)
   static Future<Map<String, dynamic>> saveSignature(String base64Image) async {
     try {
       final headers = await _headers();
       final res = await http.post(
-        Uri.parse(signaturesUrl),
+        Uri.parse('$baseUrl/signature'),
         headers: headers,
         body: jsonEncode({'signatureBase64': base64Image}),
+      ).timeout(const Duration(seconds: 30));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } on SocketException {
+      return {'error': 'Sin conexión a internet'};
+    } catch (e) {
+      return {'error': 'Error: $e'};
+    }
+  }
+
+  // OBTENER FIRMA — usa /api/profile/signature
+  static Future<Map<String, dynamic>> getSignature() async {
+    try {
+      final headers = await _headers();
+      final res = await http.get(
+        Uri.parse('$baseUrl/signature'),
+        headers: headers,
       ).timeout(const Duration(seconds: 15));
       if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
       return jsonDecode(res.body);
@@ -142,27 +153,14 @@ class ProfileService {
     }
   }
 
-  // OBTENER FIRMA
-  static Future<Map<String, dynamic>> getSignature() async {
-    try {
-      final headers = await _headers();
-      final res = await http.get(Uri.parse(signaturesUrl), headers: headers)
-          .timeout(const Duration(seconds: 15));
-      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
-      return jsonDecode(res.body);
-    } on SocketException {
-      return {'error': 'Sin conexión a internet'};
-    } catch (e) {
-      return {'error': 'Error: $e'};
-    }
-  }
-
-  // ELIMINAR FIRMA
+  // ELIMINAR FIRMA — usa /api/profile/signature
   static Future<Map<String, dynamic>> deleteSignature() async {
     try {
       final headers = await _headers();
-      final res = await http.delete(Uri.parse(signaturesUrl), headers: headers)
-          .timeout(const Duration(seconds: 15));
+      final res = await http.delete(
+        Uri.parse('$baseUrl/signature'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 15));
       if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
       return jsonDecode(res.body);
     } on SocketException {
