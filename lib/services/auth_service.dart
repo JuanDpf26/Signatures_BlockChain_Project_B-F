@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:js' as js;
+import '../config/app_config.dart';
 
 class AuthService {
   static const _storage = FlutterSecureStorage();
@@ -17,18 +18,21 @@ class AuthService {
       : null, // Android usa google-services.json
 );
 
-  static String get baseUrl {
+  //static String get baseUrl {
     //**if (kIsWeb) return 'http://localhost:3000/api/auth';
     //if (Platform.isAndroid) return 'http://10.0.2.2:3000/api/auth';
     //return 'http://localhost:3000/api/auth';
     //En producción: 'https://tuapi.com/api/auth'
 
   
-  if (kIsWeb) return 'https://blocksign-backend.onrender.com/api/auth';
-  if (Platform.isAndroid) return 'https://blocksign-backend.onrender.com/api/auth';
-  return 'https://blocksign-backend.onrender.com/api/auth';
+  //if (kIsWeb) return 'https://blocksign-backend.onrender.com/api/auth';
+  //if (Platform.isAndroid) return 'https://blocksign-backend.onrender.com/api/auth';
+  //return 'https://blocksign-backend.onrender.com/api/auth';
 
-  }
+
+  //}
+
+  static String get baseUrl => '${AppConfig.apiUrl}/api/auth';
 
   // ────────────────────────────────────────────────
   // TOKEN MANAGEMENT
