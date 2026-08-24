@@ -24,7 +24,7 @@ class AuthService {
     //En producción: 'https://tuapi.com/api/auth'
 
   
-  //if (kIsWeb) return 'https://blocksign-backend.onrender.com/api/auth';
+  if (kIsWeb) return 'https://blocksign-backend.onrender.com/api/auth';
   if (Platform.isAndroid) return 'https://blocksign-backend.onrender.com/api/auth';
   return 'https://blocksign-backend.onrender.com/api/auth';
 
