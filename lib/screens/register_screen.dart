@@ -5,7 +5,7 @@ import 'dart:js' as js;
 import '../widgets/widgets.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
-import '../theme/app_theme.dart';
+import '../theme/google_auth_theme.dart';
 import '../layout/responsive_layout.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -136,7 +136,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text(
                   'Crear cuenta',
                   style: TextStyle(
-                    color: AppTheme.text,
+                    color: GoogleAuthTheme.text,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -145,14 +145,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 6),
                 const Text(
                   'Completa los datos para registrarte',
-                  style: TextStyle(color: AppTheme.hint, fontSize: 14),
+                  style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14),
                 ),
                 const SizedBox(height: 32),
               ] else ...[
                 const Text(
                   'Crear cuenta',
                   style: TextStyle(
-                    color: AppTheme.text,
+                    color: GoogleAuthTheme.text,
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -161,7 +161,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 6),
                 const Text(
                   'Completa los datos para registrarte',
-                  style: TextStyle(color: AppTheme.hint, fontSize: 14),
+                  style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14),
                 ),
                 const SizedBox(height: 28),
               ],
@@ -182,6 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.person_outline_rounded,
                         validator: Validators.name,
                         textCapitalization: TextCapitalization.words,
+                        light: true,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -193,6 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.email_outlined,
                         validator: Validators.email,
                         keyboardType: TextInputType.emailAddress,
+                        light: true,
                       ),
                     ),
                   ],
@@ -205,6 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: Icons.person_outline_rounded,
                   validator: Validators.name,
                   textCapitalization: TextCapitalization.words,
+                  light: true,
                 ),
                 const SizedBox(height: 14),
                 BSTextField(
@@ -214,6 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: Icons.email_outlined,
                   validator: Validators.email,
                   keyboardType: TextInputType.emailAddress,
+                  light: true,
                 ),
               ],
 
@@ -230,6 +234,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icons.badge_outlined,
                       validator: Validators.documentId,
                       keyboardType: TextInputType.number,
+                      light: true,
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -241,6 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       icon: Icons.phone_outlined,
                       validator: Validators.phone,
                       keyboardType: TextInputType.phone,
+                      light: true,
                     ),
                   ),
                 ],
@@ -263,6 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock_outline_rounded,
                         obscureText: true,
                         validator: Validators.password,
+                        light: true,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -275,6 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         obscureText: true,
                         validator: (v) =>
                             Validators.confirmPassword(v, _pass.text),
+                        light: true,
                       ),
                     ),
                   ],
@@ -287,6 +295,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: Icons.lock_outline_rounded,
                   obscureText: true,
                   validator: Validators.password,
+                  light: true,
                 ),
                 const SizedBox(height: 14),
                 BSTextField(
@@ -296,6 +305,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: Icons.lock_outline_rounded,
                   obscureText: true,
                   validator: (v) => Validators.confirmPassword(v, _pass.text),
+                  light: true,
                 ),
               ],
 
@@ -319,11 +329,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: GoogleAuthTheme.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
+                    disabledBackgroundColor: GoogleAuthTheme.primary.withOpacity(0.5),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
                   child: _isLoading
@@ -345,14 +355,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text('¿Ya tienes cuenta? ',
-                      style: TextStyle(color: AppTheme.hint, fontSize: 14)),
+                      style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14)),
                   GestureDetector(
                     onTap: () =>
                         Navigator.pushReplacementNamed(context, '/login'),
                     child: const Text(
                       'Inicia sesión',
                       style: TextStyle(
-                          color: AppTheme.primary,
+                          color: GoogleAuthTheme.primary,
                           fontWeight: FontWeight.w700,
                           fontSize: 14),
                     ),
@@ -367,18 +377,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: GoogleAuthTheme.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppTheme.text),
+              color: GoogleAuthTheme.text),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: isWeb
-          ? ResponsiveLayout(maxWidth: 560, child: content)
+          ? ResponsiveLayout(maxWidth: 560, light: true, child: content)
           : content,
     );
   }
@@ -400,12 +410,12 @@ class _CaptchaWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: GoogleAuthTheme.surfaceAlt,
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: verified
-                ? AppTheme.success.withOpacity(0.5)
-                : AppTheme.border,
+                ? GoogleAuthTheme.success.withOpacity(0.5)
+                : GoogleAuthTheme.border,
           ),
         ),
         child: Row(
@@ -415,9 +425,9 @@ class _CaptchaWidget extends StatelessWidget {
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: verified ? AppTheme.success : Colors.transparent,
+                color: verified ? GoogleAuthTheme.success : Colors.transparent,
                 border: Border.all(
-                  color: verified ? AppTheme.success : AppTheme.hint,
+                  color: verified ? GoogleAuthTheme.success : GoogleAuthTheme.textSecondary,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(6),
@@ -434,7 +444,7 @@ class _CaptchaWidget extends StatelessWidget {
                     ? 'Verificado ✓  (toca para resetear)'
                     : 'No soy un robot — toca para verificar',
                 style: TextStyle(
-                  color: verified ? AppTheme.success : AppTheme.text,
+                  color: verified ? GoogleAuthTheme.success : GoogleAuthTheme.text,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -445,7 +455,7 @@ class _CaptchaWidget extends StatelessWidget {
               children: const [
                 Text('reCAPTCHA',
                     style:
-                        TextStyle(color: AppTheme.hint, fontSize: 10)),
+                        TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 10)),
                 Text('Google',
                     style: TextStyle(
                         color: Color(0xFF4b5563), fontSize: 9)),
@@ -470,7 +480,7 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: const TextStyle(
-        color: AppTheme.hint,
+        color: GoogleAuthTheme.textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.8,

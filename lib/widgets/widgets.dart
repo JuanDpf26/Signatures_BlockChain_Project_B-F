@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/google_auth_theme.dart';
 
 // ────────────────────────────────────────────────
 // SHOW BOTTOM SHEET (showBS)
@@ -49,6 +50,7 @@ class BSTextField extends StatefulWidget {
   final IconData? icon;
   final String? Function(String?)? validator;
   final TextCapitalization textCapitalization;
+  final bool light;
 
   const BSTextField({
     super.key,
@@ -60,6 +62,7 @@ class BSTextField extends StatefulWidget {
     this.icon,
     this.validator,
     this.textCapitalization = TextCapitalization.none,
+    this.light = false,
   });
 
   @override
@@ -77,6 +80,10 @@ class _BSTextFieldState extends State<BSTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final light = widget.light;
+    final textColor = light ? GoogleAuthTheme.text : AppTheme.text;
+    final hintColor = light ? GoogleAuthTheme.textSecondary : AppTheme.hint;
+
     return TextFormField(
       controller: widget.controller,
       obscureText: _obscure,
@@ -84,23 +91,58 @@ class _BSTextFieldState extends State<BSTextField> {
       textCapitalization: widget.textCapitalization,
       validator: widget.validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      style: const TextStyle(color: AppTheme.text, fontSize: 15),
+      style: TextStyle(color: textColor, fontSize: 15),
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,
         prefixIcon: widget.icon != null
-            ? Icon(widget.icon, color: AppTheme.hint, size: 20)
+            ? Icon(widget.icon, color: hintColor, size: 20)
             : null,
         suffixIcon: widget.obscureText
             ? IconButton(
                 icon: Icon(
                   _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: AppTheme.hint,
+                  color: hintColor,
                   size: 20,
                 ),
                 onPressed: () => setState(() => _obscure = !_obscure),
               )
             : null,
+        filled: light ? true : null,
+        fillColor: light ? GoogleAuthTheme.surfaceAlt : null,
+        labelStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
+        hintStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
+        border: light
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+              )
+            : null,
+        enabledBorder: light
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+              )
+            : null,
+        focusedBorder: light
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GoogleAuthTheme.borderFocus, width: 2),
+              )
+            : null,
+        errorBorder: light
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GoogleAuthTheme.error),
+              )
+            : null,
+        focusedErrorBorder: light
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: GoogleAuthTheme.error, width: 2),
+              )
+            : null,
+        errorStyle: light ? const TextStyle(color: GoogleAuthTheme.error) : null,
       ),
     );
   }

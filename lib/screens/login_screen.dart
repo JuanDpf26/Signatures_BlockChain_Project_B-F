@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/widgets.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
-import '../theme/app_theme.dart';
+import '../theme/google_auth_theme.dart';
 import '../layout/responsive_layout.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -103,14 +103,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           height: 64,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [AppTheme.primary, AppTheme.featureCyan],
+                              colors: [GoogleAuthTheme.primary, Color(0xFF06b6d4)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primary.withOpacity(0.4),
+                                color: GoogleAuthTheme.primary.withOpacity(0.3),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8),
                               ),
@@ -125,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w800,
-                            color: AppTheme.text,
+                            color: GoogleAuthTheme.text,
                             letterSpacing: -1,
                           ),
                         ),
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Center(
                     child: Text(
                       'Inicia sesión en tu cuenta',
-                      style: TextStyle(color: AppTheme.hint, fontSize: 15),
+                      style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 15),
                     ),
                   ),
                   const SizedBox(height: 36),
@@ -146,7 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const Text(
                     'Iniciar sesión',
                     style: TextStyle(
-                      color: AppTheme.text,
+                      color: GoogleAuthTheme.text,
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.5,
@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     'Ingresa tus credenciales para continuar',
-                    style: TextStyle(color: AppTheme.hint, fontSize: 14),
+                    style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -167,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.email_outlined,
                   validator: Validators.email,
                   keyboardType: TextInputType.emailAddress,
+                  light: true,
                 ),
                 const SizedBox(height: 16),
 
@@ -178,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   obscureText: true,
                   validator: (v) =>
                       (v == null || v.isEmpty) ? 'La contraseña es requerida' : null,
+                  light: true,
                 ),
                 const SizedBox(height: 8),
 
@@ -189,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       '¿Olvidaste tu contraseña?',
                       style: TextStyle(
-                          color: AppTheme.primary, fontWeight: FontWeight.w600),
+                          color: GoogleAuthTheme.primary, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
@@ -202,11 +204,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primary,
+                      backgroundColor: GoogleAuthTheme.primary,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
+                      disabledBackgroundColor: GoogleAuthTheme.primary.withOpacity(0.5),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
                     child: _isLoading
@@ -226,14 +228,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const Row(
                   children: [
-                    Expanded(child: Divider(color: AppTheme.border)),
+                    Expanded(child: Divider(color: GoogleAuthTheme.border)),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 14),
                       child: Text('o continúa con',
                           style: TextStyle(
-                              color: AppTheme.hint, fontSize: 13)),
+                              color: GoogleAuthTheme.textSecondary, fontSize: 13)),
                     ),
-                    Expanded(child: Divider(color: AppTheme.border)),
+                    Expanded(child: Divider(color: GoogleAuthTheme.border)),
                   ],
                 ),
 
@@ -245,10 +247,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: OutlinedButton(
                     onPressed: _isGoogleLoading ? null : _loginWithGoogle,
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.border, width: 1.5),
-                      foregroundColor: AppTheme.text,
+                      side: const BorderSide(color: GoogleAuthTheme.border, width: 1),
+                      foregroundColor: GoogleAuthTheme.text,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                     child: _isGoogleLoading
                         ? const SizedBox(
@@ -277,13 +279,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text('¿No tienes cuenta? ',
-                        style: TextStyle(color: AppTheme.hint, fontSize: 14)),
+                        style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14)),
                     GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/register'),
                       child: const Text(
                         'Regístrate',
                         style: TextStyle(
-                            color: AppTheme.primary,
+                            color: GoogleAuthTheme.primary,
                             fontWeight: FontWeight.w700,
                             fontSize: 14),
                       ),
@@ -299,9 +301,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: GoogleAuthTheme.background,
       body: isWeb
-          ? ResponsiveLayout(maxWidth: 480, child: content)
+          ? ResponsiveLayout(maxWidth: 480, light: true, child: content)
           : content,
     );
   }
