@@ -42,14 +42,15 @@ class _LeftPanel extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0f0f1a), Color(0xFF1a1a3e)],
+          colors: [Color(0xFFF8F9FA), Color(0xFFEEF3FC)],
         ),
+        border: Border(right: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Stack(
         children: [
           // Círculos decorativos
-          Positioned(top: -80, left: -80, child: _Circle(300, const Color(0xFF6366f1), 0.06)),
-          Positioned(bottom: -60, right: -60, child: _Circle(250, const Color(0xFF06b6d4), 0.05)),
+          Positioned(top: -80, left: -80, child: _Circle(300, const Color(0xFF6366f1), 0.10)),
+          Positioned(bottom: -60, right: -60, child: _Circle(250, const Color(0xFF06b6d4), 0.09)),
 
           SingleChildScrollView(
             padding: const EdgeInsets.all(52),
@@ -68,8 +69,8 @@ class _LeftPanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('BlockSign', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-                      Text('Firma digital blockchain', style: TextStyle(color: Color(0xFF6b7280), fontSize: 11)),
+                      Text('BlockSign', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text('Firma digital blockchain', style: TextStyle(color: AppTheme.hint, fontSize: 11)),
                     ]),
                   ]),
                   const SizedBox(height: 40),
@@ -77,12 +78,12 @@ class _LeftPanel extends StatelessWidget {
                   // Título
                   const Text(
                     'Firma documentos\ncon validez legal',
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w600, height: 1.25, letterSpacing: -0.5),
+                    style: TextStyle(color: AppTheme.text, fontSize: 32, fontWeight: FontWeight.w600, height: 1.25, letterSpacing: -0.5),
                   ),
                   const SizedBox(height: 14),
                   const Text(
                     'Protege tus documentos con criptografía\nde extremo a extremo y registro inmutable.',
-                    style: TextStyle(color: Color(0xFF9ca3af), fontSize: 14, height: 1.6),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.6),
                   ),
                   const SizedBox(height: 36),
 
@@ -144,7 +145,7 @@ class _LeftPanel extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   const Text('Universidad Manuela Beltrán · IS25133 · 2026',
-                      style: TextStyle(color: Color(0xFF374151), fontSize: 11)),
+                      style: TextStyle(color: AppTheme.hint, fontSize: 11)),
                 ],
               ),
             ),
@@ -226,7 +227,7 @@ class _RightPanel extends StatelessWidget {
               const SizedBox(height: 32),
               const Center(
                 child: Text('Universidad Manuela Beltrán · 2026',
-                    style: TextStyle(color: Color(0xFF4b5563), fontSize: 11)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 11)),
               ),
             ],
           ),
@@ -314,7 +315,7 @@ class _StatBadge extends StatelessWidget {
       decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: color.withOpacity(0.15))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
-        Text(sub, style: const TextStyle(color: Color(0xFF6b7280), fontSize: 10)),
+        Text(sub, style: const TextStyle(color: AppTheme.hint, fontSize: 10)),
       ]),
     );
   }
@@ -336,9 +337,9 @@ class _Feature extends StatelessWidget {
       ),
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+        Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w500)),
         const SizedBox(height: 2),
-        Text(desc, style: const TextStyle(color: Color(0xFF6b7280), fontSize: 12, height: 1.4)),
+        Text(desc, style: const TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
       ])),
     ]);
   }

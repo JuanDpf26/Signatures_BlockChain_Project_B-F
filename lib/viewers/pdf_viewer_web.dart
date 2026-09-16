@@ -1,6 +1,7 @@
 import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 import 'package:web/web.dart' as web;
+import '../theme/app_theme.dart';
 
 class PdfViewerWeb extends StatefulWidget {
   final String fileUrl;
@@ -36,14 +37,17 @@ class _PdfViewerWebState extends State<PdfViewerWeb> {
     return Column(children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        color: const Color(0xFF1E1E2E),
+        decoration: const BoxDecoration(
+          color: AppTheme.surface,
+          border: Border(bottom: BorderSide(color: AppTheme.border)),
+        ),
         child: Row(children: [
-          const Icon(Icons.info_outline_rounded, color: Color(0xFF6b7280), size: 14),
+          const Icon(Icons.info_outline_rounded, color: AppTheme.hint, size: 14),
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
               'Visor Google Docs — puede tardar unos segundos',
-              style: TextStyle(color: Color(0xFF6b7280), fontSize: 11),
+              style: TextStyle(color: AppTheme.hint, fontSize: 11),
             ),
           ),
         ]),

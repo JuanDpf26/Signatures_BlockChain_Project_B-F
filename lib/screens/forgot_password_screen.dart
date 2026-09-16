@@ -75,7 +75,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         ),
       ),
       body: isWeb
-          ? ResponsiveLayout(maxWidth: 480, child: content)
+          ? ResponsiveLayout(maxWidth: 480, light: true, child: content)
           : content,
     );
   }

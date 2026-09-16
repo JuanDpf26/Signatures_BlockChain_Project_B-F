@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
-import '../viewers//pdf_viewer_web.dart' if (dart.library.io) 'pdf_viewer_stub.dart';
+import '../viewers/pdf_viewer_web.dart' if (dart.library.io) 'pdf_viewer_stub.dart';
 
 class DocumentViewerScreen extends StatefulWidget {
   final String fileUrl;
@@ -96,7 +96,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1E),
+      backgroundColor: AppTheme.background,
       appBar: AppBar(
         backgroundColor: AppTheme.surface,
         elevation: 0,

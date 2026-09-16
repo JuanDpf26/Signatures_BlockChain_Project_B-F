@@ -95,7 +95,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               ),
             ),
       body: isWeb
-          ? ResponsiveLayout(child: content)
+          ? ResponsiveLayout(light: true, child: content)
           : content,
     );
   }
