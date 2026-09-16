@@ -214,9 +214,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ? IconButton(icon: const Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _load(); })
                 : null,
             filled: true, fillColor: AppTheme.surface,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primary)),
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
           ),
         ),
@@ -284,7 +284,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           width: double.infinity, height: 48,
           child: ElevatedButton.icon(
             onPressed: _isUploading ? null : _upload,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
             icon: _isUploading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.upload_file_rounded, size: 18),
             label: Text(_isUploading ? 'Subiendo...' : 'Subir PDF o Word', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
           ),
@@ -497,7 +497,7 @@ class _SignConfirmDialog extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.hint, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 12)),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.hint, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12)),
                 child: const Text('Cancelar'),
               ),
             ),
@@ -505,7 +505,7 @@ class _SignConfirmDialog extends StatelessWidget {
             Expanded(
               child: ElevatedButton.icon(
                 onPressed: signatureUrl == null ? null : () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 12), elevation: 0),
+                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12), elevation: 0),
                 icon: const Icon(Icons.draw_rounded, size: 16),
                 label: const Text('Firmar documento', style: TextStyle(fontWeight: FontWeight.w600)),
               ),
@@ -817,7 +817,7 @@ class _AISection extends StatelessWidget {
     if (content == null) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.04), borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.primary.withOpacity(0.1))),
+      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.04), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.1))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(icon, color: AppTheme.primary, size: 13),
@@ -840,7 +840,7 @@ class _AIBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: color.withOpacity(0.06), borderRadius: BorderRadius.circular(10), border: Border.all(color: color.withOpacity(0.15))),
+      decoration: BoxDecoration(color: color.withOpacity(0.06), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withOpacity(0.15))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
         const SizedBox(height: 4),
@@ -964,7 +964,7 @@ class _EmptyState extends StatelessWidget {
       const SizedBox(height: 20),
       ElevatedButton.icon(
         onPressed: onUpload,
-        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0),
+        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
         icon: const Icon(Icons.upload_file_rounded, size: 18),
         label: const Text('Subir documento', style: TextStyle(fontWeight: FontWeight.w600)),
       ),

@@ -292,7 +292,7 @@ class _InfoTabState extends State<_InfoTab> {
         SizedBox(width: double.infinity, height: 50,
           child: ElevatedButton(
             onPressed: _isLoading ? null : _save,
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
             child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Guardar cambios', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ),
@@ -400,7 +400,7 @@ class _SecurityTabState extends State<_SecurityTab> {
           SizedBox(width: double.infinity, height: 50,
             child: ElevatedButton(
               onPressed: _isLoading ? null : _changePassword,
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
               child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Actualizar contraseña', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ),
@@ -429,7 +429,7 @@ class _SecurityTabState extends State<_SecurityTab> {
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: _deleteAccount,
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), foregroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), foregroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
               child: const Text('Eliminar mi cuenta', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ]),
@@ -557,7 +557,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.green.withOpacity(0.3))),
+            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.withOpacity(0.3))),
             child: Column(children: [
               Row(children: [
                 const Icon(Icons.check_circle_rounded, color: Colors.green, size: 16),
@@ -576,9 +576,9 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
               const SizedBox(height: 12),
               Container(
                 height: 120, width: double.infinity,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                   child: Image.network(_savedSignatureUrl!, fit: BoxFit.contain,
                     loadingBuilder: (ctx, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
                     errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image_rounded, color: AppTheme.hint)),
@@ -653,7 +653,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _clearCanvas,
-                      style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.hint, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12)),
+                      style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.hint, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12)),
                       icon: const Icon(Icons.refresh_rounded, size: 16),
                       label: const Text('Limpiar'),
                     ),
@@ -662,7 +662,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _isSaving ? null : _saveFromCanvas,
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 12), elevation: 0),
+                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12), elevation: 0),
                       icon: _isSaving ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save_rounded, size: 16),
                       label: Text(_isSaving ? 'Guardando...' : 'Guardar firma'),
                     ),
@@ -675,7 +675,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(28),
-                  decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
+                  decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
                   child: Column(children: [
                     Container(width: 56, height: 56, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.upload_file_rounded, color: AppTheme.primary, size: 28)),
                     const SizedBox(height: 12),
@@ -687,7 +687,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                       width: double.infinity, height: 46,
                       child: ElevatedButton.icon(
                         onPressed: _isSaving ? null : _pickAndUpload,
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
                         icon: _isSaving ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.image_rounded, size: 18),
                         label: Text(_isSaving ? 'Subiendo...' : 'Seleccionar imagen'),
                       ),

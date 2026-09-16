@@ -13,6 +13,12 @@ class AppTheme {
   static const Color error = Color(0xFFD93025);
   static const Color success = Color(0xFF188038);
 
+  // Sombra sutil estilo Material para dar profundidad a cards y paneles
+  static List<BoxShadow> get cardShadow => [
+        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 2)),
+        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 2, offset: const Offset(0, 1)),
+      ];
+
   static ThemeData get dark {
     return ThemeData(
       useMaterial3: true,

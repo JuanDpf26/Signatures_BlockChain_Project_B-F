@@ -143,9 +143,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         Text(_errorMsg, style: const TextStyle(color: AppTheme.hint, fontSize: 12), textAlign: TextAlign.center),
         const SizedBox(height: 24),
         Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-          OutlinedButton.icon(onPressed: _loadDocument, style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.primary), foregroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))), icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Reintentar')),
+          OutlinedButton.icon(onPressed: _loadDocument, style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.primary), foregroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), icon: const Icon(Icons.refresh_rounded, size: 16), label: const Text('Reintentar')),
           const SizedBox(width: 12),
-          ElevatedButton.icon(onPressed: _openExternal, style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), elevation: 0), icon: const Icon(Icons.open_in_new_rounded, size: 16), label: const Text('Abrir externamente')),
+          ElevatedButton.icon(onPressed: _openExternal, style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0), icon: const Icon(Icons.open_in_new_rounded, size: 16), label: const Text('Abrir externamente')),
         ]),
       ])));
     }
@@ -171,7 +171,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         const SizedBox(height: 32),
         SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: _openExternal,
-          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 14), elevation: 0),
+          style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 14), elevation: 0),
           icon: const Icon(Icons.open_in_new_rounded, size: 18),
           label: const Text('Abrir en Word', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
         )),

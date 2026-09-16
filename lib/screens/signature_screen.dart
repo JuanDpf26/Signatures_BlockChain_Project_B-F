@@ -200,7 +200,7 @@ class _SignatureScreenState extends State<SignatureScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.green.withOpacity(0.3)),
               ),
               child: Column(
@@ -246,11 +246,11 @@ class _SignatureScreenState extends State<SignatureScreen>
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: AppTheme.border),
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       child: Image.network(
                         _savedSignatureUrl!,
                         fit: BoxFit.contain,
@@ -449,7 +449,7 @@ class _SignatureScreenState extends State<SignatureScreen>
                           backgroundColor: AppTheme.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(8)),
                           elevation: 0,
                         ),
                         icon: _isSaving
@@ -473,7 +473,7 @@ class _SignatureScreenState extends State<SignatureScreen>
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                             color: AppTheme.border,
                             style: BorderStyle.solid),
@@ -511,7 +511,7 @@ class _SignatureScreenState extends State<SignatureScreen>
                                 backgroundColor: AppTheme.primary,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(8)),
                                 elevation: 0,
                               ),
                               icon: _isSaving
@@ -535,7 +535,7 @@ class _SignatureScreenState extends State<SignatureScreen>
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                             color: AppTheme.primary.withOpacity(0.1)),
                       ),

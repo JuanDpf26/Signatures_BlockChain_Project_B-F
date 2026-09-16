@@ -149,7 +149,7 @@ class _FormView extends StatelessWidget {
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(8)),
                 elevation: 0,
               ),
               child: isLoading
@@ -224,7 +224,7 @@ class _SuccessView extends StatelessWidget {
               side: const BorderSide(color: AppTheme.primary),
               foregroundColor: AppTheme.primary,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Volver al inicio de sesión',
                 style: TextStyle(fontWeight: FontWeight.w700)),

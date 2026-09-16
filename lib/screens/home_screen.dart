@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Cerrar sesión', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 16)),
         content: const Text('¿Deseas cerrar sesión?', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
         actions: [
@@ -95,7 +95,11 @@ class _WebShell extends StatelessWidget {
         SizedBox(
           width: 220,
           child: Container(
-            color: AppTheme.surface,
+            decoration: BoxDecoration(
+              color: AppTheme.surface,
+              border: const Border(right: BorderSide(color: AppTheme.border)),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(2, 0))],
+            ),
             child: Column(children: [
               // Logo
               Padding(
@@ -208,7 +212,11 @@ class _MobileShell extends StatelessWidget {
       backgroundColor: AppTheme.background,
       body: SafeArea(child: content),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(color: AppTheme.surface, border: Border(top: BorderSide(color: AppTheme.border))),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          border: const Border(top: BorderSide(color: AppTheme.border)),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2))],
+        ),
         child: NavigationBar(
           backgroundColor: AppTheme.surface,
           selectedIndex: selectedIndex,
@@ -280,7 +288,7 @@ class _DashboardContent extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.2))),
+            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.2)), boxShadow: AppTheme.cardShadow),
             child: Row(children: [
               Container(
                 padding: const EdgeInsets.all(8),
@@ -387,7 +395,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Icon(icon, color: AppTheme.hint, size: 18),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -407,7 +415,7 @@ class _RecentDocsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
       child: Column(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
@@ -481,7 +489,7 @@ class _DistributionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Distribución por estado', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 14),
@@ -527,7 +535,7 @@ class _QuickActionsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Acciones rápidas', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),

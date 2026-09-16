@@ -182,7 +182,7 @@ class _BSCaptchaWidgetState extends State<BSCaptchaWidget> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: _verified ? AppTheme.success.withOpacity(0.4) : AppTheme.border,
         ),
@@ -258,7 +258,7 @@ class FeatureCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(

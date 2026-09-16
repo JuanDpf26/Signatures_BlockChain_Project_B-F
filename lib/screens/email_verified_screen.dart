@@ -136,7 +136,7 @@ class _EmailVerifiedScreenState extends State<EmailVerifiedScreen>
                         backgroundColor: isSuccess ? AppTheme.primary : AppTheme.surface,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                            borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
                       child: Text(

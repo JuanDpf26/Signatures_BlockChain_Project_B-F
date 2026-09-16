@@ -132,7 +132,7 @@ class _LeftPanel extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.green.withOpacity(0.2)),
                     ),
                     child: const Row(children: [
@@ -183,7 +183,7 @@ class _RightPanel extends StatelessWidget {
                   onPressed: () => Navigator.pushNamed(context, '/login'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
                   child: const Text('Iniciar sesión', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -199,7 +199,7 @@ class _RightPanel extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.border),
                     foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.person_add_outlined, size: 18),
                   label: const Text('Crear cuenta', style: TextStyle(fontSize: 15)),
@@ -270,7 +270,7 @@ class _MobileContent extends StatelessWidget {
           SizedBox(width: double.infinity, height: 50,
             child: ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/login'),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
               child: const Text('Iniciar sesión', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ),
@@ -278,7 +278,7 @@ class _MobileContent extends StatelessWidget {
           SizedBox(width: double.infinity, height: 50,
             child: OutlinedButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.text, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.text, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
               child: const Text('Crear cuenta', style: TextStyle(fontSize: 15)),
             ),
           ),

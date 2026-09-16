@@ -191,7 +191,7 @@ class _FormView extends StatelessWidget {
               foregroundColor: Colors.white,
               disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
             child: isLoading
@@ -250,7 +250,7 @@ class _SuccessView extends StatelessWidget {
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                  borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
             child: const Text('Ir al inicio de sesión',
