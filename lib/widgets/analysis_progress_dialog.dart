@@ -176,7 +176,8 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
     await _pause(650);
     if (!mounted) return;
     setState(() => _visual = 2);
-    await _pause(900);
+    // Tiempo para que se vea cómo aparece cada metadato extraído
+    await _pause(500 + metaFields(_meta).length * _MetaReveal.stepMs);
     if (!mounted) return;
     setState(() {
       _visual = 3;
@@ -284,6 +285,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
                 if (words != null) '$words palabras',
                 if (_meta['author'] != null) 'autor: ${_meta['author']}',
               ].join(' · ').ifEmpty('Sin texto legible (posible escaneo)'),
+        extra: [if (_visual >= 2) _MetaReveal(meta: _meta)],
       ),
       ChainStep('La IA lee el documento', state: _s(3), detail: _visual >= 3 || _phase == _Phase.failed ? _aiDetail : null),
       ChainStep(
@@ -419,6 +421,140 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
         if (!done && !failed)
           Text(chainElapsed(DateTime.now().difference(_started)),
               style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12, fontWeight: FontWeight.w700)),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// METADATOS: cada campo encontrado aparece uno por uno
+// ─────────────────────────────────────────────────────────────
+/// (ícono, etiqueta, valor) de los metadatos que trae el archivo
+List<(IconData, String, String?)> metaFields(Map<String, dynamic> m) {
+  String? v(String k) {
+    final x = m[k];
+    if (x == null) return null;
+    final t = x.toString().trim();
+    return t.isEmpty ? null : t;
+  }
+
+  String? date(String k) {
+    final d = DateTime.tryParse(v(k) ?? '');
+    if (d == null) return v(k);
+    final l = d.toLocal();
+    return '${l.day.toString().padLeft(2, '0')}/${l.month.toString().padLeft(2, '0')}/${l.year}';
+  }
+
+  final isPdf = (v('extension') ?? '').toLowerCase() == 'pdf';
+  final chars = int.tryParse(v('char_count') ?? '');
+  return [
+    (Icons.insert_drive_file_outlined, 'Tipo', v('mime_type') ?? v('extension')?.toUpperCase()),
+    (Icons.sd_storage_outlined, 'Tamaño', v('size_kb') != null ? '${v('size_kb')} KB' : null),
+    (Icons.auto_stories_outlined, 'Páginas', v('pages')),
+    (Icons.text_fields_rounded, 'Palabras', v('word_count')),
+    (Icons.abc_rounded, 'Caracteres', chars?.toString()),
+    (Icons.person_outline_rounded, 'Autor', v('author')),
+    if (isPdf) (Icons.title_rounded, 'Título interno', v('doc_title')),
+    if (isPdf) (Icons.subject_rounded, 'Asunto', v('subject')),
+    if (isPdf) (Icons.build_outlined, 'Creado con', v('creator')),
+    if (isPdf) (Icons.precision_manufacturing_outlined, 'Generador PDF', v('producer')),
+    if (isPdf) (Icons.event_outlined, 'Fecha de creación', date('creation_date')),
+    if (isPdf) (Icons.edit_calendar_outlined, 'Última modificación', date('modification_date')),
+    if (isPdf) (Icons.tag_rounded, 'Versión PDF', v('pdf_version')),
+    (Icons.spellcheck_rounded, 'Texto legible', m['has_text'] == null ? null : (m['has_text'] == true ? 'Sí' : 'No (posible escaneo)')),
+  ];
+}
+
+class _MetaReveal extends StatefulWidget {
+  static const stepMs = 170;
+  final Map<String, dynamic> meta;
+  const _MetaReveal({required this.meta});
+
+  @override
+  State<_MetaReveal> createState() => _MetaRevealState();
+}
+
+class _MetaRevealState extends State<_MetaReveal> {
+  int _shown = 0;
+  Timer? _t;
+
+  @override
+  void initState() {
+    super.initState();
+    final total = metaFields(widget.meta).length;
+    _t = Timer.periodic(const Duration(milliseconds: _MetaReveal.stepMs), (t) {
+      if (!mounted) return;
+      setState(() => _shown++);
+      if (_shown >= total) t.cancel();
+    });
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fields = metaFields(widget.meta);
+    final found = fields.where((f) => f.$3 != null).length;
+    final scanning = _shown < fields.length;
+    return Container(
+      margin: const EdgeInsets.only(top: 2),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F172A),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Icon(scanning ? Icons.manage_search_rounded : Icons.check_circle_rounded,
+              size: 14, color: scanning ? _aiC : const Color(0xFF4ADE80)),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              scanning ? 'Leyendo metadatos del archivo… ${math.min(_shown, fields.length)}/${fields.length}' : '$found de ${fields.length} metadatos encontrados',
+              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11.5, fontWeight: FontWeight.w700, fontFamily: 'monospace'),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 6),
+        for (var i = 0; i < fields.length && i < _shown; i++)
+          TweenAnimationBuilder<double>(
+            key: ValueKey(i),
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOut,
+            builder: (_, v, child) => Opacity(opacity: v, child: Transform.translate(offset: Offset(-10 * (1 - v), 0), child: child)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.5),
+              child: Row(children: [
+                Icon(fields[i].$1, size: 13, color: fields[i].$3 != null ? _aiC : const Color(0xFF475569)),
+                const SizedBox(width: 7),
+                SizedBox(
+                  width: 118,
+                  child: Text(fields[i].$2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontFamily: 'monospace')),
+                ),
+                Expanded(
+                  child: Text(fields[i].$3 ?? '—',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: fields[i].$3 != null ? Colors.white : const Color(0xFF475569),
+                        fontSize: 11.5,
+                        fontWeight: fields[i].$3 != null ? FontWeight.w600 : FontWeight.w400,
+                        fontFamily: 'monospace',
+                      )),
+                ),
+                Icon(fields[i].$3 != null ? Icons.check_rounded : Icons.remove_rounded,
+                    size: 13, color: fields[i].$3 != null ? const Color(0xFF4ADE80) : const Color(0xFF475569)),
+              ]),
+            ),
+          ),
       ]),
     );
   }
