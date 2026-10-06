@@ -15,9 +15,9 @@ import 'sweet_alert.dart';
 // los revisa antes de firmar, responde preguntas y verifica huellas.
 // ─────────────────────────────────────────────────────────────
 
-const _iaA = Color(0xFF6C63E0); // violeta
+const _iaA = Color(0xFF08368F); // azul profundo (paleta institucional)
 const _iaB = Color(0xFF0B45B5); // azul BlockSign
-const _iaC = Color(0xFF1499AE); // cian
+const _iaC = Color(0xFF4F7FD9); // azul claro
 const _iaGradient = LinearGradient(colors: [_iaA, _iaB, _iaC], begin: Alignment.topLeft, end: Alignment.bottomRight);
 
 /// Mensaje del chat (se guarda mientras la app esté abierta)

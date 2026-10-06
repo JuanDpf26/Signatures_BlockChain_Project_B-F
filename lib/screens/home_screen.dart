@@ -9,6 +9,7 @@ import '../widgets/bs_ui.dart';
 import '../screens/document_screen.dart';
 import 'profile_screen.dart';
 import 'verify_screen.dart';
+import 'audit_screen.dart';
 import '../widgets/sign_ia_assistant.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -130,6 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return const VerifyScreen();
       case 3:
         return const ProfileScreen();
+      case 4:
+        return const AuditScreen();
       default:
         return _DashboardContent(
           stats: _stats,
@@ -159,6 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
         : _MobileShell(
             selectedIndex: _selectedIndex,
             onNavTap: _goTo,
+            onLogout: _logout,
             user: user,
             content: _buildContent(),
             pending: _pending,
@@ -240,6 +244,7 @@ class _WebShellState extends State<_WebShell> {
           selectedIndex: widget.selectedIndex,
           onNavTap: widget.onNavTap,
           onLogout: widget.onLogout,
+          user: widget.user,
           collapsed: collapsed,
           onToggle: () => setState(() => _userCollapsed = !collapsed),
         ),
@@ -266,6 +271,7 @@ class _Sidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback onLogout;
+  final _UserInfo user;
   final bool collapsed;
   final VoidCallback onToggle;
 
@@ -273,6 +279,7 @@ class _Sidebar extends StatelessWidget {
     required this.selectedIndex,
     required this.onNavTap,
     required this.onLogout,
+    required this.user,
     required this.collapsed,
     required this.onToggle,
   });
@@ -330,12 +337,12 @@ class _Sidebar extends StatelessWidget {
                 _NavItem(icon: Icons.space_dashboard_outlined, label: 'Tablero', selected: selectedIndex == 0, collapsed: c, onTap: () => onNavTap(0)),
                 _NavItem(icon: Icons.description_outlined, label: 'Documentos', selected: selectedIndex == 1, collapsed: c, onTap: () => onNavTap(1)),
                 _NavItem(icon: Icons.verified_outlined, label: 'Verificar', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
+                _NavItem(icon: Icons.receipt_long_outlined, label: 'Auditoría', selected: selectedIndex == 4, collapsed: c, onTap: () => onNavTap(4)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: c ? 22 : 22, vertical: 14),
                   child: Container(height: 1, color: AppTheme.border),
                 ),
                 _NavItem(icon: Icons.person_outline_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
-                _NavItem(icon: Icons.logout_rounded, label: 'Cerrar sesión', selected: false, collapsed: c, danger: true, onTap: onLogout),
               ]),
             ),
 
@@ -363,9 +370,13 @@ class _Sidebar extends StatelessWidget {
               ),
             ),
 
+            const SizedBox(height: 10),
+            // ── Usuario con cerrar sesión ──
+            _UserCard(user: user, collapsed: c, onProfile: () => onNavTap(3), onLogout: onLogout),
+
             // ── Contraer / expandir ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
               child: Tooltip(
                 message: c ? 'Expandir menú' : '',
                 child: InkWell(
@@ -391,6 +402,67 @@ class _Sidebar extends StatelessWidget {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// Tarjeta del usuario al final del menú: avatar, nombre, correo y salir
+class _UserCard extends StatelessWidget {
+  final _UserInfo user;
+  final bool collapsed;
+  final VoidCallback onProfile, onLogout;
+  const _UserCard({required this.user, required this.collapsed, required this.onProfile, required this.onLogout});
+
+  @override
+  Widget build(BuildContext context) {
+    final logout = Tooltip(
+      message: 'Cerrar sesión',
+      child: InkWell(
+        onTap: onLogout,
+        borderRadius: BorderRadius.circular(10),
+        hoverColor: BSColors.danger.withOpacity(0.08),
+        child: const Padding(
+          padding: EdgeInsets.all(8),
+          child: Icon(Icons.logout_rounded, color: BSColors.danger, size: 20),
+        ),
+      ),
+    );
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: collapsed ? 14 : 16),
+      padding: EdgeInsets.all(collapsed ? 6 : 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: collapsed
+          ? Column(children: [
+              Tooltip(
+                message: user.name.isEmpty ? 'Mi perfil' : user.name,
+                child: InkWell(onTap: onProfile, customBorder: const CircleBorder(), child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 17)),
+              ),
+              const SizedBox(height: 4),
+              logout,
+            ])
+          : Row(children: [
+              InkWell(onTap: onProfile, customBorder: const CircleBorder(), child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 18)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: InkWell(
+                  onTap: onProfile,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(user.name.isEmpty ? 'Mi cuenta' : user.name,
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                    if (user.email.isNotEmpty)
+                      Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                  ]),
+                ),
+              ),
+              logout,
+            ]),
     );
   }
 }
@@ -718,6 +790,7 @@ class _Bell extends StatelessWidget {
 class _MobileShell extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
+  final VoidCallback onLogout;
   final _UserInfo user;
   final Widget content;
   final List<Map<String, dynamic>> pending;
@@ -725,6 +798,7 @@ class _MobileShell extends StatelessWidget {
   const _MobileShell({
     required this.selectedIndex,
     required this.onNavTap,
+    required this.onLogout,
     required this.user,
     required this.content,
     required this.pending,
@@ -759,9 +833,22 @@ class _MobileShell extends StatelessWidget {
               ),
               _Bell(pending: pending, onShowAll: onShowPending),
               const SizedBox(width: 6),
-              InkWell(
-                onTap: () => onNavTap(3),
-                customBorder: const CircleBorder(),
+              // Avatar con menú: perfil o cerrar sesión
+              PopupMenuButton<int>(
+                tooltip: 'Mi cuenta',
+                offset: const Offset(0, 46),
+                onSelected: (v) => v == 0 ? onNavTap(3) : onLogout(),
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 0, child: Row(children: [Icon(Icons.person_outline_rounded, size: 18), SizedBox(width: 10), Text('Mi perfil')])),
+                  PopupMenuItem(
+                    value: 1,
+                    child: Row(children: [
+                      Icon(Icons.logout_rounded, size: 18, color: BSColors.danger),
+                      SizedBox(width: 10),
+                      Text('Cerrar sesión', style: TextStyle(color: BSColors.danger)),
+                    ]),
+                  ),
+                ],
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 18),
@@ -780,13 +867,15 @@ class _MobileShell extends StatelessWidget {
         child: NavigationBar(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
-          selectedIndex: selectedIndex,
-          onDestinationSelected: onNavTap,
+          // En la barra inferior Auditoría va antes de Perfil
+          selectedIndex: selectedIndex == 4 ? 3 : (selectedIndex == 3 ? 4 : selectedIndex),
+          onDestinationSelected: (i) => onNavTap(i == 3 ? 4 : (i == 4 ? 3 : i)),
           indicatorColor: BSColors.selected,
           destinations: const [
             NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
             NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded, color: AppTheme.primary), label: 'Docs'),
             NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
+            NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded, color: AppTheme.primary), label: 'Auditoría'),
             NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
           ],
         ),
@@ -805,6 +894,14 @@ class _DashboardContent extends StatelessWidget {
 
   const _DashboardContent({required this.stats, required this.recentDocs, required this.loading, required this.onNavTap, required this.onRefresh});
 
+  static String hoursLabel(dynamic h) {
+    final x = double.tryParse('${h ?? ''}');
+    if (x == null) return '—';
+    if (x < 1) return '${(x * 60).round()} min';
+    if (x < 48) return '${x.toStringAsFixed(1)} h';
+    return '${(x / 24).toStringAsFixed(1)} d';
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -813,18 +910,14 @@ class _DashboardContent extends StatelessWidget {
     final pad = isWeb ? 28.0 : 16.0;
 
     int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
-    final total = n('total');
-    final signed = n('signed');
-    final verified = n('verified');
-    final pending = n('pending');
-    final mb = stats['total_size_mb']?.toString() ?? '0';
-    String v(int x) => loading ? '–' : '$x';
-    final pctSigned = total > 0 ? ((signed + verified) * 100 / total).round() : 0;
+    String v(String x) => loading ? '–' : x;
+    final gas = double.tryParse('${stats['gas_eth'] ?? 0}') ?? 0;
 
-    final byStatus = _StatusChartCard(docs: recentDocs, loading: loading);
-    final byCategory = _CategoryCard(docs: recentDocs, loading: loading);
+    final activity7 = _WeekChartCard(days: ((stats['activity'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
+    final statusCard = _StatusMixCard(stats: stats, loading: loading, onNavTap: onNavTap);
+    final confCard = _ConfidentialityCard(rows: ((stats['confidentiality'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
     final recent = _RecentTableCard(docs: recentDocs.take(5).toList(), loading: loading, onNavTap: onNavTap);
-    final activity = _ActivityCard(docs: recentDocs, loading: loading);
+    final feed = _ActivityCard(docs: recentDocs, loading: loading);
 
     return Container(
       color: BSColors.page,
@@ -838,6 +931,7 @@ class _DashboardContent extends StatelessWidget {
             BSPageHeader(
               breadcrumb: const ['Inicio', 'Tablero'],
               title: 'Tablero general',
+              subtitle: 'Cómo va tu actividad de firma, análisis y registro en blockchain.',
               actions: [
                 BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: loading ? null : () => onRefresh()),
                 BSPrimaryButton(label: 'Subir documento', icon: Icons.add_rounded, onPressed: () => onNavTap(1)),
@@ -845,36 +939,273 @@ class _DashboardContent extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos registrados', value: v(total), caption: '$mb MB almacenados', color: AppTheme.primary, icon: Icons.folder_copy_outlined, onTap: () => onNavTap(1)),
-              BSKpiCard(label: 'Pendientes de firma', value: v(pending), caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning, icon: Icons.pending_actions_rounded, onTap: () => onNavTap(1)),
-              BSKpiCard(label: 'Firmados en blockchain', value: v(signed), caption: '$pctSigned % del total', color: AppTheme.featureCyan, icon: Icons.draw_outlined, onTap: () => onNavTap(1)),
-              BSKpiCard(label: 'Verificados', value: v(verified), caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined, onTap: () => onNavTap(2)),
+              BSKpiCard(
+                label: 'Firmas este mes',
+                value: v('${n('signed_month')}'),
+                caption: '${n('signed') + n('verified')} firmas en total',
+                color: AppTheme.primary,
+                icon: Icons.draw_outlined,
+                onTap: () => onNavTap(1),
+              ),
+              BSKpiCard(
+                label: 'Tiempo promedio para firmar',
+                value: v(hoursLabel(stats['avg_hours_to_sign'])),
+                caption: 'Desde que se sube hasta el bloque',
+                color: BSColors.warning,
+                icon: Icons.timer_outlined,
+              ),
+              BSKpiCard(
+                label: 'Analizados con IA',
+                value: v('${n('analyzed_pct')} %'),
+                caption: n('ai_errors') > 0 ? '${n('ai_errors')} con error' : '${n('analyzed')} de ${n('total')} documentos',
+                color: BSColors.success,
+                icon: Icons.auto_awesome_outlined,
+              ),
+              BSKpiCard(
+                label: 'Gas consumido',
+                value: v(gas == 0 ? '0' : gas.toStringAsFixed(gas < 0.001 ? 6 : 4)),
+                caption: stats['last_block'] != null ? 'ETH de prueba · último bloque #${stats['last_block']}' : 'ETH de prueba en Sepolia',
+                color: AppTheme.featureCyan,
+                icon: Icons.local_gas_station_outlined,
+              ),
             ]),
             const SizedBox(height: 20),
             if (isWide) ...[
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(flex: 10, child: BSEntrance(delay: const Duration(milliseconds: 120), child: byStatus)),
+                Expanded(flex: 12, child: BSEntrance(delay: const Duration(milliseconds: 120), child: activity7)),
                 const SizedBox(width: 20),
-                Expanded(flex: 10, child: BSEntrance(delay: const Duration(milliseconds: 180), child: byCategory)),
+                Expanded(flex: 8, child: BSEntrance(delay: const Duration(milliseconds: 180), child: statusCard)),
               ]),
               const SizedBox(height: 20),
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(flex: 14, child: BSEntrance(delay: const Duration(milliseconds: 240), child: recent)),
+                Expanded(flex: 12, child: BSEntrance(delay: const Duration(milliseconds: 240), child: recent)),
                 const SizedBox(width: 20),
-                Expanded(flex: 7, child: BSEntrance(delay: const Duration(milliseconds: 300), child: activity)),
+                Expanded(
+                  flex: 8,
+                  child: BSEntrance(
+                    delay: const Duration(milliseconds: 300),
+                    child: Column(children: [confCard, const SizedBox(height: 20), feed]),
+                  ),
+                ),
               ]),
             ] else ...[
-              byStatus,
+              activity7,
               const SizedBox(height: 16),
-              byCategory,
+              statusCard,
+              const SizedBox(height: 16),
+              confCard,
               const SizedBox(height: 16),
               recent,
               const SizedBox(height: 16),
-              activity,
+              feed,
             ],
           ]),
         ),
       ),
+    );
+  }
+}
+
+// ── Actividad de los últimos 7 días (subidos vs firmados) ─────────────────
+class _WeekChartCard extends StatelessWidget {
+  final List<Map> days;
+  final bool loading;
+  const _WeekChartCard({required this.days, required this.loading});
+
+  @override
+  Widget build(BuildContext context) {
+    const names = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    final data = [
+      for (final d in days)
+        (
+          () {
+            final t = DateTime.tryParse('${d['day']}');
+            return t == null ? '' : '${names[t.weekday - 1]} ${t.day}';
+          }(),
+          int.tryParse('${d['uploaded']}') ?? 0,
+          int.tryParse('${d['signed']}') ?? 0,
+        ),
+    ];
+    final maxV = data.fold<int>(1, (m, e) => [m, e.$2, e.$3].reduce((a, b) => a > b ? a : b));
+    final totalUp = data.fold<int>(0, (m, e) => m + e.$2);
+    final totalSig = data.fold<int>(0, (m, e) => m + e.$3);
+
+    return BSCard(
+      title: 'Actividad de los últimos 7 días',
+      trailing: Text('$totalUp subidos · $totalSig firmados', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      child: loading
+          ? _loadingBox(250)
+          : data.isEmpty
+              ? _emptyBox('Sin datos de actividad', 250)
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Row(children: [
+                    _Legend(color: AppTheme.primary, label: 'Subidos'),
+                    SizedBox(width: 22),
+                    _Legend(color: AppTheme.featureBlue, label: 'Firmados'),
+                  ]),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 210,
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      for (final e in data)
+                        Expanded(
+                          child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                            Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                              _VBar(value: e.$2, max: maxV, color: AppTheme.primary, tooltip: '${e.$1} · subidos: ${e.$2}', width: 18),
+                              const SizedBox(width: 4),
+                              _VBar(value: e.$3, max: maxV, color: AppTheme.featureBlue, tooltip: '${e.$1} · firmados: ${e.$3}', width: 18),
+                            ]),
+                          ]),
+                        ),
+                    ]),
+                  ),
+                  Container(height: 1, color: AppTheme.border),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    for (final e in data)
+                      Expanded(
+                        child: Text(e.$1, textAlign: TextAlign.center,
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      ),
+                  ]),
+                ]),
+    );
+  }
+}
+
+// ── Estado de tus documentos: barra segmentada + leyenda ──────────────────
+class _StatusMixCard extends StatelessWidget {
+  final Map<String, dynamic> stats;
+  final bool loading;
+  final ValueChanged<int> onNavTap;
+  const _StatusMixCard({required this.stats, required this.loading, required this.onNavTap});
+
+  @override
+  Widget build(BuildContext context) {
+    int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
+    final total = n('total');
+    final pend = n('pending') - n('in_chain') - n('revoked');
+    final parts = [
+      ('Pendientes', pend < 0 ? 0 : pend, BSColors.warning),
+      ('En registro', n('in_chain'), AppTheme.featureBlue),
+      ('Firmados', n('signed'), AppTheme.primary),
+      ('Verificados', n('verified'), BSColors.success),
+      ('Revocados', n('revoked'), BSColors.danger),
+    ].where((p) => p.$2 > 0 || p.$1 != 'En registro' && p.$1 != 'Revocados').toList();
+
+    return BSCard(
+      title: 'Estado de tus documentos',
+      trailing: Text('$total en total', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      child: loading
+          ? _loadingBox(250)
+          : total == 0
+              ? _emptyBox('Aún no hay documentos', 250)
+              : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      height: 22,
+                      child: Row(children: [
+                        for (final p in parts)
+                          if (p.$2 > 0)
+                            Expanded(
+                              flex: p.$2,
+                              child: Tooltip(message: '${p.$1}: ${p.$2}', child: Container(color: p.$3)),
+                            ),
+                      ]),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  for (final p in parts)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      child: Row(children: [
+                        Container(width: 12, height: 12, decoration: BoxDecoration(color: p.$3, borderRadius: BorderRadius.circular(3))),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(p.$1, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w600))),
+                        Text('${p.$2}', style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                        SizedBox(
+                          width: 54,
+                          child: Text('${total == 0 ? 0 : (p.$2 * 100 / total).round()} %',
+                              textAlign: TextAlign.right, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                        ),
+                      ]),
+                    ),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    const Icon(Icons.auto_stories_outlined, size: 16, color: AppTheme.hint),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text('${n('pages')} páginas · ${stats['total_size_mb'] ?? 0} MB · ${n('pdfs')} PDF / ${n('words')} Word',
+                          style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                    ),
+                  ]),
+                ]),
+    );
+  }
+}
+
+// ── Nivel de confidencialidad (según la IA) ───────────────────────────────
+class _ConfidentialityCard extends StatelessWidget {
+  final List<Map> rows;
+  final bool loading;
+  const _ConfidentialityCard({required this.rows, required this.loading});
+
+  static Color colorOf(String level) => switch (level.toLowerCase()) {
+        'secreto' => BSColors.danger,
+        'confidencial' => BSColors.warning,
+        'interno' => AppTheme.primary,
+        'público' || 'publico' => BSColors.success,
+        _ => BSColors.neutral,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [for (final r in rows) ('${r['level']}', int.tryParse('${r['n']}') ?? 0)];
+    final maxV = items.isEmpty ? 1 : items.map((e) => e.$2).reduce((a, b) => a > b ? a : b);
+    return BSCard(
+      title: 'Nivel de confidencialidad',
+      child: loading
+          ? _loadingBox(160)
+          : items.isEmpty
+              ? _emptyBox('Sin documentos analizados', 160)
+              : Column(children: [
+                  for (var i = 0; i < items.length; i++)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 7),
+                      child: Row(children: [
+                        SizedBox(
+                          width: 110,
+                          child: Text(items[i].$1, maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                        ),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Stack(children: [
+                              Container(height: 18, color: BSColors.page),
+                              TweenAnimationBuilder<double>(
+                                tween: Tween(begin: 0, end: items[i].$2 / maxV),
+                                duration: Duration(milliseconds: 700 + i * 90),
+                                curve: Curves.easeOutCubic,
+                                builder: (_, x, __) => FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: x.clamp(0.03, 1.0),
+                                  child: Container(height: 18, color: colorOf(items[i].$1)),
+                                ),
+                              ),
+                            ]),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 36,
+                          child: Text('${items[i].$2}', textAlign: TextAlign.right,
+                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                        ),
+                      ]),
+                    ),
+                ]),
     );
   }
 }
@@ -920,67 +1251,6 @@ Widget _emptyBox(String text, [double h = 200]) => SizedBox(
       ),
     );
 
-// ── Barras agrupadas: documentos por estado y tipo ─────────────────────────
-class _StatusChartCard extends StatelessWidget {
-  final List<Map<String, dynamic>> docs;
-  final bool loading;
-  const _StatusChartCard({required this.docs, required this.loading});
-
-  @override
-  Widget build(BuildContext context) {
-    const groups = [('pending', 'Pendiente'), ('chain', 'En registro'), ('signed', 'Firmado'), ('verified', 'Verificado')];
-    final data = [
-      for (final g in groups)
-        (
-          g.$2,
-          docs.where((d) => _visibleStatusOf(d) == g.$1 && _isPdf(d)).length,
-          docs.where((d) => _visibleStatusOf(d) == g.$1 && !_isPdf(d)).length,
-        ),
-    ];
-    final maxV = data.fold<int>(1, (m, e) => [m, e.$2, e.$3].reduce((a, b) => a > b ? a : b));
-
-    return BSCard(
-      title: 'Documentos por estado y tipo',
-      child: loading
-          ? _loadingBox(250)
-          : docs.isEmpty
-              ? _emptyBox('Aún no hay documentos', 250)
-              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Row(children: [
-                    _Legend(color: AppTheme.primary, label: 'PDF'),
-                    SizedBox(width: 22),
-                    _Legend(color: AppTheme.featureBlue, label: 'Word'),
-                  ]),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 210,
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                      for (final e in data)
-                        Expanded(
-                          child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-                            Row(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [
-                              _VBar(value: e.$2, max: maxV, color: AppTheme.primary, tooltip: '${e.$1} · PDF: ${e.$2}'),
-                              const SizedBox(width: 8),
-                              _VBar(value: e.$3, max: maxV, color: AppTheme.featureBlue, tooltip: '${e.$1} · Word: ${e.$3}'),
-                            ]),
-                          ]),
-                        ),
-                    ]),
-                  ),
-                  Container(height: 1, color: AppTheme.border),
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    for (final e in data)
-                      Expanded(
-                        child: Text(e.$1, textAlign: TextAlign.center,
-                            style: const TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w600)),
-                      ),
-                  ]),
-                ]),
-    );
-  }
-}
-
 class _Legend extends StatelessWidget {
   final Color color;
   final String label;
@@ -999,7 +1269,8 @@ class _VBar extends StatefulWidget {
   final int value, max;
   final Color color;
   final String tooltip;
-  const _VBar({required this.value, required this.max, required this.color, required this.tooltip});
+  final double width;
+  const _VBar({required this.value, required this.max, required this.color, required this.tooltip, this.width = 34});
 
   @override
   State<_VBar> createState() => _VBarState();
@@ -1026,7 +1297,7 @@ class _VBarState extends State<_VBar> {
             curve: Curves.easeOutCubic,
             builder: (_, v, __) => AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              width: _hover ? 38 : 34,
+              width: _hover ? widget.width + 4 : widget.width,
               height: v,
               decoration: BoxDecoration(
                 color: _hover ? Color.lerp(widget.color, Colors.black, 0.12) : widget.color,
@@ -1036,73 +1307,6 @@ class _VBarState extends State<_VBar> {
           ),
         ]),
       ),
-    );
-  }
-}
-
-// ── Barras horizontales: documentos por categoría ─────────────────────────
-class _CategoryCard extends StatelessWidget {
-  final List<Map<String, dynamic>> docs;
-  final bool loading;
-  const _CategoryCard({required this.docs, required this.loading});
-
-  @override
-  Widget build(BuildContext context) {
-    final counts = <String, int>{};
-    for (final d in docs) {
-      final m = _metaOf(d);
-      final c = (m['ai_category'] ?? m['category'] ?? 'Documento').toString();
-      counts[c] = (counts[c] ?? 0) + 1;
-    }
-    final items = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-    final top = items.take(6).toList();
-    final maxV = top.isEmpty ? 1 : top.first.value;
-
-    return BSCard(
-      title: 'Documentos por categoría',
-      child: loading
-          ? _loadingBox(250)
-          : top.isEmpty
-              ? _emptyBox('Sin categorías todavía', 250)
-              : Column(children: [
-                  for (var i = 0; i < top.length; i++)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 9),
-                      child: Row(children: [
-                        SizedBox(
-                          width: 130,
-                          child: Text(top[i].key, maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
-                        ),
-                        Expanded(
-                          child: Tooltip(
-                            message: '${top[i].key}: ${top[i].value}',
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: Stack(children: [
-                                Container(height: 24, color: BSColors.page),
-                                TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0, end: top[i].value / maxV),
-                                  duration: Duration(milliseconds: 700 + i * 80),
-                                  curve: Curves.easeOutCubic,
-                                  builder: (_, v, __) => FractionallySizedBox(
-                                    alignment: Alignment.centerLeft,
-                                    widthFactor: v.clamp(0.02, 1.0),
-                                    child: Container(height: 24, color: i == 0 ? AppTheme.primary : AppTheme.primary.withOpacity(0.85 - i * 0.1)),
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 44,
-                          child: Text('${top[i].value}', textAlign: TextAlign.right,
-                              style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
-                        ),
-                      ]),
-                    ),
-                ]),
     );
   }
 }

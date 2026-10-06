@@ -129,6 +129,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       builder: (_) => _SignConfirmDialog(
         docTitle: docTitle,
         signatureUrl: signatureUrl,
+        doc: _docs.cast<Map<String, dynamic>?>().firstWhere((d) => d?['id']?.toString() == docId, orElse: () => null),
       ),
     );
 
@@ -719,105 +720,225 @@ class _MenuItem extends StatelessWidget {
 }
 
 // ── Sign Confirm Dialog ────────────────────────────────────────────────────
-class _SignConfirmDialog extends StatelessWidget {
+class _SignConfirmDialog extends StatefulWidget {
   final String docTitle;
   final String? signatureUrl;
+  final Map<String, dynamic>? doc;
 
-  const _SignConfirmDialog({required this.docTitle, this.signatureUrl});
+  const _SignConfirmDialog({required this.docTitle, this.signatureUrl, this.doc});
+
+  @override
+  State<_SignConfirmDialog> createState() => _SignConfirmDialogState();
+}
+
+class _SignConfirmDialogState extends State<_SignConfirmDialog> {
+  bool _agree = false;
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppTheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Row(children: [
-            Icon(Icons.draw_rounded, color: AppTheme.primary, size: 20),
-            SizedBox(width: 10),
-            Text('Confirmar firma', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w600)),
-          ]),
-          const SizedBox(height: 16),
+    final meta = Map<String, dynamic>.from((widget.doc?['metadata'] as Map?) ?? {});
+    final ext = (meta['extension'] ?? 'pdf').toString();
+    final isPdf = ext.toLowerCase() == 'pdf';
+    final hash = widget.doc?['file_hash']?.toString();
+    final pages = int.tryParse('${meta['pages'] ?? ''}');
+    final info = [
+      ext.toUpperCase(),
+      if (meta['size_mb'] != null) '${meta['size_mb']} MB',
+      if (pages != null && pages > 0) '$pages págs',
+      (meta['ai_category'] ?? meta['category'] ?? 'Documento').toString(),
+    ].join(' · ');
+    final hasSig = widget.signatureUrl != null;
+    final narrow = MediaQuery.of(context).size.width < 560;
 
-          // Documento
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-            child: Row(children: [
-              const Icon(Icons.description_outlined, color: AppTheme.hint, size: 16),
-              const SizedBox(width: 8),
-              Expanded(child: Text(docTitle, style: const TextStyle(color: AppTheme.text, fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            ]),
-          ),
-          const SizedBox(height: 16),
-
-          // Previsualización de firma
-          const Text('Tu firma', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity, height: 100,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-            child: signatureUrl != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.network(
-                      signatureUrl!,
-                      fit: BoxFit.contain,
-                      loadingBuilder: (ctx, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2)),
-                      errorBuilder: (_, __, ___) => _NoSignature(),
-                    ),
-                  )
-                : _NoSignature(),
-          ),
-
-          if (signatureUrl == null) ...[
-            const SizedBox(height: 8),
+    Widget step(int n, String text) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: Colors.orange.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.orange.withOpacity(0.2))),
-              child: const Row(children: [
-                Icon(Icons.warning_outlined, color: Colors.orange, size: 14),
-                SizedBox(width: 8),
-                Expanded(child: Text('No tienes firma guardada. Ve a Perfil → Mi Firma y crea una antes de firmar.', style: TextStyle(color: Colors.orange, fontSize: 12))),
+              width: 22,
+              height: 22,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: BSColors.selected, shape: BoxShape.circle),
+              child: Text('$n', style: const TextStyle(color: AppTheme.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.4))),
+          ]),
+        );
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.all(20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 540),
+        child: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            // Encabezado
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 20, 12, 0),
+              child: Row(children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Confirmar firma', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w800)),
+                    SizedBox(height: 2),
+                    Text('Revisa los datos antes de firmar', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+                  ]),
+                ),
+                IconButton(
+                  tooltip: 'Cerrar',
+                  onPressed: () => Navigator.pop(context, false),
+                  icon: const Icon(Icons.close_rounded, color: AppTheme.hint),
+                ),
               ]),
             ),
-          ],
+            const SizedBox(height: 18),
 
-          const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                // Documento
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+                  child: Row(children: [
+                    BSInitialBox(
+                      text: ext.toUpperCase(),
+                      color: isPdf ? BSColors.danger : AppTheme.primary,
+                      icon: isPdf ? Icons.picture_as_pdf_rounded : Icons.article_rounded,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(widget.docTitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 3),
+                        Text(info, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                        if (hash != null) ...[
+                          const SizedBox(height: 4),
+                          Row(children: [
+                            const Icon(Icons.fingerprint_rounded, size: 14, color: AppTheme.primary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(hash.length > 26 ? '${hash.substring(0, 14)}…${hash.substring(hash.length - 10)}' : hash,
+                                  style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontFamily: 'monospace')),
+                            ),
+                          ]),
+                        ],
+                      ]),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 16),
 
-          // Info blockchain
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.primary.withOpacity(0.1))),
-            child: const Row(children: [
-              Icon(Icons.link_rounded, color: AppTheme.primary, size: 14),
-              SizedBox(width: 8),
-              Expanded(child: Text('Esta firma se registrará en la blockchain Sepolia de forma inmutable.', style: TextStyle(color: AppTheme.hint, fontSize: 12))),
-            ]),
-          ),
-          const SizedBox(height: 20),
+                // Firma
+                Row(children: [
+                  const Text('Tu firma', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                  const Spacer(),
+                  if (hasSig) const BSPill(label: 'Registrada en tu perfil', color: BSColors.success),
+                ]),
+                const SizedBox(height: 8),
+                Container(
+                  height: narrow ? 110 : 130,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: hasSig ? AppTheme.border : BSColors.warning, width: hasSig ? 1 : 1.4),
+                  ),
+                  child: Stack(children: [
+                    // Línea de firma
+                    Positioned(
+                      left: 24,
+                      right: 24,
+                      bottom: 26,
+                      child: Container(height: 1, color: AppTheme.border),
+                    ),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
+                        child: hasSig
+                            ? Image.network(
+                                widget.signatureUrl!,
+                                fit: BoxFit.contain,
+                                loadingBuilder: (ctx, child, progress) =>
+                                    progress == null ? child : const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                errorBuilder: (_, __, ___) => _NoSignature(),
+                              )
+                            : _NoSignature(),
+                      ),
+                    ),
+                  ]),
+                ),
+                if (!hasSig) ...[
+                  const SizedBox(height: 10),
+                  const BSInfoBanner(
+                    title: 'No tienes firma guardada',
+                    text: 'Ve a Mi perfil → Mi firma, dibújala una vez y vuelve a firmar.',
+                    color: BSColors.warning,
+                    icon: Icons.warning_amber_rounded,
+                  ),
+                ],
+                const SizedBox(height: 16),
 
-          // Botones
-          Row(children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.hint, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12)),
-                child: const Text('Cancelar'),
-              ),
+                // Qué va a pasar
+                const Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                step(1, 'Se combina la huella SHA-256 del archivo con tu identidad y la fecha exacta.'),
+                step(2, 'Se envía una transacción al contrato en Ethereum Sepolia; verás cada paso en vivo.'),
+                step(3, 'Al confirmarse en un bloque, recibes el comprobante por correo.'),
+                const SizedBox(height: 12),
+
+                // Aceptación
+                InkWell(
+                  onTap: hasSig ? () => setState(() => _agree = !_agree) : null,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          value: _agree,
+                          onChanged: hasSig ? (v) => setState(() => _agree = v ?? false) : null,
+                          activeColor: AppTheme.primary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text('Revisé el documento y estoy de acuerdo con su contenido. Entiendo que la firma queda registrada de forma permanente.',
+                            style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4)),
+                      ),
+                    ]),
+                  ),
+                ),
+              ]),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: signatureUrl == null ? null : () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), padding: const EdgeInsets.symmetric(vertical: 12), elevation: 0),
-                icon: const Icon(Icons.draw_rounded, size: 16),
-                label: const Text('Firmar documento', style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
+
+            // Acciones
+            Container(
+              margin: const EdgeInsets.only(top: 16),
+              padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
+              decoration: const BoxDecoration(color: BSColors.page, border: Border(top: BorderSide(color: AppTheme.border))),
+              child: Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
+                BSOutlineButton(label: 'Cancelar', icon: Icons.close_rounded, color: AppTheme.hint, onPressed: () => Navigator.pop(context, false)),
+                BSPrimaryButton(
+                  label: 'Firmar documento',
+                  icon: Icons.draw_rounded,
+                  onPressed: hasSig && _agree ? () => Navigator.pop(context, true) : null,
+                ),
+              ]),
             ),
           ]),
-        ]),
+        ),
       ),
     );
   }
