@@ -216,15 +216,7 @@ class _AvatarWidget extends StatelessWidget {
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Stack(children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppTheme.primary.withOpacity(0.12),
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-            child: avatarUrl == null
-                ? Text(name.isNotEmpty ? name[0].toUpperCase() : 'U',
-                    style: const TextStyle(color: AppTheme.primary, fontSize: 30, fontWeight: FontWeight.w800))
-                : null,
-          ),
+          BSAvatar(name: name, url: avatarUrl, radius: 40),
           Positioned(
             bottom: 0, right: 0,
             child: Container(

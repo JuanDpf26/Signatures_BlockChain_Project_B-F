@@ -7,6 +7,7 @@ import '../services/document_service.dart';
 import '../services/profile_service.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
+import '../widgets/signing_progress_dialog.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
 import '../theme/app_theme.dart';
@@ -134,26 +135,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
     setState(() => _signingDocId = docId);
     try {
-      final res = await DocumentService.signDocument(docId);
-      if (!mounted) return;
-      if (res.containsKey('error')) {
-        setState(() => _signingDocId = null);
-        await SweetAlert.error(context, title: 'No se pudo firmar', text: res['error'].toString());
-      } else {
-        final txHash = res['signature']?['blockchain']?['txHash']?.toString();
-        setState(() => _signingDocId = null);
-        SweetAlert.success(
-          context,
-          title: 'Documento firmado',
-          text: txHash != null
-              ? 'La firma quedó registrada en blockchain.\nTx: ${txHash.length > 20 ? '${txHash.substring(0, 10)}…${txHash.substring(txHash.length - 8)}' : txHash}'
-              : 'El documento se firmó correctamente.',
-        );
-        await _load();
-      }
+      // Muestra el proceso real paso a paso: huella → firma → tx → bloque
+      await showSigningProgress(context, docId: docId, docTitle: docTitle);
     } finally {
       if (mounted) setState(() => _signingDocId = null);
     }
+    if (mounted) await _load();
   }
 
   Future<void> _delete(String docId, String title) async {
@@ -418,7 +405,8 @@ class _DocInfo {
   final String? aiDesc;
   final int? pages;
   bool get isPdf => ext == 'pdf';
-  bool get canSign => status == 'pending';
+  // 'chain' = la transacción está en la red; al tocar Firmar se vuelve a ver el progreso
+  bool get canSign => status == 'pending' || status == 'chain';
 
   _DocInfo({required this.title, required this.ext, required this.status, required this.category, required this.dateStr, required this.sizeStr, this.aiDesc, this.pages});
 
@@ -430,7 +418,7 @@ class _DocInfo {
     return _DocInfo(
       title: doc['title']?.toString() ?? 'Sin nombre',
       ext: meta['extension']?.toString() ?? 'pdf',
-      status: doc['status']?.toString() ?? 'pending',
+      status: _visibleStatus(doc['status']?.toString() ?? 'pending', meta),
       category: meta['ai_category']?.toString() ?? meta['category']?.toString() ?? 'Documento',
       aiDesc: meta['ai_description']?.toString(),
       dateStr: '${two(created.day)}/${two(created.month)}/${created.year}',
@@ -438,6 +426,15 @@ class _DocInfo {
       pages: (pages != null && pages > 0) ? pages : null,
     );
   }
+}
+
+/// Estado que se muestra: añade "en blockchain" y "revocado" según la metadata
+String _visibleStatus(String status, Map<String, dynamic> meta) {
+  if (status != 'pending') return status;
+  final chain = meta['blockchain_status']?.toString();
+  if (chain == 'sending' || chain == 'confirming') return 'chain';
+  if (meta['revoked'] == true) return 'revoked';
+  return status;
 }
 
 Widget _typeBox(_DocInfo info) => BSInitialBox(

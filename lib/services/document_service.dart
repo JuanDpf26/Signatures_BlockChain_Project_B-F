@@ -87,6 +87,40 @@ class DocumentService {
     }
   }
 
+  /// Estado de la firma en blockchain (sending | confirming | confirmed | failed)
+  static Future<Map<String, dynamic>> getSigningStatus(String docId) async {
+    try {
+      final headers = await _authHeaders();
+      final res = await http.get(Uri.parse('$signingUrl/$docId/status'), headers: headers).timeout(const Duration(seconds: 20));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'error': 'Error al consultar el estado: $e'};
+    }
+  }
+
+  /// Verificación pública por huella SHA-256 (no necesita sesión; el archivo no se sube)
+  static Future<Map<String, dynamic>> verifyByHash(String hash) async {
+    try {
+      final res = await http.get(Uri.parse('$signingUrl/public/${hash.trim().toLowerCase()}')).timeout(const Duration(seconds: 30));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'error': 'No se pudo conectar con el servidor: $e'};
+    }
+  }
+
+  /// Datos de la red Sepolia y del contrato
+  static Future<Map<String, dynamic>> getNetworkInfo() async {
+    try {
+      final res = await http.get(Uri.parse('$signingUrl/network')).timeout(const Duration(seconds: 20));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'connected': false, 'error': '$e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> reanalyzeDocument(String docId) async {
     try {
       final headers = await _authHeaders();
