@@ -260,12 +260,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     ));
   }
 
-  void _showDetail(Map<String, dynamic> doc) {
+  void _showDetail(Map<String, dynamic> doc, {int tab = 0}) {
     final id = doc['id']?.toString() ?? '';
     final title = doc['title']?.toString() ?? '';
     showDocumentDetail(
       context,
       doc: doc,
+      initialTab: tab,
       isSigning: _signingDocId == id,
       onOpen: () => _openViewer(doc),
       onSign: () {
@@ -280,18 +281,85 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         Navigator.pop(context);
         _reanalyze(id);
       },
-      onUpdate: (category, tags) async {
-        final res = await DocumentService.updateDocumentMeta(docId: id, category: category, tags: tags);
-        if (!mounted) return;
-        Navigator.pop(context);
-        if (res.containsKey('error')) {
-          await SweetAlert.error(context, title: 'No se pudo guardar', text: res['error'].toString());
-        } else {
-          SweetAlert.success(context, title: 'Cambios guardados', autoClose: const Duration(milliseconds: 1500));
-          await _load();
+      onUpdate: (changes) async {
+        final res = await DocumentService.updateDocumentMeta(
+          docId: id,
+          title: changes['title'] as String?,
+          description: changes['description'] as String?,
+          category: changes['category'] as String?,
+          tags: (changes['tags'] as List?)?.map((e) => e.toString()).toList(),
+          confidentiality: changes['confidentiality'] as String?,
+        );
+        if (!mounted) return null;
+        if (res.containsKey('error') || res['document'] is! Map) {
+          await SweetAlert.error(context, title: 'No se pudo guardar', text: (res['error'] ?? 'Respuesta inesperada del servidor').toString());
+          return null;
         }
+        _load(); // refresca la lista sin cerrar el detalle
+        return Map<String, dynamic>.from(res['document'] as Map);
       },
+      onReplaceFile: () => _replaceFile(doc),
     );
+  }
+
+  /// Nueva versión del archivo: elegir → confirmar → subir → análisis con IA visible
+  Future<void> _replaceFile(Map<String, dynamic> doc) async {
+    final id = doc['id']?.toString() ?? '';
+    final meta = (doc['metadata'] as Map?) ?? {};
+    final pick = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'doc', 'docx'], withData: true);
+    if (pick == null || pick.files.isEmpty || !mounted) return;
+    final file = pick.files.first;
+    if (file.bytes == null) {
+      await SweetAlert.error(context, title: 'No se pudo leer el archivo', text: 'Intenta seleccionarlo de nuevo.');
+      return;
+    }
+    final ok = await SweetAlert.confirm(
+      context,
+      title: '¿Subir nueva versión?',
+      text: 'Se reemplazará "${doc['title']}" por "${file.name}".\n\nLa huella SHA-256 cambiará y el documento se volverá a analizar con IA. '
+          'La versión actual queda guardada en el historial.',
+      confirmText: 'Subir versión',
+    );
+    if (!ok || !mounted) return;
+
+    final ext = (file.extension ?? '').toLowerCase();
+    final mime = ext == 'pdf' ? 'application/pdf' : ext == 'doc' ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (_) => const Dialog(
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.6, color: AppTheme.primary)),
+            SizedBox(width: 16),
+            Text('Subiendo nueva versión…', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      ),
+    );
+    final res = await DocumentService.replaceFile(docId: id, fileBytes: file.bytes!, fileName: file.name, mimeType: mime);
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // cierra "cargando"
+    if (res.containsKey('error')) {
+      await SweetAlert.error(context, title: 'No se pudo reemplazar', text: res['error'].toString());
+      return;
+    }
+    Navigator.of(context).pop(); // cierra el detalle (tenía la versión anterior)
+    await _load();
+    if (!mounted) return;
+    final title = res['document'] is Map ? (res['document'] as Map)['title']?.toString() : file.name;
+    final r = await showAnalysisProgress(context, docId: id, title: title);
+    if (!mounted) return;
+    await _load();
+    if (!mounted) return;
+    if (r.ok) {
+      SweetAlert.success(context, title: 'Versión ${res['version'] ?? ''} lista', text: 'Archivo reemplazado y analizado.', autoClose: const Duration(milliseconds: 1800));
+    } else if (r.background) {
+      _watchAnalysis(id, title: title, prevAnalyzedAt: meta['ai_analyzed_at']?.toString(), prevErrorAt: meta['ai_error_at']?.toString());
+    }
   }
 
   @override
@@ -443,6 +511,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         isSigning: _signingDocId == docId,
         onSign: () => _sign(docId, info.title),
         onDetail: () => _showDetail(doc),
+        onEdit: () => _showDetail(doc, tab: 3),
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
       );
@@ -494,8 +563,8 @@ class _DocInfo {
       title: doc['title']?.toString() ?? 'Sin nombre',
       ext: meta['extension']?.toString() ?? 'pdf',
       status: _visibleStatus(doc['status']?.toString() ?? 'pending', meta),
-      category: meta['ai_category']?.toString() ?? meta['category']?.toString() ?? 'Documento',
-      aiDesc: meta['ai_description']?.toString(),
+      category: docCategoryOf(meta),
+      aiDesc: meta['user_description']?.toString().trim().isNotEmpty == true ? meta['user_description'].toString() : meta['ai_description']?.toString(),
       dateStr: '${two(created.day)}/${two(created.month)}/${created.year}',
       sizeStr: meta['size_mb'] != null ? '${meta['size_mb']} MB' : '-',
       pages: (pages != null && pages > 0) ? pages : null,
@@ -655,9 +724,9 @@ class _DocTile extends StatelessWidget {
 class _DocActions extends StatelessWidget {
   final _DocInfo info;
   final bool isSigning;
-  final VoidCallback onSign, onDetail, onReanalyze, onDelete;
+  final VoidCallback onSign, onDetail, onEdit, onReanalyze, onDelete;
 
-  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onReanalyze, required this.onDelete});
+  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onReanalyze, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -689,11 +758,13 @@ class _DocActions extends StatelessWidget {
         icon: const Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
         onSelected: (v) {
           if (v == 'detail') onDetail();
+          if (v == 'edit') onEdit();
           if (v == 'ai') onReanalyze();
           if (v == 'delete') onDelete();
         },
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalle', AppTheme.text)),
+          PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
           PopupMenuDivider(),
           PopupMenuItem(value: 'delete', child: _MenuItem(Icons.delete_outline_rounded, 'Eliminar', BSColors.danger)),
@@ -745,7 +816,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
       ext.toUpperCase(),
       if (meta['size_mb'] != null) '${meta['size_mb']} MB',
       if (pages != null && pages > 0) '$pages págs',
-      (meta['ai_category'] ?? meta['category'] ?? 'Documento').toString(),
+      docCategoryOf(meta),
     ].join(' · ');
     final hasSig = widget.signatureUrl != null;
     final narrow = MediaQuery.of(context).size.width < 560;

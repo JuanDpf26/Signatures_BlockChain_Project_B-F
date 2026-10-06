@@ -247,6 +247,7 @@ class _WebShellState extends State<_WebShell> {
           user: widget.user,
           collapsed: collapsed,
           onToggle: () => setState(() => _userCollapsed = !collapsed),
+          pendingCount: widget.pending.length,
         ),
         Expanded(
           child: Column(children: [
@@ -265,8 +266,8 @@ class _WebShellState extends State<_WebShell> {
   }
 }
 
-// ── Menú lateral claro (estilo panel institucional) ────────────────────────
-// Expandido 264 px / contraído 84 px.
+// ── Menú lateral azul institucional ────────────────────────────────────────
+// Expandido 268 px / contraído 92 px (ícono con su nombre debajo).
 class _Sidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
@@ -274,6 +275,7 @@ class _Sidebar extends StatelessWidget {
   final _UserInfo user;
   final bool collapsed;
   final VoidCallback onToggle;
+  final int pendingCount;
 
   const _Sidebar({
     required this.selectedIndex,
@@ -282,128 +284,170 @@ class _Sidebar extends StatelessWidget {
     required this.user,
     required this.collapsed,
     required this.onToggle,
+    this.pendingCount = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     final c = collapsed;
-    final w = c ? 84.0 : 264.0;
+    final w = c ? 92.0 : 268.0;
+
+    Widget section(String text) => c
+        ? Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
+            child: Container(height: 1, color: Colors.white.withOpacity(0.14)),
+          )
+        : Padding(
+            padding: const EdgeInsets.fromLTRB(26, 18, 16, 8),
+            child: Text(text, style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
+          );
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
       width: w,
       decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(right: BorderSide(color: AppTheme.border)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primary, AppTheme.primaryDark],
+        ),
       ),
       child: ClipRect(
-        child: OverflowBox(
-          alignment: Alignment.topLeft,
-          minWidth: w,
-          maxWidth: w,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            // ── Marca ──
-            Padding(
-              padding: EdgeInsets.fromLTRB(c ? 0 : 22, 22, c ? 0 : 16, 0),
-              child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
-                const _LogoMark(size: 46),
-                if (!c) ...[
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text.rich(TextSpan(children: [
-                        TextSpan(text: 'Block', style: TextStyle(color: AppTheme.text)),
-                        TextSpan(text: 'Sign', style: TextStyle(color: AppTheme.primary)),
-                      ]), style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900, letterSpacing: -0.6, height: 1.05)),
-                      Text('Firma digital', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w500)),
-                    ]),
+        child: Stack(fit: StackFit.expand, children: [
+          // Círculos decorativos (mismo lenguaje que la pantalla de inicio de sesión)
+          Positioned(top: -70, right: -80, child: _Ring(size: 220, opacity: 0.07)),
+          Positioned(bottom: 120, left: -90, child: _Ring(size: 200, opacity: 0.05)),
+          OverflowBox(
+            alignment: Alignment.topLeft,
+            minWidth: w,
+            maxWidth: w,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              // ── Marca ──
+              Padding(
+                padding: EdgeInsets.fromLTRB(c ? 0 : 22, 24, c ? 0 : 16, 4),
+                child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+                  const _LogoMark(size: 46, onBlue: true),
+                  if (!c) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        const Text('BlockSign',
+                            style: TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w900, letterSpacing: -0.6, height: 1.05)),
+                        Text('Firma digital con blockchain',
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11.5, fontWeight: FontWeight.w500)),
+                      ]),
+                    ),
+                  ],
+                ]),
+              ),
+
+              // ── Navegación ──
+              Expanded(
+                child: ListView(padding: const EdgeInsets.only(bottom: 8), children: [
+                  section('PRINCIPAL'),
+                  _NavItem(icon: Icons.space_dashboard_outlined, activeIcon: Icons.space_dashboard_rounded, label: 'Tablero', selected: selectedIndex == 0, collapsed: c, onTap: () => onNavTap(0)),
+                  _NavItem(
+                    icon: Icons.description_outlined,
+                    activeIcon: Icons.description_rounded,
+                    label: 'Documentos',
+                    selected: selectedIndex == 1,
+                    collapsed: c,
+                    badge: pendingCount,
+                    badgeTooltip: '$pendingCount por firmar',
+                    onTap: () => onNavTap(1),
                   ),
-                ],
-              ]),
-            ),
-            if (!c)
-              const Padding(
-                padding: EdgeInsets.fromLTRB(22, 22, 16, 6),
-                child: Text('DOCUMENTOS Y FIRMAS',
-                    style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
-              )
-            else
-              const SizedBox(height: 18),
+                  _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
+                  section('CONTROL'),
+                  _NavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, label: 'Auditoría', selected: selectedIndex == 4, collapsed: c, onTap: () => onNavTap(4)),
+                  _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
+                ]),
+              ),
 
-            // ── Navegación ──
-            Expanded(
-              child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
-                _NavItem(icon: Icons.space_dashboard_outlined, label: 'Tablero', selected: selectedIndex == 0, collapsed: c, onTap: () => onNavTap(0)),
-                _NavItem(icon: Icons.description_outlined, label: 'Documentos', selected: selectedIndex == 1, collapsed: c, onTap: () => onNavTap(1)),
-                _NavItem(icon: Icons.verified_outlined, label: 'Verificar', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
-                _NavItem(icon: Icons.receipt_long_outlined, label: 'Auditoría', selected: selectedIndex == 4, collapsed: c, onTap: () => onNavTap(4)),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: c ? 22 : 22, vertical: 14),
-                  child: Container(height: 1, color: AppTheme.border),
-                ),
-                _NavItem(icon: Icons.person_outline_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
-              ]),
-            ),
-
-            // ── Ambiente / red ──
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: c ? 14 : 16),
-              child: Tooltip(
-                message: c ? 'Red: Sepolia Testnet · Datos de prueba' : '',
-                child: Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(horizontal: c ? 0 : 16, vertical: 14),
-                  decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12)),
-                  child: c
-                      ? const Center(child: _PulseDot())
-                      : const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Row(children: [
-                            _PulseDot(),
-                            SizedBox(width: 6),
-                            Text('Red: Sepolia Testnet', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
+              // ── Ambiente / red ──
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: c ? 16 : 16),
+                child: Tooltip(
+                  message: c ? 'Red: Sepolia Testnet · Datos de prueba' : '',
+                  child: Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.symmetric(horizontal: c ? 0 : 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.14)),
+                    ),
+                    child: c
+                        ? const Center(child: _PulseDot())
+                        : Row(children: [
+                            const _PulseDot(),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                const Text('Sepolia Testnet', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+                                Text('Red de pruebas · v1.0', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11.5)),
+                              ]),
+                            ),
+                            Icon(Icons.hub_outlined, color: Colors.white.withOpacity(0.55), size: 18),
                           ]),
-                          SizedBox(height: 4),
-                          Text('Blockchain de pruebas · v1.0', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
-                        ]),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-            // ── Usuario con cerrar sesión ──
-            _UserCard(user: user, collapsed: c, onProfile: () => onNavTap(3), onLogout: onLogout),
-
-            // ── Contraer / expandir ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
-              child: Tooltip(
-                message: c ? 'Expandir menú' : '',
-                child: InkWell(
-                  onTap: onToggle,
-                  borderRadius: BorderRadius.circular(10),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
-                    child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
-                      AnimatedRotation(
-                        turns: c ? 0.5 : 0,
-                        duration: const Duration(milliseconds: 260),
-                        child: const Icon(Icons.keyboard_double_arrow_left_rounded, color: AppTheme.hint, size: 20),
-                      ),
-                      if (!c) ...[
-                        const SizedBox(width: 10),
-                        const Text('Contraer menú', style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
-                      ],
-                    ]),
                   ),
                 ),
               ),
-            ),
-          ]),
-        ),
+
+              const SizedBox(height: 10),
+              // ── Usuario con cerrar sesión ──
+              _UserCard(user: user, collapsed: c, onProfile: () => onNavTap(3), onLogout: onLogout),
+
+              // ── Contraer / expandir ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+                child: Tooltip(
+                  message: c ? 'Expandir menú' : '',
+                  child: Material(
+                    type: MaterialType.transparency,
+                    child: InkWell(
+                      onTap: onToggle,
+                      borderRadius: BorderRadius.circular(10),
+                      hoverColor: Colors.white.withOpacity(0.08),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+                        child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+                          AnimatedRotation(
+                            turns: c ? 0.5 : 0,
+                            duration: const Duration(milliseconds: 260),
+                            child: Icon(Icons.keyboard_double_arrow_left_rounded, color: Colors.white.withOpacity(0.75), size: 20),
+                          ),
+                          if (!c) ...[
+                            const SizedBox(width: 10),
+                            Text('Contraer menú', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5, fontWeight: FontWeight.w600)),
+                          ],
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ]),
       ),
     );
   }
+}
+
+/// Aro decorativo translúcido
+class _Ring extends StatelessWidget {
+  final double size, opacity;
+  const _Ring({required this.size, required this.opacity});
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(opacity), width: 28)),
+        ),
+      );
 }
 
 /// Tarjeta del usuario al final del menú: avatar, nombre, correo y salir
@@ -417,24 +461,26 @@ class _UserCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final logout = Tooltip(
       message: 'Cerrar sesión',
-      child: InkWell(
-        onTap: onLogout,
-        borderRadius: BorderRadius.circular(10),
-        hoverColor: BSColors.danger.withOpacity(0.08),
-        child: const Padding(
-          padding: EdgeInsets.all(8),
-          child: Icon(Icons.logout_rounded, color: BSColors.danger, size: 20),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onLogout,
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: BSColors.danger.withOpacity(0.08),
+          child: const Padding(
+            padding: EdgeInsets.all(8),
+            child: Icon(Icons.logout_rounded, color: BSColors.danger, size: 20),
+          ),
         ),
       ),
     );
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: collapsed ? 14 : 16),
+      margin: EdgeInsets.symmetric(horizontal: collapsed ? 16 : 16),
       padding: EdgeInsets.all(collapsed ? 6 : 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 18, offset: const Offset(0, 8))],
       ),
       child: collapsed
           ? Column(children: [
@@ -467,35 +513,45 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-/// Logo de BlockSign: círculo azul con escudo blanco (como el sello de la marca)
+/// Logo de BlockSign: escudo en un círculo (azul sobre blanco o blanco sobre azul)
 class _LogoMark extends StatelessWidget {
   final double size;
-  const _LogoMark({required this.size});
+  final bool onBlue;
+  const _LogoMark({required this.size, this.onBlue = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
-      child: Icon(Icons.verified_user_rounded, color: Colors.white, size: size * 0.52),
+      decoration: BoxDecoration(
+        color: onBlue ? Colors.white : AppTheme.primary,
+        shape: BoxShape.circle,
+        boxShadow: onBlue ? [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 6))] : null,
+      ),
+      child: Icon(Icons.verified_user_rounded, color: onBlue ? AppTheme.primary : Colors.white, size: size * 0.52),
     );
   }
 }
 
 class _NavItem extends StatefulWidget {
   final IconData icon;
+  final IconData? activeIcon;
   final String label;
-  final bool selected, collapsed, danger;
+  final bool selected, collapsed;
+  final int badge;
+  final String? badgeTooltip;
   final VoidCallback onTap;
 
   const _NavItem({
     required this.icon,
+    this.activeIcon,
     required this.label,
     required this.selected,
     required this.collapsed,
     required this.onTap,
-    this.danger = false,
+    this.badge = 0,
+    this.badgeTooltip,
   });
 
   @override
@@ -510,8 +566,52 @@ class _NavItemState extends State<_NavItem> {
   Widget build(BuildContext context) {
     final sel = widget.selected;
     final c = widget.collapsed;
-    final base = widget.danger ? BSColors.danger : AppTheme.text;
-    final fg = sel ? AppTheme.primary : (_hover ? (widget.danger ? BSColors.danger : AppTheme.primary) : base.withOpacity(widget.danger ? 0.9 : 0.78));
+    final fg = sel ? AppTheme.primary : Colors.white.withOpacity(_hover ? 1 : 0.86);
+
+    Widget icon = Icon(sel ? (widget.activeIcon ?? widget.icon) : widget.icon, color: fg, size: c ? 23 : 21);
+    if (widget.badge > 0) {
+      icon = Badge(
+        label: Text('${widget.badge > 99 ? '99+' : widget.badge}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+        backgroundColor: BSColors.warning,
+        textColor: Colors.white,
+        offset: const Offset(8, -6),
+        child: icon,
+      );
+    }
+
+    final content = c
+        ? Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            icon,
+            const SizedBox(height: 5),
+            Text(widget.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: fg, fontSize: 11, fontWeight: sel ? FontWeight.w800 : FontWeight.w600)),
+          ])
+        : Row(children: [
+            AnimatedSlide(
+              offset: Offset(_hover && !sel ? 0.12 : 0, 0),
+              duration: const Duration(milliseconds: 180),
+              child: icon,
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(widget.label, style: TextStyle(color: fg, fontSize: 15, fontWeight: sel ? FontWeight.w800 : FontWeight.w600)),
+            ),
+            if (widget.badge > 0)
+              Tooltip(
+                message: widget.badgeTooltip ?? '',
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: sel ? BSColors.warning.withOpacity(0.14) : Colors.white.withOpacity(0.16),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text('${widget.badge}',
+                      style: TextStyle(color: sel ? BSColors.warning : Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                ),
+              ),
+          ]);
 
     final item = MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
@@ -523,51 +623,27 @@ class _NavItemState extends State<_NavItem> {
         onTapUp: (_) => setState(() => _down = false),
         onTapCancel: () => setState(() => _down = false),
         child: AnimatedScale(
-          scale: _down ? 0.97 : 1,
+          scale: _down ? 0.96 : 1,
           duration: const Duration(milliseconds: 120),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
-            height: 50,
+            height: c ? 64 : 48,
+            padding: EdgeInsets.symmetric(horizontal: c ? 4 : 16),
             decoration: BoxDecoration(
-              color: sel ? BSColors.selected : (_hover ? BSColors.page : Colors.transparent),
-              borderRadius: BorderRadius.circular(10),
+              color: sel ? Colors.white : (_hover ? Colors.white.withOpacity(0.1) : Colors.transparent),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: sel ? [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 14, offset: const Offset(0, 6))] : null,
             ),
-            child: Stack(children: [
-              // Barra azul a la izquierda de la opción activa
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                left: 0,
-                top: sel ? 8 : 25,
-                bottom: sel ? 8 : 25,
-                child: Container(width: 4, decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(4))),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: c ? 0 : 18),
-                child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
-                  AnimatedSlide(
-                    offset: Offset(_hover && !sel && !c ? 0.12 : 0, 0),
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(widget.icon, color: fg, size: 21),
-                  ),
-                  if (!c) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(widget.label,
-                          style: TextStyle(color: fg, fontSize: 15, fontWeight: sel ? FontWeight.w800 : FontWeight.w500)),
-                    ),
-                  ],
-                ]),
-              ),
-            ]),
+            child: content,
           ),
         ),
       ),
     );
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: c ? 14 : 14, vertical: 3),
-      child: c ? Tooltip(message: widget.label, preferBelow: false, child: item) : item,
+      padding: EdgeInsets.symmetric(horizontal: c ? 12 : 14, vertical: 3),
+      child: c ? Tooltip(message: widget.label, preferBelow: false, waitDuration: const Duration(milliseconds: 500), child: item) : item,
     );
   }
 }
@@ -916,7 +992,7 @@ class _DashboardContent extends StatelessWidget {
     final activity7 = _WeekChartCard(days: ((stats['activity'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
     final statusCard = _StatusMixCard(stats: stats, loading: loading, onNavTap: onNavTap);
     final confCard = _ConfidentialityCard(rows: ((stats['confidentiality'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
-    final recent = _RecentTableCard(docs: recentDocs.take(5).toList(), loading: loading, onNavTap: onNavTap);
+    final recent = _RecentTableCard(docs: recentDocs.take(6).toList(), loading: loading, onNavTap: onNavTap);
     final feed = _ActivityCard(docs: recentDocs, loading: loading);
 
     return Container(
@@ -970,32 +1046,49 @@ class _DashboardContent extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 20),
-            if (isWide) ...[
+            // Dos columnas independientes: cada una apila sus tarjetas sin dejar huecos
+            if (isWide)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(flex: 12, child: BSEntrance(delay: const Duration(milliseconds: 120), child: activity7)),
-                const SizedBox(width: 20),
-                Expanded(flex: 8, child: BSEntrance(delay: const Duration(milliseconds: 180), child: statusCard)),
-              ]),
-              const SizedBox(height: 20),
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Expanded(flex: 12, child: BSEntrance(delay: const Duration(milliseconds: 240), child: recent)),
+                Expanded(
+                  flex: 13,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    BSEntrance(delay: const Duration(milliseconds: 120), child: activity7),
+                    const SizedBox(height: 20),
+                    BSEntrance(delay: const Duration(milliseconds: 220), child: recent),
+                  ]),
+                ),
                 const SizedBox(width: 20),
                 Expanded(
-                  flex: 8,
-                  child: BSEntrance(
-                    delay: const Duration(milliseconds: 300),
-                    child: Column(children: [confCard, const SizedBox(height: 20), feed]),
-                  ),
+                  flex: 7,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    BSEntrance(delay: const Duration(milliseconds: 170), child: statusCard),
+                    const SizedBox(height: 20),
+                    BSEntrance(delay: const Duration(milliseconds: 260), child: confCard),
+                    const SizedBox(height: 20),
+                    BSEntrance(delay: const Duration(milliseconds: 320), child: feed),
+                  ]),
                 ),
+              ])
+            else if (width >= 760) ...[
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: statusCard),
+                const SizedBox(width: 16),
+                Expanded(child: confCard),
               ]),
-            ] else ...[
+              const SizedBox(height: 16),
               activity7,
               const SizedBox(height: 16),
+              recent,
+              const SizedBox(height: 16),
+              feed,
+            ] else ...[
               statusCard,
               const SizedBox(height: 16),
-              confCard,
+              activity7,
               const SizedBox(height: 16),
               recent,
+              const SizedBox(height: 16),
+              confCard,
               const SizedBox(height: 16),
               feed,
             ],
@@ -1045,7 +1138,7 @@ class _WeekChartCard extends StatelessWidget {
                   ]),
                   const SizedBox(height: 14),
                   SizedBox(
-                    height: 210,
+                    height: 170,
                     child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
                       for (final e in data)
                         Expanded(
@@ -1087,52 +1180,52 @@ class _StatusMixCard extends StatelessWidget {
     final total = n('total');
     final pend = n('pending') - n('in_chain') - n('revoked');
     final parts = [
-      ('Pendientes', pend < 0 ? 0 : pend, BSColors.warning),
-      ('En registro', n('in_chain'), AppTheme.featureBlue),
-      ('Firmados', n('signed'), AppTheme.primary),
-      ('Verificados', n('verified'), BSColors.success),
-      ('Revocados', n('revoked'), BSColors.danger),
-    ].where((p) => p.$2 > 0 || p.$1 != 'En registro' && p.$1 != 'Revocados').toList();
+      ('Por firmar', pend < 0 ? 0 : pend, BSColors.warning, Icons.edit_document),
+      ('En registro', n('in_chain'), AppTheme.featureBlue, Icons.sync_rounded),
+      ('Firmados', n('signed'), AppTheme.primary, Icons.draw_rounded),
+      ('Verificados', n('verified'), BSColors.success, Icons.verified_rounded),
+      ('Revocados', n('revoked'), BSColors.danger, Icons.block_rounded),
+    ].where((p) => p.$2 > 0 || (p.$1 != 'En registro' && p.$1 != 'Revocados')).toList();
 
     return BSCard(
       title: 'Estado de tus documentos',
       trailing: Text('$total en total', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
       child: loading
-          ? _loadingBox(250)
+          ? _loadingBox(200)
           : total == 0
-              ? _emptyBox('Aún no hay documentos', 250)
+              ? _emptyBox('Aún no hay documentos', 200)
               : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  // Contadores grandes (como un resumen de entregas)
+                  LayoutBuilder(builder: (context, c) {
+                    final cols = parts.length <= 3 ? parts.length : (c.maxWidth > 420 ? parts.length.clamp(3, 5) : 2);
+                    final w = (c.maxWidth - (cols - 1) * 8) / cols;
+                    return Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final p in parts)
+                        SizedBox(
+                          width: w,
+                          child: _CountTile(label: p.$1, value: p.$2, color: p.$3, icon: p.$4, onTap: () => onNavTap(1)),
+                        ),
+                    ]);
+                  }),
+                  const SizedBox(height: 16),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                     child: SizedBox(
-                      height: 22,
+                      height: 10,
                       child: Row(children: [
                         for (final p in parts)
                           if (p.$2 > 0)
                             Expanded(
                               flex: p.$2,
-                              child: Tooltip(message: '${p.$1}: ${p.$2}', child: Container(color: p.$3)),
+                              child: Tooltip(
+                                message: '${p.$1}: ${p.$2} (${(p.$2 * 100 / total).round()} %)',
+                                child: Container(color: p.$3),
+                              ),
                             ),
                       ]),
                     ),
                   ),
-                  const SizedBox(height: 18),
-                  for (final p in parts)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 7),
-                      child: Row(children: [
-                        Container(width: 12, height: 12, decoration: BoxDecoration(color: p.$3, borderRadius: BorderRadius.circular(3))),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(p.$1, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w600))),
-                        Text('${p.$2}', style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
-                        SizedBox(
-                          width: 54,
-                          child: Text('${total == 0 ? 0 : (p.$2 * 100 / total).round()} %',
-                              textAlign: TextAlign.right, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
-                        ),
-                      ]),
-                    ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Row(children: [
                     const Icon(Icons.auto_stories_outlined, size: 16, color: AppTheme.hint),
                     const SizedBox(width: 6),
@@ -1142,6 +1235,64 @@ class _StatusMixCard extends StatelessWidget {
                     ),
                   ]),
                 ]),
+    );
+  }
+}
+
+/// Contador grande con fondo suave (resumen rápido)
+class _CountTile extends StatefulWidget {
+  final String label;
+  final int value;
+  final Color color;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _CountTile({required this.label, required this.value, required this.color, required this.icon, this.onTap});
+
+  @override
+  State<_CountTile> createState() => _CountTileState();
+}
+
+class _CountTileState extends State<_CountTile> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.color;
+    return MouseRegion(
+      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          transform: Matrix4.translationValues(0, _hover ? -2 : 0, 0),
+          decoration: BoxDecoration(
+            color: c.withOpacity(_hover ? 0.12 : 0.07),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: c.withOpacity(_hover ? 0.35 : 0.12)),
+          ),
+          child: Column(children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: widget.value.toDouble()),
+              duration: const Duration(milliseconds: 700),
+              curve: Curves.easeOutCubic,
+              builder: (_, x, __) => Text('${x.round()}',
+                  style: TextStyle(color: c, fontSize: 28, fontWeight: FontWeight.w900, height: 1.05)),
+            ),
+            const SizedBox(height: 4),
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(widget.icon, size: 13, color: c),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(widget.label, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: c, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              ),
+            ]),
+          ]),
+        ),
+      ),
     );
   }
 }
@@ -1223,6 +1374,12 @@ class _LinkText extends StatelessWidget {
           child: Text(text, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w700)),
         ),
       );
+}
+
+/// Categoría visible: la editada a mano tiene prioridad sobre la de la IA
+String _categoryOf(Map m) {
+  final v = (m['category_source'] == 'manual' ? m['category'] : (m['ai_category'] ?? m['category']))?.toString();
+  return (v == null || v.trim().isEmpty) ? 'Documento' : v;
 }
 
 Map<String, dynamic> _metaOf(Map<String, dynamic> d) => Map<String, dynamic>.from((d['metadata'] as Map?) ?? {});
@@ -1321,8 +1478,6 @@ class _RecentTableCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width > 820;
-    const head = TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w700);
-    String two(int x) => x.toString().padLeft(2, '0');
 
     Widget body;
     if (loading) {
@@ -1342,67 +1497,108 @@ class _RecentTableCard extends StatelessWidget {
       );
     } else {
       body = Column(children: [
-        if (wide)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(6, 0, 6, 12),
-            child: Row(children: [
-              Expanded(flex: 5, child: Text('Documento', style: head)),
-              Expanded(flex: 3, child: Text('Categoría', style: head)),
-              Expanded(flex: 2, child: Text('Tamaño', style: head)),
-              Expanded(flex: 2, child: Text('Fecha', style: head)),
-              Expanded(flex: 3, child: Text('Estado', style: head)),
-            ]),
-          ),
-        const Divider(height: 1, color: AppTheme.border),
-        for (final d in docs) ...[
-          Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-            onTap: () => onNavTap(1),
-            hoverColor: BSColors.selected.withOpacity(0.6),
+        for (var i = 0; i < docs.length; i++)
+          BSEntrance(
+            delay: Duration(milliseconds: 50 * i),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-              child: Builder(builder: (_) {
-                final m = _metaOf(d);
-                final created = DateTime.tryParse(d['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now();
-                final date = '${two(created.day)}/${two(created.month)}/${created.year}';
-                final title = Text(d['title']?.toString() ?? 'Sin nombre', maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800));
-                final cat = (m['ai_category'] ?? m['category'] ?? 'Documento').toString();
-                if (!wide) {
-                  return Row(children: [
-                    Expanded(
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        title,
-                        const SizedBox(height: 3),
-                        Text('$cat · $date', style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
-                      ]),
-                    ),
-                    const SizedBox(width: 8),
-                    BSPill.docStatus(_visibleStatusOf(d)),
-                  ]);
-                }
-                return Row(children: [
-                  Expanded(flex: 5, child: title),
-                  Expanded(flex: 3, child: Text(cat, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 14))),
-                  Expanded(flex: 2, child: Text('${m['size_mb'] ?? '?'} MB', style: const TextStyle(color: AppTheme.text, fontSize: 14))),
-                  Expanded(flex: 2, child: Text(date, style: const TextStyle(color: AppTheme.text, fontSize: 14))),
-                  Expanded(flex: 3, child: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(_visibleStatusOf(d)))),
-                ]);
-              }),
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _RecentRow(doc: docs[i], wide: wide, onTap: () => onNavTap(1)),
             ),
           ),
-          ),
-          const Divider(height: 1, color: AppTheme.border),
-        ],
       ]);
     }
 
     return BSCard(
       title: 'Documentos recientes',
       trailing: _LinkText('Ver todos →', () => onNavTap(1)),
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 12),
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 14),
       child: body,
+    );
+  }
+}
+
+/// Fila de documento: ícono por tipo, nombre, detalle, fecha y estado
+class _RecentRow extends StatefulWidget {
+  final Map<String, dynamic> doc;
+  final bool wide;
+  final VoidCallback onTap;
+  const _RecentRow({required this.doc, required this.wide, required this.onTap});
+
+  @override
+  State<_RecentRow> createState() => _RecentRowState();
+}
+
+class _RecentRowState extends State<_RecentRow> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.doc;
+    final m = _metaOf(d);
+    final pdf = _isPdf(d);
+    final tint = pdf ? BSColors.danger : AppTheme.primary;
+    final created = DateTime.tryParse(d['created_at']?.toString() ?? '')?.toLocal() ?? DateTime.now();
+    String two(int x) => x.toString().padLeft(2, '0');
+    final date = '${two(created.day)}/${two(created.month)}/${created.year}';
+    final cat = _categoryOf(m);
+    final pages = int.tryParse('${m['pages'] ?? ''}');
+    final sub = [cat, if (m['size_mb'] != null) '${m['size_mb']} MB', if (pages != null && pages > 0) '$pages pág.'].join('  ·  ');
+
+    final tile = Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(color: tint.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+      child: Icon(pdf ? Icons.picture_as_pdf_outlined : Icons.article_outlined, color: tint, size: 26),
+    );
+
+    final dateChip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(8)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.event_outlined, size: 15, color: AppTheme.primary),
+        const SizedBox(width: 6),
+        Text('$date · ${two(created.hour)}:${two(created.minute)}',
+            style: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+      ]),
+    );
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: _hover ? BSColors.page : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _hover ? AppTheme.primary.withOpacity(0.25) : AppTheme.border),
+          ),
+          child: Row(children: [
+            tile,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(d['title']?.toString() ?? 'Sin nombre',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: _hover ? AppTheme.primary : AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                Text(widget.wide ? sub : '$cat · $date',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              ]),
+            ),
+            const SizedBox(width: 10),
+            if (widget.wide) ...[dateChip, const SizedBox(width: 10)],
+            SizedBox(
+              width: widget.wide ? 118 : null,
+              child: Align(alignment: Alignment.centerRight, child: BSPill.docStatus(_visibleStatusOf(d))),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 }
@@ -1433,7 +1629,9 @@ class _ActivityCard extends StatelessWidget {
       final up = at('uploaded_at') ?? DateTime.tryParse(d['created_at']?.toString() ?? '')?.toLocal();
       if (up != null) events.add((up, 'Documento subido', title, AppTheme.primary));
       final ai = at('ai_analyzed_at');
-      if (ai != null) events.add((ai, 'Análisis con IA completado', '$title · ${m['ai_category'] ?? 'Documento'}', AppTheme.primary));
+      if (ai != null) events.add((ai, 'Análisis con IA completado', '$title · ${_categoryOf(m)}', AppTheme.primary));
+      final edited = at('last_edited_at');
+      if (edited != null) events.add((edited, 'Documento editado', title, AppTheme.featureCyan));
       final aiErr = at('ai_error_at');
       if (aiErr != null && (ai == null || aiErr.isAfter(ai))) events.add((aiErr, 'Análisis con IA falló', title, BSColors.danger));
       final sent = at('blockchain_sent_at');

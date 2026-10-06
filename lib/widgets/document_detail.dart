@@ -34,7 +34,8 @@ class DocView {
   bool get isPdf => ext == 'pdf';
   String get status => raw['status']?.toString() ?? 'pending';
   bool get canSign => status == 'pending';
-  String get category => meta['ai_category']?.toString() ?? meta['category']?.toString() ?? 'Documento';
+  /// Lo editado a mano tiene prioridad sobre lo que propuso la IA
+  String get category => docCategoryOf(meta);
   String? get hash => raw['file_hash']?.toString();
   String? get tx => raw['blockchain_tx']?.toString();
   String? get fileUrl => raw['file_url']?.toString();
@@ -45,8 +46,25 @@ class DocView {
   String? get aiError => _s(meta['ai_error']);
   String? get aiModel => _s(meta['ai_model']);
   List<String> get aiTags => ((meta['ai_tags'] as List?) ?? const []).map((e) => e.toString()).toList();
-  List<String> get tags => ((meta['ai_tags'] as List?) ?? (meta['tags'] as List?) ?? const []).map((e) => e.toString()).toList();
+  List<String> get tags => ((meta['tags_source'] == 'manual' ? meta['tags'] as List? : (meta['ai_tags'] as List?) ?? (meta['tags'] as List?)) ?? const [])
+      .map((e) => e.toString())
+      .toList();
   bool get analyzed => aiDescription != null;
+
+  // Edición
+  String? get userDescription => _s(meta['user_description']);
+  String? get description => userDescription ?? aiDescription;
+  String? get confidentiality => _s(meta['confidentiality']) ?? aiConfidentiality;
+  bool get confidentialityManual => _s(meta['confidentiality']) != null;
+  bool get inChain => ['sending', 'confirming'].contains(meta['blockchain_status']);
+  bool get canReplaceFile => status == 'pending' && !inChain;
+  int get version => int.tryParse('${meta['version'] ?? ''}') ?? 1;
+  String? get id => raw['id']?.toString();
+  String? get editedLabel => fmtDate(meta['last_edited_at']?.toString());
+  List<Map<String, dynamic>> get versions =>
+      ((meta['versions'] as List?) ?? const []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+  List<Map<String, dynamic>> get editHistory =>
+      ((meta['edit_history'] as List?) ?? const []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
 
   String get sizeLabel {
     final mb = meta['size_mb'];
@@ -75,6 +93,13 @@ class DocView {
     String two(int n) => n.toString().padLeft(2, '0');
     return '${two(d.day)}/${two(d.month)}/${d.year} · ${bsHora(d)}';
   }
+}
+
+/// Categoría visible de un documento (mapa de metadata)
+String docCategoryOf(Map meta) {
+  final manual = meta['category_source'] == 'manual' ? meta['category']?.toString() : null;
+  final v = manual ?? meta['ai_category']?.toString() ?? meta['category']?.toString();
+  return (v == null || v.trim().isEmpty) ? 'Documento' : v;
 }
 
 Color confidentialityColor(String? level) {
@@ -113,7 +138,9 @@ Future<void> showDocumentDetail(
   required VoidCallback onSign,
   required VoidCallback onDelete,
   required VoidCallback onReanalyze,
-  required void Function(String category, List<String> tags) onUpdate,
+  required Future<Map<String, dynamic>?> Function(Map<String, dynamic> changes) onUpdate,
+  VoidCallback? onReplaceFile,
+  int initialTab = 0,
 }) {
   final size = MediaQuery.of(context).size;
   final panel = DocumentDetailPanel(
@@ -124,6 +151,8 @@ Future<void> showDocumentDetail(
     onDelete: onDelete,
     onReanalyze: onReanalyze,
     onUpdate: onUpdate,
+    onReplaceFile: onReplaceFile,
+    initialTab: initialTab,
   );
 
   if (size.width > 900) {
@@ -174,7 +203,10 @@ class DocumentDetailPanel extends StatefulWidget {
   final Map<String, dynamic> doc;
   final bool isSigning;
   final VoidCallback onOpen, onSign, onDelete, onReanalyze;
-  final void Function(String category, List<String> tags) onUpdate;
+  /// Guarda los cambios; devuelve el documento actualizado o null si falló
+  final Future<Map<String, dynamic>?> Function(Map<String, dynamic> changes) onUpdate;
+  final VoidCallback? onReplaceFile;
+  final int initialTab;
 
   const DocumentDetailPanel({
     super.key,
@@ -185,6 +217,8 @@ class DocumentDetailPanel extends StatefulWidget {
     required this.onDelete,
     required this.onReanalyze,
     required this.onUpdate,
+    this.onReplaceFile,
+    this.initialTab = 0,
   });
 
   @override
@@ -193,13 +227,20 @@ class DocumentDetailPanel extends StatefulWidget {
 
 class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTickerProviderStateMixin {
   late final TabController _tabs;
-  late final DocView d;
+  late DocView d;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
+    _tabs = TabController(length: 4, vsync: this, initialIndex: widget.initialTab.clamp(0, 3));
     d = DocView(widget.doc);
+  }
+
+  Future<bool> _save(Map<String, dynamic> changes) async {
+    final updated = await widget.onUpdate(changes);
+    if (updated == null || !mounted) return false;
+    setState(() => d = DocView(updated));
+    return true;
   }
 
   @override
@@ -283,7 +324,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
             Tab(text: 'Resumen'),
             Tab(text: 'Análisis IA'),
             Tab(text: 'Metadatos'),
-            Tab(text: 'Editar'),
+            Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit_outlined, size: 16), SizedBox(width: 6), Text('Editar')])),
           ],
         ),
       ),
@@ -314,7 +355,14 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
             ]),
             _scroll(pad, [DocAiCard(d: d, onReanalyze: widget.onReanalyze)]),
             _scroll(pad, [DocMetadataCards(d: d)]),
-            _scroll(pad, [_EditTab(d: d, onSave: widget.onUpdate)]),
+            _scroll(pad, [
+              _EditTab(
+                key: ValueKey('${d.meta['last_edited_at'] ?? ''}|${d.hash ?? ''}'),
+                d: d,
+                onSave: _save,
+                onReplaceFile: widget.onReplaceFile,
+              ),
+            ]),
           ]),
         ),
       ),
@@ -345,11 +393,27 @@ class DocFichaCard extends StatelessWidget {
       BSLabelValue(label: 'Tamaño', value: d.sizeLabel),
       if (d.pages != null) BSLabelValue(label: 'Páginas', value: d.pages!),
       BSLabelValue(label: 'Categoría', value: d.category),
+      BSLabelValue(label: 'Confidencialidad', value: d.confidentiality ?? 'Sin definir'),
       BSLabelValue(label: 'Estado', value: bsDocStatusLabel(d.status)),
       BSLabelValue(label: 'Subido', value: d.createdLabel),
+      if (d.version > 1) BSLabelValue(label: 'Versión', value: 'v${d.version}'),
+      if (d.editedLabel != null) BSLabelValue(label: 'Última edición', value: d.editedLabel!),
       if (DocView._s(m['author']) != null) BSLabelValue(label: 'Autor', value: m['author'].toString()),
     ];
-    return BSCard(title: 'Información general', child: BSLabelGrid(items: items));
+    return BSCard(
+      title: 'Información general',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (d.userDescription != null) ...[
+          Text(d.userDescription!, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45)),
+          const SizedBox(height: 14),
+        ],
+        BSLabelGrid(items: items),
+        if (d.tags.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Wrap(spacing: 6, runSpacing: 6, children: d.tags.map((t) => _TagChip(t)).toList()),
+        ],
+      ]),
+    );
   }
 }
 
@@ -406,7 +470,7 @@ class DocAiCard extends StatelessWidget {
       );
     }
 
-    final conf = d.aiConfidentiality;
+    final conf = d.confidentiality;
     final confColor = confidentialityColor(conf);
 
     return BSCard(
@@ -586,8 +650,9 @@ class DocMetadataCards extends StatelessWidget {
 // ─────────────────────────────────────────
 class _EditTab extends StatefulWidget {
   final DocView d;
-  final void Function(String category, List<String> tags) onSave;
-  const _EditTab({required this.d, required this.onSave});
+  final Future<bool> Function(Map<String, dynamic> changes) onSave;
+  final VoidCallback? onReplaceFile;
+  const _EditTab({super.key, required this.d, required this.onSave, this.onReplaceFile});
 
   @override
   State<_EditTab> createState() => _EditTabState();
@@ -595,38 +660,162 @@ class _EditTab extends StatefulWidget {
 
 class _EditTabState extends State<_EditTab> {
   static const _cats = ['Documento', 'Contrato', 'Factura', 'Informe', 'Propuesta', 'Acta', 'Comunicado', 'Certificado', 'Autorización', 'Manual', 'Presupuesto'];
+  static const _levels = [
+    ('Público', Icons.public_rounded, 'Se puede compartir sin restricción'),
+    ('Interno', Icons.apartment_rounded, 'Solo personas de la organización'),
+    ('Confidencial', Icons.lock_outline_rounded, 'Acceso limitado a quienes lo necesitan'),
+    ('Secreto', Icons.gpp_maybe_outlined, 'Máxima reserva'),
+  ];
+
+  late final TextEditingController _name;
+  late final TextEditingController _desc;
+  final _tagCtrl = TextEditingController();
+  final _customCat = TextEditingController();
   late String _category;
   late List<String> _tags;
-  final _tagCtrl = TextEditingController();
+  String? _conf;
+  bool _saving = false;
+
+  DocView get d => widget.d;
+  String get _ext => '.${d.ext}';
+  String _baseName(String t) => t.toLowerCase().endsWith(_ext) ? t.substring(0, t.length - _ext.length) : t;
 
   @override
   void initState() {
     super.initState();
-    _category = widget.d.category;
-    _tags = List.of(widget.d.tags);
+    _name = TextEditingController(text: _baseName(d.title))..addListener(_touch);
+    _desc = TextEditingController(text: d.userDescription ?? '')..addListener(_touch);
+    _category = d.category;
+    _tags = List.of(d.tags);
+    _conf = d.confidentiality;
   }
+
+  void _touch() => setState(() {});
 
   @override
   void dispose() {
+    _name.dispose();
+    _desc.dispose();
     _tagCtrl.dispose();
+    _customCat.dispose();
     super.dispose();
   }
 
-  void _addTag() {
-    final t = _tagCtrl.text.trim().toLowerCase();
-    if (t.isNotEmpty && !_tags.contains(t)) setState(() => _tags.add(t));
-    _tagCtrl.clear();
+  /// Solo los campos que cambiaron
+  Map<String, dynamic> get _changes {
+    final c = <String, dynamic>{};
+    final name = _name.text.trim();
+    if (name.isNotEmpty && name != _baseName(d.title)) c['title'] = name;
+    if (_desc.text.trim() != (d.userDescription ?? '')) c['description'] = _desc.text.trim();
+    if (_category != d.category) c['category'] = _category;
+    if (_tags.join('|') != d.tags.join('|')) c['tags'] = _tags;
+    if (_conf != null && _conf != d.confidentiality) c['confidentiality'] = _conf;
+    return c;
   }
+
+  bool get _dirty => _changes.isNotEmpty;
+
+  void _reset() {
+    _name.text = _baseName(d.title);
+    _desc.text = d.userDescription ?? '';
+    setState(() {
+      _category = d.category;
+      _tags = List.of(d.tags);
+      _conf = d.confidentiality;
+    });
+  }
+
+  void _addTag([String? value]) {
+    final t = (value ?? _tagCtrl.text).trim().toLowerCase().replaceAll(RegExp(r'^#+'), '').replaceAll(RegExp(r'\s+'), '-');
+    if (t.isNotEmpty && !_tags.contains(t) && _tags.length < 15) setState(() => _tags.add(t));
+    if (value == null) _tagCtrl.clear();
+  }
+
+  Future<void> _save() async {
+    if (_name.text.trim().isEmpty) {
+      await SweetAlert.error(context, title: 'Falta el nombre', text: 'El documento necesita un nombre.');
+      return;
+    }
+    setState(() => _saving = true);
+    final ok = await widget.onSave(_changes);
+    if (mounted) setState(() => _saving = false);
+    if (ok && mounted) {
+      SweetAlert.success(context, title: 'Cambios guardados', autoClose: const Duration(milliseconds: 1400));
+    }
+  }
+
+  InputDecoration _dec(String hint, {String? suffix}) => InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        suffixText: suffix,
+        suffixStyle: const TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w700),
+        filled: true,
+        fillColor: Colors.white,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.6)),
+      );
+
+  Widget _label(String text, [String? help]) => Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
+          if (help != null) ...[
+            const SizedBox(width: 8),
+            Expanded(child: Text(help, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12))),
+          ],
+        ]),
+      );
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      BSCard(
-        title: 'Categoría',
-        child: Wrap(
+    final wide = MediaQuery.of(context).size.width > 900;
+    final signed = !d.canSign;
+    final cats = [..._cats, if (!_cats.contains(_category)) _category];
+    final aiSuggest = d.aiTags.where((t) => !_tags.contains(t)).toList();
+
+    final general = BSCard(
+      title: 'Datos del documento',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        _label('Nombre'),
+        TextField(
+          controller: _name,
+          maxLength: 140,
+          style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w600),
+          decoration: _dec('Nombre del documento', suffix: _ext).copyWith(counterText: ''),
+        ),
+        const SizedBox(height: 16),
+        _label('Descripción', 'Tu propia descripción; la de la IA se conserva aparte'),
+        TextField(
+          controller: _desc,
+          minLines: 3,
+          maxLines: 6,
+          maxLength: 1000,
+          style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+          decoration: _dec(d.aiDescription ?? 'Describe para qué sirve este documento…'),
+        ),
+        if (d.aiDescription != null && _desc.text.trim().isEmpty)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _desc.text = d.aiDescription!,
+              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
+              label: const Text('Usar la descripción de la IA'),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.primary, minimumSize: const Size(0, 36)),
+            ),
+          ),
+      ]),
+    );
+
+    final category = BSCard(
+      title: 'Categoría',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _cats.map((c) {
+          children: cats.map((c) {
             final sel = _category == c;
             return ChoiceChip(
               label: Text(c),
@@ -640,59 +829,381 @@ class _EditTabState extends State<_EditTab> {
             );
           }).toList(),
         ),
-      ),
-      const SizedBox(height: 12),
-      BSCard(
-        title: 'Etiquetas',
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (_tags.isEmpty)
-            const Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
-          else
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: _tags
-                  .map((t) => InputChip(
-                        label: Text('#$t'),
-                        onDeleted: () => setState(() => _tags.remove(t)),
-                        deleteIconColor: AppTheme.primary,
-                        backgroundColor: AppTheme.primary.withOpacity(0.07),
-                        side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
-                        labelStyle: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
-                      ))
-                  .toList(),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: TextField(
+              controller: _customCat,
+              maxLength: 40,
+              onSubmitted: (v) {
+                if (v.trim().isNotEmpty) setState(() => _category = v.trim());
+                _customCat.clear();
+              },
+              style: const TextStyle(color: AppTheme.text, fontSize: 13),
+              decoration: _dec('Otra categoría…').copyWith(counterText: ''),
             ),
+          ),
+          const SizedBox(width: 8),
+          BSOutlineButton(
+            label: 'Usar',
+            icon: Icons.check_rounded,
+            onPressed: () {
+              if (_customCat.text.trim().isEmpty) return;
+              setState(() => _category = _customCat.text.trim());
+              _customCat.clear();
+            },
+          ),
+        ]),
+      ]),
+    );
+
+    final confidentiality = BSCard(
+      title: 'Confidencialidad',
+      trailing: d.aiConfidentiality != null
+          ? Text('IA sugirió: ${d.aiConfidentiality}', style: const TextStyle(color: AppTheme.hint, fontSize: 12))
+          : null,
+      child: LayoutBuilder(builder: (context, c) {
+        final cols = c.maxWidth > 520 ? 4 : 2;
+        final w = (c.maxWidth - (cols - 1) * 8) / cols;
+        return Wrap(spacing: 8, runSpacing: 8, children: [
+          for (final l in _levels)
+            SizedBox(
+              width: w,
+              child: _LevelOption(
+                label: l.$1,
+                icon: l.$2,
+                help: l.$3,
+                color: confidentialityColor(l.$1),
+                selected: _conf == l.$1,
+                onTap: () => setState(() => _conf = l.$1),
+              ),
+            ),
+        ]);
+      }),
+    );
+
+    final tags = BSCard(
+      title: 'Etiquetas',
+      trailing: Text('${_tags.length}/15', style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (_tags.isEmpty)
+          const Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _tags
+                .map((t) => InputChip(
+                      label: Text('#$t'),
+                      onDeleted: () => setState(() => _tags.remove(t)),
+                      deleteIconColor: AppTheme.primary,
+                      backgroundColor: AppTheme.primary.withOpacity(0.07),
+                      side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
+                      labelStyle: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ))
+                .toList(),
+          ),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+            child: TextField(
+              controller: _tagCtrl,
+              onSubmitted: (_) => _addTag(),
+              style: const TextStyle(color: AppTheme.text, fontSize: 13),
+              decoration: _dec('Nueva etiqueta y Enter'),
+            ),
+          ),
+          const SizedBox(width: 8),
+          BSPrimaryButton(label: 'Agregar', icon: Icons.add_rounded, onPressed: () => _addTag()),
+        ]),
+        if (aiSuggest.isNotEmpty) ...[
           const SizedBox(height: 12),
-          Row(children: [
-            Expanded(
-              child: TextField(
-                controller: _tagCtrl,
-                onSubmitted: (_) => _addTag(),
-                style: const TextStyle(color: AppTheme.text, fontSize: 13),
-                decoration: InputDecoration(
-                  hintText: 'Agregar etiqueta y presionar Enter',
-                  hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
-                  filled: true,
-                  fillColor: BSColors.page,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primary)),
+          const Text('Sugeridas por la IA', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: aiSuggest
+                .map((t) => ActionChip(
+                      avatar: const Icon(Icons.add_rounded, size: 15, color: AppTheme.primary),
+                      label: Text(t),
+                      onPressed: () => _addTag(t),
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: AppTheme.border),
+                      labelStyle: const TextStyle(color: AppTheme.text, fontSize: 12),
+                    ))
+                .toList(),
+          ),
+        ],
+      ]),
+    );
+
+    final file = _FileVersionCard(d: d, onReplace: widget.onReplaceFile);
+    final history = _EditHistoryCard(d: d);
+
+    final saveBar = Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: _dirty ? BSColors.selected : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _dirty ? AppTheme.primary.withOpacity(0.35) : AppTheme.border),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(_dirty ? Icons.edit_note_rounded : Icons.check_circle_outline_rounded, color: _dirty ? AppTheme.primary : BSColors.success, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              _dirty ? '${_changes.length} cambio${_changes.length == 1 ? '' : 's'} sin guardar' : 'Todo guardado',
+              style: TextStyle(color: _dirty ? AppTheme.primary : AppTheme.hint, fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+          ]),
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            if (_dirty) ...[
+              TextButton(onPressed: _saving ? null : _reset, child: const Text('Descartar')),
+              const SizedBox(width: 6),
+            ],
+            BSPrimaryButton(
+              label: _saving ? 'Guardando…' : 'Guardar cambios',
+              icon: Icons.save_rounded,
+              loading: _saving,
+              onPressed: _dirty ? _save : null,
+            ),
+          ]),
+        ],
+      ),
+    );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      if (signed) ...[
+        const BSInfoBanner(
+          title: 'Este documento ya está firmado',
+          text: 'Puedes cambiar sus datos descriptivos. El archivo y su huella SHA-256 quedan fijos porque están registrados en blockchain.',
+          icon: Icons.lock_outline_rounded,
+        ),
+        const SizedBox(height: 12),
+      ],
+      if (wide)
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(
+            flex: 3,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [general, const SizedBox(height: 12), confidentiality, const SizedBox(height: 12), tags]),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [category, const SizedBox(height: 12), file, const SizedBox(height: 12), history]),
+          ),
+        ])
+      else ...[
+        general,
+        const SizedBox(height: 12),
+        category,
+        const SizedBox(height: 12),
+        confidentiality,
+        const SizedBox(height: 12),
+        tags,
+        const SizedBox(height: 12),
+        file,
+        const SizedBox(height: 12),
+        history,
+      ],
+      const SizedBox(height: 14),
+      saveBar,
+    ]);
+  }
+}
+
+/// Opción de nivel de confidencialidad (tarjeta seleccionable)
+class _LevelOption extends StatelessWidget {
+  final String label, help;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _LevelOption({required this.label, required this.help, required this.icon, required this.color, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        hoverColor: color.withOpacity(0.06),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: selected ? color.withOpacity(0.09) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: selected ? color : AppTheme.border, width: selected ? 1.6 : 1),
+          ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(icon, color: color, size: 19),
+              const Spacer(),
+              AnimatedOpacity(
+                opacity: selected ? 1 : 0,
+                duration: const Duration(milliseconds: 180),
+                child: Icon(Icons.check_circle_rounded, color: color, size: 18),
+              ),
+            ]),
+            const SizedBox(height: 8),
+            Text(label, style: TextStyle(color: selected ? color : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
+            const SizedBox(height: 2),
+            Text(help, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Archivo actual, nueva versión y versiones anteriores
+class _FileVersionCard extends StatelessWidget {
+  final DocView d;
+  final VoidCallback? onReplace;
+  const _FileVersionCard({required this.d, this.onReplace});
+
+  @override
+  Widget build(BuildContext context) {
+    final versions = d.versions;
+    return BSCard(
+      title: 'Archivo',
+      trailing: BSPill(label: 'v${d.version}', color: AppTheme.primary, dot: false),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          BSInitialBox(
+            text: d.ext.toUpperCase(),
+            color: d.isPdf ? BSColors.danger : AppTheme.primary,
+            icon: d.isPdf ? Icons.picture_as_pdf_rounded : Icons.article_rounded,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(d.meta['original_name']?.toString() ?? d.title,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+              const SizedBox(height: 2),
+              Text('${d.sizeLabel}${d.pages != null ? ' · ${d.pages} pág.' : ''}', style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+            ]),
+          ),
+        ]),
+        if (d.hash != null) ...[
+          const SizedBox(height: 10),
+          InkWell(
+            onTap: () => copyToClipboard(context, d.hash!, 'Hash'),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8)),
+              child: Row(children: [
+                const Icon(Icons.fingerprint_rounded, color: AppTheme.hint, size: 16),
+                const SizedBox(width: 6),
+                Expanded(child: Text(shortHash(d.hash!), style: const TextStyle(color: AppTheme.text, fontFamily: 'monospace', fontSize: 12))),
+                const Icon(Icons.copy_rounded, color: AppTheme.hint, size: 14),
+              ]),
+            ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        if (d.canReplaceFile && onReplace != null) ...[
+          BSOutlineButton(label: 'Subir nueva versión', icon: Icons.upload_file_rounded, onPressed: onReplace),
+          const SizedBox(height: 6),
+          const Text('Cambia la huella SHA-256 y se vuelve a analizar con IA. Tus datos editados se conservan.',
+              style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
+        ] else
+          Text(
+            d.inChain ? 'La firma se está registrando: no se puede cambiar el archivo.' : 'Firmado: el archivo ya no se puede reemplazar.',
+            style: const TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35),
+          ),
+        if (versions.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          const Text('Versiones anteriores', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          for (final v in versions)
+            Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: v['file_url'] == null ? null : () => launchUrl(Uri.parse(v['file_url'].toString()), mode: LaunchMode.externalApplication),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  child: Row(children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(6)),
+                      child: Text('v${v['version'] ?? '?'}', style: const TextStyle(color: AppTheme.text, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(v['name']?.toString() ?? 'Archivo', maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        Text('Reemplazado ${DocView.fmtDate(v['replaced_at']?.toString()) ?? ''} · ${shortHash('${v['file_hash'] ?? ''}')}',
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                      ]),
+                    ),
+                    const Icon(Icons.open_in_new_rounded, color: AppTheme.hint, size: 15),
+                  ]),
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            BSPrimaryButton(label: 'Agregar', icon: Icons.add_rounded, onPressed: _addTag),
-          ]),
-        ]),
-      ),
-      const SizedBox(height: 16),
-      Align(
-        alignment: Alignment.centerRight,
-        child: BSPrimaryButton(label: 'Guardar cambios', icon: Icons.save_rounded, onPressed: () => widget.onSave(_category, _tags)),
-      ),
-    ]);
+        ],
+      ]),
+    );
+  }
+}
+
+/// Historial de cambios (quién y qué cambió)
+class _EditHistoryCard extends StatelessWidget {
+  final DocView d;
+  const _EditHistoryCard({required this.d});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = d.editHistory.take(8).toList();
+    return BSCard(
+      title: 'Historial de cambios',
+      child: items.isEmpty
+          ? const Text('Aún no se ha editado. Cada cambio queda registrado aquí y en Auditoría.',
+              style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4))
+          : Column(children: [
+              for (var i = 0; i < items.length; i++)
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Column(children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: i == 0 ? AppTheme.primary : Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppTheme.primary, width: 2),
+                      ),
+                    ),
+                    if (i < items.length - 1) Container(width: 2, height: 34, color: AppTheme.border),
+                  ]),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('Cambió ${((items[i]['fields'] as List?) ?? const []).join(', ')}',
+                            style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                        Text(DocView.fmtDate(items[i]['at']?.toString()) ?? '',
+                            style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                      ]),
+                    ),
+                  ),
+                ]),
+            ]),
+    );
   }
 }
 

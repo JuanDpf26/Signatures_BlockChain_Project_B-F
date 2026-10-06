@@ -132,8 +132,10 @@ class DocumentService {
     }
   }
 
+  /// Edita los datos del documento. Solo se envían los campos que cambiaron.
+  /// Campos: title, description, category, tags, confidentiality.
   static Future<Map<String, dynamic>> updateDocumentMeta({
-    required String docId, String? category, List<String>? tags, String? title,
+    required String docId, String? category, List<String>? tags, String? title, String? description, String? confidentiality,
   }) async {
     try {
       final headers = await _authHeaders();
@@ -141,11 +143,36 @@ class DocumentService {
       if (category != null) body['category'] = category;
       if (tags != null) body['tags'] = tags;
       if (title != null) body['title'] = title;
+      if (description != null) body['description'] = description;
+      if (confidentiality != null) body['confidentiality'] = confidentiality;
       final res = await http.patch(Uri.parse('$baseUrl/$docId'), headers: headers, body: jsonEncode(body)).timeout(const Duration(seconds: 15));
       if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
       return jsonDecode(res.body);
     } catch (e) {
       return {'error': 'Error: $e'};
+    }
+  }
+
+  /// Sube una nueva versión del archivo (solo si el documento aún no está firmado).
+  /// analyze=0: la app lanza luego el análisis con IA mostrando el proceso.
+  static Future<Map<String, dynamic>> replaceFile({
+    required String docId,
+    required Uint8List fileBytes,
+    required String fileName,
+    required String mimeType,
+  }) async {
+    try {
+      final token = await AuthService.getToken();
+      final request = http.MultipartRequest('PUT', Uri.parse('$baseUrl/$docId/file?analyze=0'))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..files.add(http.MultipartFile.fromBytes('file', fileBytes, filename: fileName, contentType: MediaType.parse(mimeType)));
+      final response = await http.Response.fromStream(await request.send().timeout(const Duration(seconds: 45)));
+      if (response.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      final data = jsonDecode(response.body);
+      if (response.statusCode >= 400 && data is Map && !data.containsKey('error')) return {'error': 'Error ${response.statusCode}'};
+      return Map<String, dynamic>.from(data as Map);
+    } catch (e) {
+      return {'error': 'Error al subir la nueva versión: $e'};
     }
   }
 
