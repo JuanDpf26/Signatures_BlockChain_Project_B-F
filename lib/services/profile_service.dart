@@ -4,17 +4,28 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'auth_service.dart';
+import '../config/app_config.dart';
 
 class ProfileService {
-  static String get baseUrl {
-    if (kIsWeb) return 'http://localhost:3000/api/profile';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000/api/profile';
-    return 'http://localhost:3000/api/profile';
-  }
+  // Usa la misma dirección que el resto de la app (sirve también para probar en celular con API_URL)
+  static String get baseUrl => '${AppConfig.apiUrl}/api/profile';
 
   static Future<Map<String, String>> _headers() async {
     final token = await AuthService.getToken();
     return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
+  }
+
+  // CLAVES DE FIRMA (ECDSA P-256): devuelve la clave pública y su huella
+  static Future<Map<String, dynamic>> getMyKeys() async {
+    try {
+      final headers = await _headers();
+      final res = await http.get(Uri.parse('${AppConfig.apiUrl}/api/keys/me'), headers: headers)
+          .timeout(const Duration(seconds: 20));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      return jsonDecode(res.body);
+    } catch (e) {
+      return {'error': 'No se pudieron consultar tus claves: $e'};
+    }
   }
 
   // GET PERFIL

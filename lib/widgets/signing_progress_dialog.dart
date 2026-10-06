@@ -52,6 +52,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
   int _visualStep = 0; // para animar los primeros pasos uno a uno
   String? _documentHash;
   String? _signatureHash;
+  String? _keyFingerprint; // huella de la clave pública del usuario
   String? _txHash;
   String? _explorerUrl;
   String? _wallet;
@@ -104,6 +105,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
 
     _documentHash = res['documentHash']?.toString();
     _signatureHash = res['signatureHash']?.toString();
+    _keyFingerprint = res['publicKeyFingerprint']?.toString();
     _txHash = res['txHash']?.toString();
     _explorerUrl = res['explorerUrl']?.toString();
     _wallet = res['from']?.toString();
@@ -195,8 +197,13 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
       ChainStep(
         'Generar firma digital',
         state: _s(1),
-        detail: _s(1) == ChainStepState.waiting ? null : 'Se combina la huella con tu identidad y la fecha exacta.',
-        extra: [if (_signatureHash != null && _visualStep >= 1) ChainValueRow(label: 'Firma', value: _signatureHash!)],
+        detail: _s(1) == ChainStepState.waiting
+            ? null
+            : 'Tu clave privada ECDSA P-256 firma la huella junto con tu correo y la fecha exacta.',
+        extra: [
+          if (_keyFingerprint != null && _visualStep >= 1) ChainValueRow(label: 'Tu clave', value: _keyFingerprint!),
+          if (_signatureHash != null && _visualStep >= 1) ChainValueRow(label: 'Hash firma', value: _signatureHash!),
+        ],
       ),
       ChainStep(
         'Preparar transacción',

@@ -448,6 +448,7 @@ class _VerdictCard extends StatelessWidget {
     final (Color color, IconData icon, String title) = switch (verdict) {
       'authentic' => (BSColors.success, Icons.verified_rounded, 'Documento auténtico'),
       'revoked' => (BSColors.danger, Icons.gpp_bad_rounded, 'Firma revocada'),
+      'invalid_signature' => (BSColors.danger, Icons.gpp_bad_rounded, 'Firma digital inválida'),
       'pending' => (BSColors.warning, Icons.hourglass_top_rounded, 'Firma en proceso'),
       'unavailable' => (BSColors.warning, Icons.cloud_off_rounded, 'Blockchain no disponible'),
       'invalid' => (BSColors.danger, Icons.error_outline_rounded, 'Huella inválida'),
@@ -459,6 +460,7 @@ class _VerdictCard extends StatelessWidget {
     final doc = result['document'] is Map ? Map<String, dynamic>.from(result['document']) : null;
     final wide = MediaQuery.of(context).size.width > 720;
 
+    final sig = result['signature'] is Map ? Map<String, dynamic>.from(result['signature']) : null;
     final details = <(String, String)>[
       if (bc?['documentTitle'] != null) ('Documento', bc!['documentTitle'].toString()),
       if (doc?['signerName'] != null) ('Firmado por', doc!['signerName'].toString()),
@@ -534,6 +536,8 @@ class _VerdictCard extends StatelessWidget {
             ],
             if (result['hash'] != null) ChainValueRow(label: 'Huella', value: result['hash'].toString()),
             if (bc?['signatureHash'] != null) ChainValueRow(label: 'Firma', value: bc!['signatureHash'].toString()),
+            if (sig?['fingerprint'] != null) ChainValueRow(label: 'Clave pública', value: sig!['fingerprint'].toString()),
+            if (sig?['algorithm'] != null) ChainValueRow(label: 'Algoritmo', value: sig!['algorithm'].toString(), mono: false, copy: false, shorten: false),
             if (bc?['signerWallet'] != null) ChainValueRow(label: 'Wallet', value: bc!['signerWallet'].toString()),
             if (tx?['txHash'] != null) ChainValueRow(label: 'Tx', value: tx!['txHash'].toString(), url: tx['explorerUrl']?.toString()),
             const SizedBox(height: 10),

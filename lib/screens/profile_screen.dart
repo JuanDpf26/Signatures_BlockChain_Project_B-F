@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/foundation.dart';
@@ -439,6 +440,8 @@ class _SecurityTabState extends State<_SecurityTab> {
           title: 'Tu cuenta usa Google.',
           text: 'La contraseña se gestiona desde tu cuenta de Google.',
         ),
+      const SizedBox(height: 16),
+      const _KeysCard(),
     ], right: [
       const BSCard(
         title: 'Recomendaciones de seguridad',
@@ -789,6 +792,106 @@ class _Tip extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45))),
       ]),
+    );
+  }
+}
+
+
+/// Claves de firma del usuario (criptografía asimétrica ECDSA P-256)
+class _KeysCard extends StatefulWidget {
+  const _KeysCard();
+
+  @override
+  State<_KeysCard> createState() => _KeysCardState();
+}
+
+class _KeysCardState extends State<_KeysCard> {
+  Map<String, dynamic>? _k;
+  String? _error;
+  bool _showKey = false;
+
+  @override
+  void initState() {
+    super.initState();
+    ProfileService.getMyKeys().then((r) {
+      if (!mounted) return;
+      setState(() {
+        if (r['error'] != null) {
+          _error = r['error'].toString();
+        } else {
+          _k = r;
+        }
+      });
+    });
+  }
+
+  String _group(String fp) {
+    final s = fp.toUpperCase();
+    final parts = <String>[];
+    for (var i = 0; i < s.length && i < 32; i += 4) {
+      parts.add(s.substring(i, i + 4 > s.length ? s.length : i + 4));
+    }
+    return parts.join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BSCard(
+      title: 'Mis claves de firma',
+      trailing: const BSPill(label: 'ECDSA P-256', color: AppTheme.primary, dot: false),
+      child: _error != null
+          ? BSInfoBanner(title: 'No se pudieron cargar', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded)
+          : _k == null
+              ? const SizedBox(height: 90, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
+              : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                  const Text(
+                    'Cuando firmas, tu clave privada firma la huella del documento. Cualquiera puede comprobar esa firma con tu clave pública. '
+                    'La clave privada se guarda cifrada y nunca sale del servidor.',
+                    style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+                    child: Row(children: [
+                      const Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 30),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          const Text('Huella de tu clave pública', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 3),
+                          SelectableText(_group(_k!['fingerprint']?.toString() ?? ''),
+                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+                        ]),
+                      ),
+                    ]),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(spacing: 10, runSpacing: 10, children: [
+                    BSOutlineButton(
+                      label: _showKey ? 'Ocultar clave pública' : 'Ver clave pública',
+                      icon: Icons.key_rounded,
+                      onPressed: () => setState(() => _showKey = !_showKey),
+                    ),
+                    BSOutlineButton(
+                      label: 'Copiar clave pública',
+                      icon: Icons.copy_rounded,
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: _k!['publicKey']?.toString() ?? ''));
+                        if (context.mounted) SweetAlert.success(context, title: 'Clave pública copiada', autoClose: const Duration(milliseconds: 1100));
+                      },
+                    ),
+                  ]),
+                  if (_showKey) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(10)),
+                      child: SelectableText(_k!['publicKey']?.toString() ?? '',
+                          style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11.5, fontFamily: 'monospace', height: 1.4)),
+                    ),
+                  ],
+                ]),
     );
   }
 }
