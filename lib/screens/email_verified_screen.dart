@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import '../widgets/sweet_alert.dart';
+import '../widgets/bs_ui.dart';
+import '../widgets/bs_auth_layout.dart';
 
 class EmailVerifiedScreen extends StatefulWidget {
   final bool success;
@@ -9,175 +11,81 @@ class EmailVerifiedScreen extends StatefulWidget {
   State<EmailVerifiedScreen> createState() => _EmailVerifiedScreenState();
 }
 
-class _EmailVerifiedScreenState extends State<EmailVerifiedScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnim;
-  late Animation<double> _fadeAnim;
-
+class _EmailVerifiedScreenState extends State<EmailVerifiedScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _scaleAnim = CurvedAnimation(parent: _controller, curve: Curves.elasticOut);
-    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-    _controller.forward();
+    // SweetAlert al abrir la pantalla (después del primer frame)
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showSweetAlert());
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _showSweetAlert() async {
+    if (!mounted) return;
+
+    if (widget.success) {
+      final goLogin = await SweetAlert.success(
+        context,
+        title: '¡Correo verificado!',
+        text: 'Tu cuenta ha sido verificada exitosamente.\n'
+            'Ya puedes iniciar sesión en BlockSign.',
+        confirmText: 'Iniciar sesión',
+      );
+      // Si pulsa "Iniciar sesión" va al login; si cierra la alerta, se queda en la pantalla
+      if (goLogin == true && mounted) {
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } else {
+      await SweetAlert.error(
+        context,
+        title: 'Enlace inválido',
+        text: 'El enlace de verificación es inválido, ya fue usado o expiró.\n'
+            'Solicita un nuevo correo de verificación.',
+        confirmText: 'Entendido',
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isSuccess = widget.success;
-    final color = isSuccess ? Colors.green : Colors.red;
-    final icon = isSuccess ? Icons.verified_rounded : Icons.error_rounded;
-    final title = isSuccess ? '¡Correo verificado!' : 'Enlace inválido';
-    final message = isSuccess
-        ? 'Tu cuenta ha sido verificada exitosamente.\nYa puedes iniciar sesión en BlockSign.'
-        : 'El enlace de verificación es inválido o ha expirado.\nSolicita un nuevo correo de verificación.';
+    final ok = widget.success;
 
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: FadeTransition(
-              opacity: _fadeAnim,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Ícono animado
-                  ScaleTransition(
-                    scale: _scaleAnim,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: color.withOpacity(0.3), width: 2),
-                      ),
-                      child: Icon(icon, color: color, size: 52),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Logo
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppTheme.primary, AppTheme.featureCyan],
-                          ),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.verified_user_rounded,
-                            color: Colors.white, size: 14),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'BlockSign',
-                        style: TextStyle(
-                          color: AppTheme.text,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Título
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: color,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Mensaje
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      color: AppTheme.hint,
-                      fontSize: 15,
-                      height: 1.6,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 40),
-
-                  // Botón
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () =>
-                          Navigator.pushReplacementNamed(context, '/login'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isSuccess ? AppTheme.primary : AppTheme.surface,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        isSuccess ? 'Iniciar sesión' : 'Volver al inicio',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-
-                  if (isSuccess) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.green.withOpacity(0.2)),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.security_rounded,
-                              color: Colors.green, size: 18),
-                          SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Tu cuenta está protegida con cifrado de extremo a extremo y registro blockchain.',
-                              style: TextStyle(
-                                  color: Colors.green, fontSize: 12, height: 1.5),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
+    return BSAuthLayout(
+      title: ok ? '¡Correo verificado!' : 'Enlace inválido',
+      subtitle: ok
+          ? 'Tu cuenta ha sido verificada exitosamente. Ya puedes iniciar sesión en BlockSign.'
+          : 'El enlace de verificación es inválido, ya fue usado o expiró. Si ya verificaste tu cuenta, simplemente inicia sesión.',
+      leading: BSAuthIcon(
+        icon: ok ? Icons.verified_rounded : Icons.link_off_rounded,
+        color: ok ? BSColors.success : BSColors.danger,
       ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        ok
+            ? const BSInfoBanner(
+                title: 'Tu cuenta está protegida.',
+                text: 'Cada documento que firmes queda cifrado con SHA-256 y registrado en blockchain.',
+                color: BSColors.success,
+                icon: Icons.security_rounded,
+              )
+            : const BSInfoBanner(
+                title: '¿Necesitas un enlace nuevo?',
+                text: 'Intenta registrarte de nuevo con el mismo correo y te enviaremos otro enlace de verificación.',
+                color: BSColors.warning,
+                icon: Icons.mail_outline_rounded,
+              ),
+        const SizedBox(height: 24),
+        BSAuthButton(
+          label: ok ? 'Iniciar sesión' : 'Ir a iniciar sesión',
+          onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+        ),
+        if (!ok) ...[
+          const SizedBox(height: 18),
+          BSAuthSwitch(
+            question: '¿Aún no tienes cuenta?',
+            action: 'Regístrate',
+            onTap: () => Navigator.pushReplacementNamed(context, '/register'),
+          ),
+        ],
+      ]),
     );
   }
 }

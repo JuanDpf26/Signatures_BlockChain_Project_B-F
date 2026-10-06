@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../services/document_service.dart';
+import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../layout/responsive_layout.dart';
+import '../widgets/sweet_alert.dart';
+import '../widgets/bs_ui.dart';
 import '../screens/document_screen.dart';
 import 'profile_screen.dart';
 
@@ -17,44 +20,69 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _recentDocs = [];
   bool _loading = true;
+
+  // Usuario (para el saludo de la barra superior)
   String _userName = '';
   String _userEmail = '';
+  String? _avatarUrl;
 
   @override
   void initState() {
     super.initState();
+    _loadUser();
     _loadData();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final res = await ProfileService.getProfile();
+      if (!mounted || !res.containsKey('user')) return;
+      final u = Map<String, dynamic>.from(res['user']);
+      setState(() {
+        _userName = u['name']?.toString() ?? '';
+        _userEmail = u['email']?.toString() ?? '';
+        _avatarUrl = u['avatar_url']?.toString();
+      });
+    } catch (_) {
+      // Si el backend no responde, la barra muestra el saludo sin nombre
+    }
   }
 
   Future<void> _loadData() async {
     setState(() => _loading = true);
-    final statsRes = await DocumentService.getStats();
-    final docsRes = await DocumentService.getDocuments(page: 1);
-    if (!mounted) return;
-    setState(() {
-      if (!statsRes.containsKey('error')) _stats = statsRes;
-      if (docsRes.containsKey('documents')) {
-        _recentDocs = List<Map<String, dynamic>>.from(docsRes['documents']).take(5).toList();
-      }
-      _loading = false;
-    });
+    try {
+      final statsRes = await DocumentService.getStats();
+      final docsRes = await DocumentService.getDocuments(page: 1);
+      if (!mounted) return;
+      setState(() {
+        if (!statsRes.containsKey('error')) _stats = statsRes;
+        if (docsRes.containsKey('documents')) {
+          _recentDocs = List<Map<String, dynamic>>.from(docsRes['documents']).take(5).toList();
+        }
+      });
+    } catch (_) {
+      // sin conexión: se muestran los valores vacíos
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  void _goTo(int i) {
+    final leavingProfile = _selectedIndex == 3 && i != 3;
+    setState(() => _selectedIndex = i);
+    if (leavingProfile) _loadUser(); // por si cambió el nombre o la foto
+    if (i == 0) _loadData();
   }
 
   Future<void> _logout() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Cerrar sesión', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w600, fontSize: 16)),
-        content: const Text('¿Deseas cerrar sesión?', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar', style: TextStyle(color: AppTheme.hint))),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Cerrar sesión', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600))),
-        ],
-      ),
+    final ok = await SweetAlert.confirm(
+      context,
+      title: '¿Cerrar sesión?',
+      text: 'Tendrás que volver a ingresar tus credenciales.',
+      confirmText: 'Sí, cerrar sesión',
+      type: SweetAlertType.question,
     );
-    if (ok == true) {
+    if (ok) {
       await AuthService.logout();
       if (mounted) Navigator.pushReplacementNamed(context, '/');
     }
@@ -62,20 +90,37 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContent() {
     switch (_selectedIndex) {
-      case 1: return const DocumentsScreen();
-      case 2: return _PlaceholderContent(icon: Icons.verified_outlined, title: 'Verificar firma', subtitle: 'Comprueba la autenticidad de documentos firmados en blockchain.');
-      case 3: return const ProfileScreen();
-      default: return _DashboardContent(stats: _stats, recentDocs: _recentDocs, loading: _loading, onNavTap: (i) => setState(() => _selectedIndex = i), onRefresh: _loadData);
+      case 1:
+        return const DocumentsScreen();
+      case 2:
+        return const _VerifyPlaceholder();
+      case 3:
+        return const ProfileScreen();
+      default:
+        return _DashboardContent(
+          stats: _stats,
+          recentDocs: _recentDocs,
+          loading: _loading,
+          onNavTap: _goTo,
+          onRefresh: _loadData,
+        );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isWeb = ResponsiveLayout.isWeb(context);
+    final user = _UserInfo(name: _userName, email: _userEmail, avatarUrl: _avatarUrl);
     return isWeb
-        ? _WebShell(selectedIndex: _selectedIndex, onNavTap: (i) => setState(() => _selectedIndex = i), onLogout: _logout, content: _buildContent())
-        : _MobileShell(selectedIndex: _selectedIndex, onNavTap: (i) => setState(() => _selectedIndex = i), content: _buildContent());
+        ? _WebShell(selectedIndex: _selectedIndex, onNavTap: _goTo, onLogout: _logout, user: user, content: _buildContent())
+        : _MobileShell(selectedIndex: _selectedIndex, onNavTap: _goTo, user: user, content: _buildContent());
   }
+}
+
+class _UserInfo {
+  final String name, email;
+  final String? avatarUrl;
+  const _UserInfo({required this.name, required this.email, this.avatarUrl});
 }
 
 // ── Web shell ──────────────────────────────────────────────────────────────
@@ -83,91 +128,107 @@ class _WebShell extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback onLogout;
+  final _UserInfo user;
   final Widget content;
-  const _WebShell({required this.selectedIndex, required this.onNavTap, required this.onLogout, required this.content});
+  const _WebShell({required this.selectedIndex, required this.onNavTap, required this.onLogout, required this.user, required this.content});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: BSColors.page,
       body: Row(children: [
-        // Sidebar
-        SizedBox(
-          width: 220,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppTheme.surface,
-              border: const Border(right: BorderSide(color: AppTheme.border)),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(2, 0))],
-            ),
-            child: Column(children: [
-              // Logo
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                child: Row(children: [
-                  Container(
-                    width: 34, height: 34,
-                    decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('BlockSign', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w600)),
-                    Text('Firma digital', style: TextStyle(color: AppTheme.hint, fontSize: 10)),
-                  ]),
-                ]),
-              ),
-              const _SidebarDivider(),
-
-              const SizedBox(height: 8),
-              _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, label: 'Dashboard', selected: selectedIndex == 0, onTap: () => onNavTap(0)),
-              _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description_rounded, label: 'Documentos', selected: selectedIndex == 1, onTap: () => onNavTap(1)),
-              _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, onTap: () => onNavTap(2)),
-
-              const SizedBox(height: 8),
-              const _SidebarDivider(),
-              const SizedBox(height: 8),
-
-              _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Perfil', selected: selectedIndex == 3, onTap: () => onNavTap(3)),
-
-              const Spacer(),
-
-              // Versión
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Text('UMB · IS25133 · v1.0.0', style: TextStyle(color: Color(0xFF4b5563), fontSize: 10), textAlign: TextAlign.center),
-              ),
-              const SizedBox(height: 12),
-              const _SidebarDivider(),
-
-              // Logout
-              InkWell(
-                onTap: onLogout,
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(children: [
-                    const Icon(Icons.logout_rounded, color: Colors.red, size: 17),
-                    const SizedBox(width: 10),
-                    const Text('Cerrar sesión', style: TextStyle(color: Colors.red, fontSize: 13)),
-                  ]),
-                ),
-              ),
-              const SizedBox(height: 8),
-            ]),
-          ),
+        _Sidebar(selectedIndex: selectedIndex, onNavTap: onNavTap, onLogout: onLogout),
+        Expanded(
+          child: Column(children: [
+            _TopBar(user: user, onProfile: () => onNavTap(3)),
+            Expanded(child: content),
+          ]),
         ),
-        // Contenido
-        Expanded(child: content),
       ]),
     );
   }
 }
 
-class _SidebarDivider extends StatelessWidget {
-  const _SidebarDivider();
+// ── Menú lateral ───────────────────────────────────────────────────────────
+class _Sidebar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onNavTap;
+  final VoidCallback onLogout;
+  const _Sidebar({required this.selectedIndex, required this.onNavTap, required this.onLogout});
+
   @override
-  Widget build(BuildContext context) => Container(height: 0.5, color: AppTheme.border, margin: const EdgeInsets.symmetric(horizontal: 0));
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(right: BorderSide(color: AppTheme.border)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Logo
+        Container(
+          height: 76,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+          child: Row(children: [
+            Container(
+              width: 38, height: 38,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.featureCyan], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('BlockSign', style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+                Text('Firma digital con blockchain', style: TextStyle(color: AppTheme.hint, fontSize: 10.5)),
+              ]),
+            ),
+          ]),
+        ),
+
+        const _SideLabel('MENÚ'),
+        _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, label: 'Dashboard', selected: selectedIndex == 0, onTap: () => onNavTap(0)),
+        _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description_rounded, label: 'Documentos', selected: selectedIndex == 1, onTap: () => onNavTap(1)),
+        _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, onTap: () => onNavTap(2)),
+
+        const _SideLabel('CUENTA'),
+        _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, onTap: () => onNavTap(3)),
+
+        const Spacer(),
+
+        // Tarjeta de red / versión
+        Container(
+          margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Icon(Icons.circle, color: BSColors.success, size: 8),
+              SizedBox(width: 6),
+              Text('Red: Sepolia Testnet', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
+            ]),
+            SizedBox(height: 4),
+            Text('UMB · IS25133 · v1.0.0', style: TextStyle(color: AppTheme.hint, fontSize: 11)),
+          ]),
+        ),
+        _NavItem(icon: Icons.logout_rounded, activeIcon: Icons.logout_rounded, label: 'Cerrar sesión', selected: false, color: BSColors.danger, onTap: onLogout),
+        const SizedBox(height: 12),
+      ]),
+    );
+  }
+}
+
+class _SideLabel extends StatelessWidget {
+  final String text;
+  const _SideLabel(this.text);
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(22, 20, 22, 8),
+        child: Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.9)),
+      );
 }
 
 class _NavItem extends StatelessWidget {
@@ -175,26 +236,119 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _NavItem({required this.icon, required this.activeIcon, required this.label, required this.selected, required this.onTap});
+  final Color? color;
+  const _NavItem({required this.icon, required this.activeIcon, required this.label, required this.selected, required this.onTap, this.color});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primary.withOpacity(0.1) : Colors.transparent,
+    final c = color ?? (selected ? AppTheme.primary : AppTheme.hint);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: Material(
+        color: selected ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(children: [
+              // Indicador lateral del elemento activo
+              Container(
+                width: 3, height: 20,
+                decoration: BoxDecoration(color: selected ? AppTheme.primary : Colors.transparent, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(width: 11),
+              Icon(selected ? activeIcon : icon, color: c, size: 19),
+              const SizedBox(width: 12),
+              Text(label, style: TextStyle(color: color ?? (selected ? AppTheme.primary : AppTheme.text), fontSize: 14, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+            ]),
+          ),
         ),
-        child: Row(children: [
-          Icon(selected ? activeIcon : icon, color: selected ? AppTheme.primary : AppTheme.hint, size: 18),
-          const SizedBox(width: 10),
-          Text(label, style: TextStyle(color: selected ? AppTheme.primary : AppTheme.hint, fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
-          if (selected) ...[const Spacer(), Container(width: 5, height: 5, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle))],
-        ]),
       ),
+    );
+  }
+}
+
+// ── Barra superior: saludo con nombre, fecha y hora en vivo, usuario ───────
+class _TopBar extends StatelessWidget {
+  final _UserInfo user;
+  final VoidCallback onProfile;
+  const _TopBar({required this.user, required this.onProfile});
+
+  @override
+  Widget build(BuildContext context) {
+    final showDetails = MediaQuery.of(context).size.width > 980;
+    final first = bsPrimerNombre(user.name);
+
+    return Container(
+      height: 76,
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Row(children: [
+        Expanded(
+          child: BSLiveClock(
+            builder: (context, now) => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  first.isEmpty ? '${bsSaludo(now)} 👋' : '${bsSaludo(now)}, $first 👋',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3),
+                ),
+                const SizedBox(height: 3),
+                Row(children: [
+                  const Icon(Icons.schedule_rounded, color: AppTheme.hint, size: 14),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      '${bsFechaLarga(now)} · ${bsHora(now)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppTheme.hint, fontSize: 12.5),
+                    ),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+        ),
+        if (showDetails) ...[
+          const BSPill(label: 'Sepolia activo', color: BSColors.success),
+          const SizedBox(width: 18),
+        ],
+        Tooltip(
+          message: 'Mi perfil',
+          child: InkWell(
+            onTap: onProfile,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                BSAvatar(name: user.name, url: user.avatarUrl, radius: 19),
+                if (showDetails) ...[
+                  const SizedBox(width: 10),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 220),
+                    child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(user.name.isEmpty ? 'Mi cuenta' : user.name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                      if (user.email.isNotEmpty)
+                        Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                    ]),
+                  ),
+                ],
+              ]),
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
@@ -203,22 +357,54 @@ class _NavItem extends StatelessWidget {
 class _MobileShell extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
+  final _UserInfo user;
   final Widget content;
-  const _MobileShell({required this.selectedIndex, required this.onNavTap, required this.content});
+  const _MobileShell({required this.selectedIndex, required this.onNavTap, required this.user, required this.content});
 
   @override
   Widget build(BuildContext context) {
+    final first = bsPrimerNombre(user.name);
     return Scaffold(
-      backgroundColor: AppTheme.background,
-      body: SafeArea(child: content),
+      backgroundColor: BSColors.page,
+      body: SafeArea(
+        child: Column(children: [
+          // Encabezado con saludo, fecha y hora
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+            decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
+            child: Row(children: [
+              Expanded(
+                child: BSLiveClock(
+                  builder: (context, now) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(first.isEmpty ? '${bsSaludo(now)} 👋' : '${bsSaludo(now)}, $first 👋',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text('${bsFechaLarga(now)} · ${bsHora(now)}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                  ]),
+                ),
+              ),
+              InkWell(
+                onTap: () => onNavTap(3),
+                customBorder: const CircleBorder(),
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 18),
+                ),
+              ),
+            ]),
+          ),
+          Expanded(child: content),
+        ]),
+      ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          border: const Border(top: BorderSide(color: AppTheme.border)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, -2))],
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppTheme.border)),
         ),
         child: NavigationBar(
-          backgroundColor: AppTheme.surface,
+          backgroundColor: Colors.white,
           selectedIndex: selectedIndex,
           onDestinationSelected: onNavTap,
           indicatorColor: AppTheme.primary.withOpacity(0.1),
@@ -234,249 +420,180 @@ class _MobileShell extends StatelessWidget {
   }
 }
 
-// ── Dashboard content ──────────────────────────────────────────────────────
+// ── Dashboard ──────────────────────────────────────────────────────────────
 class _DashboardContent extends StatelessWidget {
   final Map<String, dynamic> stats;
   final List<Map<String, dynamic>> recentDocs;
   final bool loading;
   final ValueChanged<int> onNavTap;
-  final VoidCallback onRefresh;
+  final Future<void> Function() onRefresh;
 
   const _DashboardContent({required this.stats, required this.recentDocs, required this.loading, required this.onNavTap, required this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
     final isWeb = ResponsiveLayout.isWeb(context);
+    final isWide = width > 1150;
     final pad = isWeb ? 28.0 : 16.0;
-    final total = int.tryParse(stats['total']?.toString() ?? '0') ?? 0;
-    final signed = int.tryParse(stats['signed']?.toString() ?? '0') ?? 0;
-    final verified = int.tryParse(stats['verified']?.toString() ?? '0') ?? 0;
-    final pending = int.tryParse(stats['pending']?.toString() ?? '0') ?? 0;
+
+    int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
+    final total = n('total');
+    final signed = n('signed');
+    final verified = n('verified');
+    final pending = n('pending');
     final mb = stats['total_size_mb']?.toString() ?? '0';
+    String v(int x) => loading ? '–' : '$x';
 
-    return RefreshIndicator(
-      color: AppTheme.primary,
-      onRefresh: () async => onRefresh(),
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(pad),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          // Topbar
-          Row(
-            children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Dashboard', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w600)),
-                Text(_greeting(), style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
-              ]),
-              const Spacer(),
-              // Badge blockchain
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.green.withOpacity(0.3))),
-                child: const Row(children: [
-                  Icon(Icons.circle, color: Colors.green, size: 7),
-                  SizedBox(width: 5),
-                  Text('Sepolia activo', style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.w500)),
-                ]),
-              ),
-              const SizedBox(width: 8),
-              _IconBtn(icon: Icons.refresh_rounded, onTap: onRefresh),
-            ],
-          ),
-          const SizedBox(height: 20),
+    final recent = _RecentDocsCard(docs: recentDocs, loading: loading, onNavTap: onNavTap);
+    final distribution = _DistributionCard(total: total, pending: pending, signed: signed, verified: verified);
+    final quick = _QuickActionsCard(onNavTap: onNavTap);
 
-          // Banner blockchain
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.primary.withOpacity(0.2)), boxShadow: AppTheme.cardShadow),
-            child: Row(children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                child: const Icon(Icons.link_rounded, color: AppTheme.primary, size: 18),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Blockchain conectado — Ethereum Sepolia Testnet', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w500)),
-                Text('Contrato verificado en Etherscan', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
-              ])),
-              const Icon(Icons.open_in_new_rounded, color: AppTheme.hint, size: 16),
-            ]),
-          ),
-          const SizedBox(height: 20),
-
-          // Stats
-          _SectionLabel('Resumen de actividad'),
-          const SizedBox(height: 10),
-          GridView.count(
-            crossAxisCount: isWeb ? 4 : 2,
-            mainAxisSpacing: 10, crossAxisSpacing: 10,
-            childAspectRatio: isWeb ? 1.8 : 1.5,
-            shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _StatCard(icon: Icons.description_outlined, label: 'Documentos', value: loading ? '-' : '$total', valueColor: AppTheme.primary),
-              _StatCard(icon: Icons.draw_outlined, label: 'Firmados', value: loading ? '-' : '$signed', valueColor: AppTheme.text),
-              _StatCard(icon: Icons.verified_outlined, label: 'Verificados', value: loading ? '-' : '$verified', valueColor: Colors.green),
-              _StatCard(icon: Icons.storage_outlined, label: 'MB usados', value: loading ? '-' : mb, valueColor: Colors.orange),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Main grid
-          if (isWeb)
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(child: Column(children: [
-                _RecentDocsCard(docs: recentDocs, onNavTap: onNavTap),
-              ])),
-              const SizedBox(width: 12),
-              SizedBox(width: 300, child: Column(children: [
-                _DistributionCard(total: total, pending: pending, signed: signed, verified: verified),
-                const SizedBox(height: 12),
-                _QuickActionsCard(onNavTap: onNavTap),
-              ])),
-            ])
-          else
-            Column(children: [
-              _DistributionCard(total: total, pending: pending, signed: signed, verified: verified),
-              const SizedBox(height: 12),
-              _QuickActionsCard(onNavTap: onNavTap),
-              const SizedBox(height: 12),
-              _RecentDocsCard(docs: recentDocs, onNavTap: onNavTap),
-            ]),
-
-          const SizedBox(height: 32),
-        ]),
-      ),
-    );
-  }
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    final g = h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches';
-    final now = DateTime.now();
-    const m = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    return '$g — ${now.day} ${m[now.month-1]} ${now.year}';
-  }
-}
-
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _IconBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-        child: Icon(icon, color: AppTheme.hint, size: 16),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-  @override
-  Widget build(BuildContext context) => Text(text.toUpperCase(), style: const TextStyle(color: AppTheme.hint, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 1.0));
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label, value;
-  final Color valueColor;
-  const _StatCard({required this.icon, required this.label, required this.value, required this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Icon(icon, color: AppTheme.hint, size: 18),
-        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(value, style: TextStyle(color: valueColor, fontSize: 22, fontWeight: FontWeight.w600)),
-          Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
-        ]),
-      ]),
+      color: BSColors.page,
+      child: RefreshIndicator(
+        color: AppTheme.primary,
+        onRefresh: onRefresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(pad, 20, pad, 28),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            BSPageHeader(
+              breadcrumb: const ['Inicio', 'Dashboard'],
+              title: 'Dashboard',
+              subtitle: 'Resumen de tu actividad en BlockSign.',
+              actions: [
+                BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: loading ? null : () => onRefresh()),
+                BSPrimaryButton(label: 'Subir documento', icon: Icons.upload_file_rounded, onPressed: () => onNavTap(1)),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const BSInfoBanner(
+              title: 'Blockchain conectado — Ethereum Sepolia Testnet',
+              text: 'Cada firma queda registrada de forma inmutable y se puede comprobar en Etherscan.',
+              color: BSColors.success,
+              icon: Icons.link_rounded,
+            ),
+            const SizedBox(height: 16),
+            BSKpiRow(items: [
+              BSKpiCard(label: 'Documentos', value: v(total), caption: '$mb MB usados', color: AppTheme.primary),
+              BSKpiCard(label: 'Pendientes de firma', value: v(pending), caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning),
+              BSKpiCard(label: 'Firmados', value: v(signed), caption: 'Registrados en Sepolia', color: AppTheme.featureCyan),
+              BSKpiCard(label: 'Verificados', value: v(verified), caption: 'Integridad comprobada', color: BSColors.success),
+            ]),
+            const SizedBox(height: 16),
+            if (isWide)
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(child: recent),
+                const SizedBox(width: 16),
+                SizedBox(width: 340, child: Column(children: [distribution, const SizedBox(height: 16), quick])),
+              ])
+            else ...[
+              recent,
+              const SizedBox(height: 16),
+              distribution,
+              const SizedBox(height: 16),
+              quick,
+            ],
+          ]),
+        ),
+      ),
     );
   }
+}
+
+class _LinkText extends StatelessWidget {
+  final String text;
+  final VoidCallback onTap;
+  const _LinkText(this.text, this.onTap);
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Text(text, style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w700)),
+        ),
+      );
 }
 
 class _RecentDocsCard extends StatelessWidget {
   final List<Map<String, dynamic>> docs;
+  final bool loading;
   final ValueChanged<int> onNavTap;
-  const _RecentDocsCard({required this.docs, required this.onNavTap});
+  const _RecentDocsCard({required this.docs, required this.loading, required this.onNavTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-          child: Row(children: [
-            const Text('Documentos recientes', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
-            const Spacer(),
-            GestureDetector(onTap: () => onNavTap(1), child: const Text('Ver todos →', style: TextStyle(color: AppTheme.primary, fontSize: 12))),
+    Widget body;
+    if (loading) {
+      body = const Padding(padding: EdgeInsets.symmetric(vertical: 40), child: Center(child: CircularProgressIndicator(color: AppTheme.primary)));
+    } else if (docs.isEmpty) {
+      body = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 28),
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 56, height: 56,
+              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
+              child: const Icon(Icons.inbox_outlined, color: AppTheme.primary, size: 26),
+            ),
+            const SizedBox(height: 12),
+            const Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            const Text('Sube tu primer PDF o Word para empezar.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            const SizedBox(height: 16),
+            BSPrimaryButton(label: 'Subir documento', icon: Icons.upload_file_rounded, onPressed: () => onNavTap(1)),
           ]),
         ),
-        const Divider(height: 1, color: AppTheme.border),
-        if (docs.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(children: [
-              const Icon(Icons.inbox_outlined, color: AppTheme.hint, size: 32),
-              const SizedBox(height: 8),
-              const Text('Sin documentos aún', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => onNavTap(1),
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.primary), foregroundColor: AppTheme.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                icon: const Icon(Icons.upload_file_rounded, size: 15),
-                label: const Text('Subir documento', style: TextStyle(fontSize: 13)),
-              ),
-            ]),
-          )
-        else
-          ...docs.asMap().entries.map((e) {
-            final i = e.key;
-            final doc = e.value;
-            final meta = (doc['metadata'] as Map<String, dynamic>?) ?? {};
-            final ext = meta['extension']?.toString() ?? 'pdf';
-            final isPdf = ext == 'pdf';
-            final status = doc['status']?.toString() ?? 'pending';
-            final created = doc['created_at'] != null ? DateTime.parse(doc['created_at']).toLocal() : DateTime.now();
-            final dateStr = '${created.day}/${created.month}/${created.year}';
+      );
+    } else {
+      final rows = <Widget>[];
+      for (var i = 0; i < docs.length; i++) {
+        final doc = docs[i];
+        final meta = (doc['metadata'] as Map<String, dynamic>?) ?? {};
+        final ext = meta['extension']?.toString() ?? 'pdf';
+        final isPdf = ext == 'pdf';
+        final status = doc['status']?.toString() ?? 'pending';
+        final created = doc['created_at'] != null ? DateTime.parse(doc['created_at']).toLocal() : DateTime.now();
+        String two(int x) => x.toString().padLeft(2, '0');
+        final dateStr = '${two(created.day)}/${two(created.month)}/${created.year}';
 
-            return Column(children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                child: Row(children: [
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      color: isPdf ? Colors.red.withOpacity(0.1) : AppTheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(isPdf ? Icons.picture_as_pdf_rounded : Icons.article_rounded, color: isPdf ? Colors.red : AppTheme.primary, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(doc['title']?.toString() ?? 'Sin nombre', style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text('$dateStr · ${meta['size_mb'] ?? '?'} MB', style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
-                  ])),
-                  _StatusChip(status: status),
+        rows.add(InkWell(
+          onTap: () => onNavTap(1),
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 11),
+            child: Row(children: [
+              BSInitialBox(
+                text: ext.toUpperCase(),
+                color: isPdf ? BSColors.danger : AppTheme.primary,
+                icon: isPdf ? Icons.picture_as_pdf_rounded : Icons.article_rounded,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(doc['title']?.toString() ?? 'Sin nombre', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text('$dateStr · ${meta['size_mb'] ?? '?'} MB', style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
               ),
-              if (i < docs.length - 1) const Divider(height: 1, indent: 16, endIndent: 16, color: AppTheme.border),
-            ]);
-          }),
-      ]),
+              const SizedBox(width: 10),
+              BSPill.docStatus(status),
+            ]),
+          ),
+        ));
+        if (i < docs.length - 1) rows.add(const Divider(height: 1, color: AppTheme.border));
+      }
+      body = Column(children: rows);
+    }
+
+    return BSCard(
+      title: 'Documentos recientes',
+      trailing: _LinkText('Ver todos →', () => onNavTap(1)),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      child: body,
     );
   }
 }
@@ -487,17 +604,14 @@ class _DistributionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Distribución por estado', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
+    return BSCard(
+      title: 'Distribución por estado',
+      child: Column(children: [
+        _Bar(label: 'Pendiente', count: pending, total: total, color: BSColors.warning),
         const SizedBox(height: 14),
-        _Bar(label: 'Pendiente', count: pending, total: total, color: Colors.orange),
-        const SizedBox(height: 10),
         _Bar(label: 'Firmado', count: signed, total: total, color: AppTheme.primary),
-        const SizedBox(height: 10),
-        _Bar(label: 'Verificado', count: verified, total: total, color: Colors.green),
+        const SizedBox(height: 14),
+        _Bar(label: 'Verificado', count: verified, total: total, color: BSColors.success),
       ]),
     );
   }
@@ -514,14 +628,14 @@ class _Bar extends StatelessWidget {
     final pct = total > 0 ? count / total : 0.0;
     return Column(children: [
       Row(children: [
-        Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+        Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
         const Spacer(),
-        Text('$count (${(pct * 100).toStringAsFixed(0)}%)', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+        Text('$count · ${(pct * 100).toStringAsFixed(0)}%', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
-      const SizedBox(height: 5),
+      const SizedBox(height: 6),
       ClipRRect(
         borderRadius: BorderRadius.circular(4),
-        child: LinearProgressIndicator(value: pct, backgroundColor: AppTheme.border, valueColor: AlwaysStoppedAnimation(color), minHeight: 6),
+        child: LinearProgressIndicator(value: pct, backgroundColor: BSColors.page, valueColor: AlwaysStoppedAnimation(color), minHeight: 8),
       ),
     ]);
   }
@@ -533,94 +647,104 @@ class _QuickActionsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Acciones rápidas', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 12),
-        GridView.count(
-          crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8, childAspectRatio: 2.4,
-          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _ActionBtn(icon: Icons.upload_file_outlined, label: 'Subir', sub: 'PDF o Word', color: AppTheme.primary, onTap: () => onNavTap(1)),
-            _ActionBtn(icon: Icons.draw_outlined, label: 'Firmar', sub: 'Documento', color: Colors.green, onTap: () => onNavTap(1)),
-            _ActionBtn(icon: Icons.verified_outlined, label: 'Verificar', sub: 'Firma', color: Colors.orange, onTap: () => onNavTap(2)),
-            _ActionBtn(icon: Icons.person_outline_rounded, label: 'Perfil', sub: 'Mi cuenta', color: Colors.purple, onTap: () => onNavTap(3)),
-          ],
-        ),
+    return BSCard(
+      title: 'Acciones rápidas',
+      child: Column(children: [
+        _ActionTile(icon: Icons.upload_file_outlined, label: 'Subir documento', sub: 'PDF o Word, analizado con IA', color: AppTheme.primary, onTap: () => onNavTap(1)),
+        const SizedBox(height: 8),
+        _ActionTile(icon: Icons.draw_outlined, label: 'Firmar pendientes', sub: 'Registra la firma en blockchain', color: BSColors.success, onTap: () => onNavTap(1)),
+        const SizedBox(height: 8),
+        _ActionTile(icon: Icons.verified_outlined, label: 'Verificar firma', sub: 'Comprueba un documento', color: BSColors.warning, onTap: () => onNavTap(2)),
+        const SizedBox(height: 8),
+        _ActionTile(icon: Icons.person_outline_rounded, label: 'Mi perfil', sub: 'Datos, seguridad y firma', color: const Color(0xFF8B5CF6), onTap: () => onNavTap(3)),
       ]),
     );
   }
 }
 
-class _ActionBtn extends StatelessWidget {
+class _ActionTile extends StatelessWidget {
   final IconData icon;
   final String label, sub;
   final Color color;
   final VoidCallback onTap;
-  const _ActionBtn({required this.icon, required this.label, required this.sub, required this.color, required this.onTap});
+  const _ActionTile({required this.icon, required this.label, required this.sub, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(color: AppTheme.background, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-        child: Row(children: [
-          Container(width: 28, height: 28, decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)), child: Icon(icon, color: color, size: 15)),
-          const SizedBox(width: 8),
-          Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
-            Text(sub, style: const TextStyle(color: AppTheme.hint, fontSize: 10)),
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          child: Row(children: [
+            Container(
+              width: 36, height: 36,
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+              ]),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: AppTheme.hint, size: 20),
           ]),
-        ]),
+        ),
       ),
     );
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String status;
-  const _StatusChip({required this.status});
+// ── Verificar (próximamente) ───────────────────────────────────────────────
+class _VerifyPlaceholder extends StatelessWidget {
+  const _VerifyPlaceholder();
 
   @override
   Widget build(BuildContext context) {
-    final map = {
-      'pending': (Colors.orange, 'Pendiente'),
-      'signed': (AppTheme.primary, 'Firmado'),
-      'verified': (Colors.green, 'Verificado'),
-      'rejected': (Colors.red, 'Rechazado'),
-    };
-    final (color, label) = map[status] ?? (AppTheme.hint, status);
+    final pad = ResponsiveLayout.isWeb(context) ? 28.0 : 16.0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withOpacity(0.25))),
-      child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
-    );
-  }
-}
-
-// ── Placeholder ────────────────────────────────────────────────────────────
-class _PlaceholderContent extends StatelessWidget {
-  final IconData icon;
-  final String title, subtitle;
-  const _PlaceholderContent({required this.icon, required this.title, required this.subtitle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Container(width: 64, height: 64, decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)), child: Icon(icon, color: AppTheme.hint, size: 28)),
-        const SizedBox(height: 16),
-        Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
-        Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5)),
-        const SizedBox(height: 20),
-        Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), decoration: BoxDecoration(color: AppTheme.surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.border)), child: const Text('Próximamente', style: TextStyle(color: AppTheme.hint, fontSize: 12))),
-      ]),
+      color: BSColors.page,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(pad, 20, pad, 28),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          const BSPageHeader(
+            breadcrumb: ['Inicio', 'Verificar'],
+            title: 'Verificar firma',
+            subtitle: 'Comprueba la autenticidad de documentos firmados en blockchain.',
+          ),
+          const SizedBox(height: 20),
+          BSCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    width: 64, height: 64,
+                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
+                    child: const Icon(Icons.verified_outlined, color: AppTheme.primary, size: 30),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Muy pronto', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Podrás subir un documento y comprobar su hash SHA-256\ncontra el registro en la blockchain Sepolia.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5),
+                  ),
+                  const SizedBox(height: 16),
+                  const BSPill(label: 'En desarrollo', color: BSColors.warning),
+                ]),
+              ),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
