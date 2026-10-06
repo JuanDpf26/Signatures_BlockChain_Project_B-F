@@ -1,8 +1,11 @@
 name: Deploy Flutter Web to Vercel
 
+# Despliegue automático PAUSADO mientras el proyecto se trabaja en local.
+# Para publicar: GitHub → Actions → "Deploy Flutter Web to Vercel" → Run workflow.
+# Para reactivarlo en cada push a main, descomenta las líneas de "push".
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -25,6 +28,7 @@ jobs:
       - name: Build web
         run: |
           flutter build web --release \
+            --dart-define=IS_LOCAL=false \
             --dart-define=API_URL=${{ secrets.API_URL }}
 
       - name: Deploy to Vercel

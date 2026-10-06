@@ -2,10 +2,9 @@ import 'package:flutter/foundation.dart';
 
 /// Dirección del backend.
 ///
-/// - `flutter run` (debug)           → backend LOCAL (http://localhost:3000)
-/// - `flutter build web --release`   → backend PUBLICADO (Render)
-/// - Forzar una URL:   --dart-define=API_URL=https://...
-/// - Forzar local/prod: --dart-define=IS_LOCAL=true | false
+/// POR AHORA TODO ES LOCAL: la app usa http://localhost:3000 siempre.
+/// - Usar el servidor publicado:  --dart-define=IS_LOCAL=false
+/// - Forzar una URL concreta:     --dart-define=API_URL=https://...
 class AppConfig {
   static const String _apiFromEnv = String.fromEnvironment('API_URL');
   static const String _isLocalEnv = String.fromEnvironment('IS_LOCAL');
@@ -19,8 +18,8 @@ class AppConfig {
     return 'http://localhost:3000';
   }
 
-  /// Local en modo debug, publicado en release (salvo que IS_LOCAL diga otra cosa)
-  static bool get isLocal => _isLocalEnv.isEmpty ? !kReleaseMode : _isLocalEnv == 'true';
+  /// Local por defecto (también en release) mientras el proyecto se trabaja en local
+  static bool get isLocal => _isLocalEnv != 'false';
 
   static String get apiUrl {
     if (_apiFromEnv.isNotEmpty) return _apiFromEnv;
