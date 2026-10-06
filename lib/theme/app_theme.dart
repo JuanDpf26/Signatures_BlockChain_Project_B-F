@@ -1,36 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Colors — paleta clara estilo Google
+  // Paleta natural: azul sereno, verde azulado y grises pizarra
+  // (menos saturada que la anterior para que todo se vea armónico).
   static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFF8F9FA);
-  static const Color border = Color(0xFFDADCE0);
-  static const Color primary = Color(0xFF1A73E8);
-  static const Color text = Color(0xFF202124);
-  static const Color hint = Color(0xFF5F6368);
-  static const Color featureBlue = Color(0xFF3b82f6);
-  static const Color featureCyan = Color(0xFF06b6d4);
-  static const Color error = Color(0xFFD93025);
-  static const Color success = Color(0xFF188038);
+  static const Color surface = Color(0xFFF8FAFC);
+  static const Color border = Color(0xFFE2E8F0);
+  static const Color primary = Color(0xFF2F6BDB);
+  static const Color primaryDark = Color(0xFF2353B3);
+  static const Color text = Color(0xFF1E293B);
+  static const Color hint = Color(0xFF64748B);
+  static const Color featureBlue = Color(0xFF4F7FE6);
+  static const Color featureCyan = Color(0xFF1499AE);
+  static const Color error = Color(0xFFDC4B4B);
+  static const Color success = Color(0xFF1F9D55);
 
-  // Sombra sutil estilo Material para dar profundidad a cards y paneles
+  // Sombras suaves en capas: dan profundidad sin verse pesadas
   static List<BoxShadow> get cardShadow => [
-        BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 12, offset: const Offset(0, 2)),
-        BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 2, offset: const Offset(0, 1)),
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.04), blurRadius: 14, offset: const Offset(0, 4)),
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.03), blurRadius: 2, offset: const Offset(0, 1)),
+      ];
+
+  static List<BoxShadow> get hoverShadow => [
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.08), blurRadius: 24, offset: const Offset(0, 10)),
+        BoxShadow(color: primary.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2)),
       ];
 
   static ThemeData get dark {
+    final scheme = ColorScheme.fromSeed(seedColor: primary, brightness: Brightness.light).copyWith(
+      primary: primary,
+      onPrimary: Colors.white,
+      secondary: featureCyan,
+      surface: Colors.white,
+      error: error,
+    );
+    WidgetStateProperty<Color?> overlay(Color c) => WidgetStateProperty.resolveWith((s) {
+          if (s.contains(WidgetState.pressed)) return c.withOpacity(0.14);
+          if (s.contains(WidgetState.hovered)) return c.withOpacity(0.07);
+          if (s.contains(WidgetState.focused)) return c.withOpacity(0.10);
+          return null;
+        });
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: background,
-      colorScheme: const ColorScheme.light(
-        primary: primary,
-        surface: surface,
-        background: background,
-        error: error,
+      colorScheme: scheme,
+      fontFamily: GoogleFonts.inter().fontFamily,
+      // Interacciones más vivas: onda suave, hover tenue y transiciones con zoom
+      splashFactory: InkRipple.splashFactory,
+      hoverColor: primary.withOpacity(0.045),
+      splashColor: primary.withOpacity(0.10),
+      highlightColor: primary.withOpacity(0.05),
+      focusColor: primary.withOpacity(0.10),
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: ZoomPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+        TargetPlatform.linux: ZoomPageTransitionsBuilder(),
+        TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
+      }),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: primary,
+        selectionColor: primary.withOpacity(0.18),
+        selectionHandleColor: primary,
       ),
-      fontFamily: 'Inter', // Agrega Inter a pubspec.yaml > fonts
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: primary),
+      tooltipTheme: TooltipThemeData(
+        decoration: BoxDecoration(color: text.withOpacity(0.92), borderRadius: BorderRadius.circular(8)),
+        textStyle: const TextStyle(color: Colors.white, fontSize: 12),
+        waitDuration: const Duration(milliseconds: 400),
+      ),
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(hint.withOpacity(0.35)),
+        radius: const Radius.circular(8),
+        thickness: WidgetStateProperty.all(6),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(backgroundColor: Colors.white, surfaceTintColor: Colors.transparent),
+      popupMenuTheme: PopupMenuThemeData(
+        color: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.all(primary),
+          overlayColor: overlay(primary),
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(style: ButtonStyle(overlayColor: overlay(primary))),
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: text,
@@ -50,6 +116,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        ).copyWith(
+          overlayColor: overlay(Colors.white),
+          elevation: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.hovered) ? 4 : 0),
+          shadowColor: WidgetStateProperty.all(primary.withOpacity(0.45)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -59,11 +129,12 @@ class AppTheme {
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
+        ).copyWith(overlayColor: overlay(primary)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        hoverColor: primary.withOpacity(0.03),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: border),

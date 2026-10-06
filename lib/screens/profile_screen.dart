@@ -90,10 +90,10 @@ class _ProfileScreenState extends State<ProfileScreen>
             const SizedBox(height: 12),
 
             BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos', value: '${stats['total_docs'] ?? 0}', caption: 'Subidos', color: AppTheme.primary),
-              BSKpiCard(label: 'Firmados', value: '${stats['signed_docs'] ?? 0}', caption: 'Con registro en blockchain', color: AppTheme.featureCyan),
-              BSKpiCard(label: 'Verificados', value: '${stats['verified_docs'] ?? 0}', caption: 'Integridad comprobada', color: BSColors.success),
-              BSKpiCard(label: 'Almacenamiento', value: '${stats['total_size_mb'] ?? 0}', caption: 'MB usados', color: BSColors.warning),
+              BSKpiCard(label: 'Documentos', value: '${stats['total_docs'] ?? 0}', caption: 'Subidos', color: AppTheme.primary, icon: Icons.folder_copy_outlined),
+              BSKpiCard(label: 'Firmados', value: '${stats['signed_docs'] ?? 0}', caption: 'Con registro en blockchain', color: AppTheme.featureCyan, icon: Icons.draw_outlined),
+              BSKpiCard(label: 'Verificados', value: '${stats['verified_docs'] ?? 0}', caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined),
+              BSKpiCard(label: 'Almacenamiento', value: '${stats['total_size_mb'] ?? 0}', caption: 'MB usados', color: BSColors.warning, icon: Icons.cloud_outlined),
             ]),
             const SizedBox(height: 20),
 

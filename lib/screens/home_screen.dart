@@ -120,6 +120,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+/// Transición suave al cambiar de sección (se desvanece y sube un poco)
+class _ContentSwitcher extends StatelessWidget {
+  final int index;
+  final Widget child;
+  const _ContentSwitcher({required this.index, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 320),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: SlideTransition(
+          position: Tween(begin: const Offset(0, 0.015), end: Offset.zero).animate(anim),
+          child: child,
+        ),
+      ),
+      layoutBuilder: (current, previous) => Stack(fit: StackFit.expand, children: [...previous, if (current != null) current]),
+      child: KeyedSubtree(key: ValueKey(index), child: child),
+    );
+  }
+}
+
 class _UserInfo {
   final String name, email;
   final String? avatarUrl;
@@ -163,7 +188,7 @@ class _WebShellState extends State<_WebShell> {
         Expanded(
           child: Column(children: [
             _TopBar(user: widget.user, onProfile: () => widget.onNavTap(3)),
-            Expanded(child: widget.content),
+            Expanded(child: _ContentSwitcher(index: widget.selectedIndex, child: widget.content)),
           ]),
         ),
       ]),
@@ -174,11 +199,11 @@ class _WebShellState extends State<_WebShell> {
 // ── Menú lateral ÉPICO (oscuro, con brillo y animaciones) ──────────────────
 // Expandido 264 px / contraído 84 px. Misma interfaz que el anterior.
 
-const _sbBg1 = Color(0xFF0B1437); // azul noche
-const _sbBg2 = Color(0xFF121A4A); // índigo profundo
-const _sbBg3 = Color(0xFF1B1464); // violeta oscuro
-const _sbText = Color(0xFFC7CEEA);
-const _sbMuted = Color(0xFF7B86B5);
+const _sbBg1 = Color(0xFF0F172A); // pizarra noche
+const _sbBg2 = Color(0xFF15213A); // azul pizarra
+const _sbBg3 = Color(0xFF1B2B48); // azul profundo
+const _sbText = Color(0xFFCBD5E1);
+const _sbMuted = Color(0xFF8492AB);
 
 class _Sidebar extends StatelessWidget {
   final int selectedIndex;
@@ -216,8 +241,8 @@ class _Sidebar extends StatelessWidget {
       child: ClipRect(
         child: Stack(children: [
           // Halos de luz decorativos
-          Positioned(top: -70, left: -60, child: _Glow(size: 220, color: AppTheme.primary.withOpacity(0.35))),
-          Positioned(bottom: 120, right: -90, child: _Glow(size: 220, color: AppTheme.featureCyan.withOpacity(0.18))),
+          Positioned(top: -70, left: -60, child: _Glow(size: 220, color: AppTheme.primary.withOpacity(0.22))),
+          Positioned(bottom: 120, right: -90, child: _Glow(size: 220, color: AppTheme.featureCyan.withOpacity(0.12))),
 
           OverflowBox(
             alignment: Alignment.topLeft,
@@ -424,6 +449,7 @@ class _NavItem extends StatefulWidget {
 
 class _NavItemState extends State<_NavItem> {
   bool _hover = false;
+  bool _down = false;
 
   @override
   Widget build(BuildContext context) {
@@ -437,8 +463,11 @@ class _NavItemState extends State<_NavItem> {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _down = true),
+        onTapUp: (_) => setState(() => _down = false),
+        onTapCancel: () => setState(() => _down = false),
         child: AnimatedScale(
-          scale: _hover && !sel ? 1.02 : 1,
+          scale: _down ? 0.96 : (_hover && !sel ? 1.02 : 1),
           duration: const Duration(milliseconds: 150),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
@@ -447,12 +476,12 @@ class _NavItemState extends State<_NavItem> {
             padding: EdgeInsets.symmetric(horizontal: c ? 0 : 14),
             decoration: BoxDecoration(
               gradient: sel
-                  ? const LinearGradient(colors: [AppTheme.primary, AppTheme.featureCyan], begin: Alignment.centerLeft, end: Alignment.centerRight)
+                  ? const LinearGradient(colors: [AppTheme.primary, AppTheme.featureBlue], begin: Alignment.centerLeft, end: Alignment.centerRight)
                   : null,
               color: sel ? null : (_hover ? Colors.white.withOpacity(0.07) : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
               boxShadow: sel
-                  ? [BoxShadow(color: AppTheme.featureCyan.withOpacity(0.35), blurRadius: 16, offset: const Offset(0, 6))]
+                  ? [BoxShadow(color: AppTheme.primary.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 5))]
                   : null,
             ),
             child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
@@ -694,7 +723,7 @@ class _MobileShell extends StatelessWidget {
               ),
             ]),
           ),
-          Expanded(child: content),
+          Expanded(child: _ContentSwitcher(index: selectedIndex, child: content)),
         ]),
       ),
       bottomNavigationBar: Container(
@@ -775,10 +804,10 @@ class _DashboardContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos', value: v(total), caption: '$mb MB usados', color: AppTheme.primary),
-              BSKpiCard(label: 'Pendientes de firma', value: v(pending), caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning),
-              BSKpiCard(label: 'Firmados', value: v(signed), caption: 'Registrados en Sepolia', color: AppTheme.featureCyan),
-              BSKpiCard(label: 'Verificados', value: v(verified), caption: 'Integridad comprobada', color: BSColors.success),
+              BSKpiCard(label: 'Documentos', value: v(total), caption: '$mb MB usados', color: AppTheme.primary, icon: Icons.folder_copy_outlined, onTap: () => onNavTap(1)),
+              BSKpiCard(label: 'Pendientes de firma', value: v(pending), caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning, icon: Icons.pending_actions_rounded, onTap: () => onNavTap(1)),
+              BSKpiCard(label: 'Firmados', value: v(signed), caption: 'Registrados en Sepolia', color: AppTheme.featureCyan, icon: Icons.draw_outlined, onTap: () => onNavTap(1)),
+              BSKpiCard(label: 'Verificados', value: v(verified), caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined, onTap: () => onNavTap(1)),
             ]),
             const SizedBox(height: 16),
             if (isWide)
@@ -955,13 +984,13 @@ class _QuickActionsCard extends StatelessWidget {
         const SizedBox(height: 8),
         _ActionTile(icon: Icons.verified_outlined, label: 'Verificar firma', sub: 'Comprueba un documento', color: BSColors.warning, onTap: () => onNavTap(2)),
         const SizedBox(height: 8),
-        _ActionTile(icon: Icons.person_outline_rounded, label: 'Mi perfil', sub: 'Datos, seguridad y firma', color: const Color(0xFF8B5CF6), onTap: () => onNavTap(3)),
+        _ActionTile(icon: Icons.person_outline_rounded, label: 'Mi perfil', sub: 'Datos, seguridad y firma', color: const Color(0xFF7C6FD6), onTap: () => onNavTap(3)),
       ]),
     );
   }
 }
 
-class _ActionTile extends StatelessWidget {
+class _ActionTile extends StatefulWidget {
   final IconData icon;
   final String label, sub;
   final Color color;
@@ -969,30 +998,49 @@ class _ActionTile extends StatelessWidget {
   const _ActionTile({required this.icon, required this.label, required this.sub, required this.color, required this.onTap});
 
   @override
+  State<_ActionTile> createState() => _ActionTileState();
+}
+
+class _ActionTileState extends State<_ActionTile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
+    final c = widget.color;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: BSPressable(
+        onTap: widget.onTap,
+        hoverLift: false,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          decoration: BoxDecoration(
+            color: _hover ? c.withOpacity(0.05) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _hover ? c.withOpacity(0.35) : AppTheme.border),
+          ),
           child: Row(children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Icon(icon, color: color, size: 18),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 38, height: 38,
+              decoration: BoxDecoration(color: _hover ? c : c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(widget.icon, color: _hover ? Colors.white : c, size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
-                Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                Text(widget.label, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                Text(widget.sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
               ]),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppTheme.hint, size: 20),
+            AnimatedSlide(
+              offset: Offset(_hover ? 0.25 : 0, 0),
+              duration: const Duration(milliseconds: 200),
+              child: Icon(Icons.chevron_right_rounded, color: _hover ? c : AppTheme.hint, size: 20),
+            ),
           ]),
         ),
       ),

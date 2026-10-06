@@ -329,10 +329,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
             // KPIs
             BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos', value: '${_docs.length}', caption: _hasFilters ? 'Con los filtros actuales' : 'En tu cuenta', color: AppTheme.primary),
-              BSKpiCard(label: 'Pendientes de firma', value: '$pending', caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning),
-              BSKpiCard(label: 'Firmados', value: '$signed', caption: 'Registrados en Sepolia', color: AppTheme.featureCyan),
-              BSKpiCard(label: 'Verificados', value: '$verified', caption: 'Integridad comprobada', color: BSColors.success),
+              BSKpiCard(label: 'Documentos', value: '${_docs.length}', caption: _hasFilters ? 'Con los filtros actuales' : 'En tu cuenta', color: AppTheme.primary, icon: Icons.folder_copy_outlined),
+              BSKpiCard(label: 'Pendientes de firma', value: '$pending', caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning, icon: Icons.pending_actions_rounded),
+              BSKpiCard(label: 'Firmados', value: '$signed', caption: 'Registrados en Sepolia', color: AppTheme.featureCyan, icon: Icons.draw_outlined),
+              BSKpiCard(label: 'Verificados', value: '$verified', caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined),
             ]),
             const SizedBox(height: 16),
 
@@ -440,9 +440,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
       );
-      rows.add(isTable
-          ? _DocRow(info: info, actions: actions, onTap: () => _showDetail(doc))
-          : _DocTile(info: info, actions: actions, onTap: () => _showDetail(doc)));
+      // Cada fila aparece con un pequeño escalonado
+      rows.add(BSEntrance(
+        key: ValueKey('doc-$docId'),
+        delay: Duration(milliseconds: 35 * (i < 12 ? i : 12)),
+        offsetY: 10,
+        child: isTable
+            ? _DocRow(info: info, actions: actions, onTap: () => _showDetail(doc))
+            : _DocTile(info: info, actions: actions, onTap: () => _showDetail(doc)),
+      ));
       if (i < _docs.length - 1) rows.add(const Divider(height: 1, color: AppTheme.border));
     }
     rows.add(Container(

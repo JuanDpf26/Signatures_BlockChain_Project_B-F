@@ -10,21 +10,21 @@ import 'package:flutter/material.dart';
 ///   final ok = await SweetAlert.confirm(context, title: '¿Seguro?', text: '...');
 enum SweetAlertType { success, error, warning, info, question }
 
-const _kBrand = Color(0xFF6366F1); // índigo BlockSign
+const _kBrand = Color(0xFF2F6BDB); // azul BlockSign
 const _kCancel = Color(0xFF6E7881);
 
 Color _typeColor(SweetAlertType t) {
   switch (t) {
     case SweetAlertType.success:
-      return const Color(0xFF22C55E);
+      return const Color(0xFF1F9D55);
     case SweetAlertType.error:
-      return const Color(0xFFEF4444);
+      return const Color(0xFFDC4B4B);
     case SweetAlertType.warning:
-      return const Color(0xFFF59E0B);
+      return const Color(0xFFD9861A);
     case SweetAlertType.info:
-      return const Color(0xFF3B82F6);
+      return const Color(0xFF2F6BDB);
     case SweetAlertType.question:
-      return const Color(0xFF8B5CF6);
+      return const Color(0xFF7C6FD6);
   }
 }
 
@@ -232,7 +232,7 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
                       widget.title,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Color(0xFF374151),
+                        color: Color(0xFF1E293B),
                         fontSize: 23,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
@@ -244,7 +244,7 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
                         widget.text!,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFF6B7280),
+                          color: Color(0xFF64748B),
                           fontSize: 15,
                           height: 1.5,
                         ),

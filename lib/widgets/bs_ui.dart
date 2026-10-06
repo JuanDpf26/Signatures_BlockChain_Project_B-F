@@ -9,11 +9,11 @@ import '../theme/app_theme.dart';
 
 // ── Colores semánticos ──────────────────────────────────────────────
 class BSColors {
-  static const success = Color(0xFF16A34A);
-  static const warning = Color(0xFFD97706);
-  static const danger = Color(0xFFDC2626);
-  static const neutral = Color(0xFF6B7280);
-  static const page = Color(0xFFF4F6FA); // fondo gris claro de página
+  static const success = Color(0xFF1F9D55);
+  static const warning = Color(0xFFD9861A);
+  static const danger = Color(0xFFDC4B4B);
+  static const neutral = Color(0xFF64748B);
+  static const page = Color(0xFFF5F7FA); // fondo gris claro de página
 }
 
 // ── Encabezado de página ────────────────────────────────────────────
@@ -69,9 +69,9 @@ class BSPageHeader extends StatelessWidget {
       ],
     );
 
-    if (actions.isEmpty) return titleBlock;
+    if (actions.isEmpty) return BSEntrance(child: titleBlock);
 
-    return isWide
+    return BSEntrance(child: isWide
         ? Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -87,17 +87,20 @@ class BSPageHeader extends StatelessWidget {
               const SizedBox(height: 14),
               Wrap(spacing: 10, runSpacing: 10, children: actions),
             ],
-          );
+          ));
   }
 }
 
 // ── Tarjeta blanca con borde ────────────────────────────────────────
-class BSCard extends StatelessWidget {
+class BSCard extends StatefulWidget {
   final String? title;
   final Widget? trailing;
   final Widget child;
   final EdgeInsetsGeometry padding;
   final Color? borderColor;
+  final VoidCallback? onTap;
+  /// Se eleva suavemente al pasar el mouse (true por defecto si hay onTap)
+  final bool? hoverable;
 
   const BSCard({
     super.key,
@@ -106,52 +109,72 @@ class BSCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(20),
     this.borderColor,
+    this.onTap,
+    this.hoverable,
   });
 
   @override
+  State<BSCard> createState() => _BSCardState();
+}
+
+class _BSCardState extends State<BSCard> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    final interactive = widget.hoverable ?? widget.onTap != null;
+    final lifted = interactive && _hover;
+    final card = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
       width: double.infinity,
+      transform: Matrix4.translationValues(0, lifted ? -2 : 0, 0),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor ?? AppTheme.border),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: widget.borderColor ?? (lifted ? AppTheme.primary.withOpacity(0.25) : AppTheme.border)),
+        boxShadow: lifted ? AppTheme.hoverShadow : AppTheme.cardShadow,
       ),
-      padding: padding,
+      padding: widget.padding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (title != null) ...[
+          if (widget.title != null) ...[
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    title!,
-                    style: const TextStyle(
-                      color: AppTheme.text,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    widget.title!,
+                    style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
-                if (trailing != null) trailing!,
+                if (widget.trailing != null) widget.trailing!,
               ],
             ),
             const SizedBox(height: 16),
           ],
-          child,
+          widget.child,
         ],
       ),
+    );
+    if (!interactive) return card;
+    return MouseRegion(
+      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: BSPressable(onTap: widget.onTap, hoverLift: false, pressedScale: widget.onTap != null ? 0.985 : 1, child: card),
     );
   }
 }
 
 // ── KPI con borde de color a la izquierda ───────────────────────────
-class BSKpiCard extends StatelessWidget {
+class BSKpiCard extends StatefulWidget {
   final String label;
   final String value;
   final String? caption;
   final Color color;
+  final IconData? icon;
+  final VoidCallback? onTap;
 
   const BSKpiCard({
     super.key,
@@ -159,51 +182,114 @@ class BSKpiCard extends StatelessWidget {
     required this.value,
     this.caption,
     required this.color,
+    this.icon,
+    this.onTap,
   });
 
   @override
+  State<BSKpiCard> createState() => _BSKpiCardState();
+}
+
+class _BSKpiCardState extends State<BSKpiCard> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    // Borde izquierdo de color sin IntrinsicHeight: ClipRRect redondea y el
-    // Border no uniforme (sin borderRadius en la decoración) pinta la franja.
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(
-            left: BorderSide(color: color, width: 4),
-            top: const BorderSide(color: AppTheme.border),
-            right: const BorderSide(color: AppTheme.border),
-            bottom: const BorderSide(color: AppTheme.border),
+    final c = widget.color;
+    final number = int.tryParse(widget.value);
+    final valueStyle = const TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w800, height: 1.1);
+    return MouseRegion(
+      cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: BSPressable(
+        onTap: widget.onTap,
+        hoverLift: false,
+        pressedScale: widget.onTap != null ? 0.97 : 1,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _hover ? c.withOpacity(0.35) : AppTheme.border),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Colors.white, _hover ? c.withOpacity(0.07) : c.withOpacity(0.025)],
+            ),
+            boxShadow: _hover
+                ? [BoxShadow(color: c.withOpacity(0.18), blurRadius: 22, offset: const Offset(0, 10))]
+                : AppTheme.cardShadow,
           ),
-        ),
-        child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(label,
-                        style: const TextStyle(
-                            color: AppTheme.hint,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    Text(value,
-                        style: const TextStyle(
-                            color: AppTheme.text,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1)),
-                    if (caption != null) ...[
-                      const SizedBox(height: 4),
-                      Text(caption!,
-                          style: TextStyle(
-                              color: color,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600)),
-                    ],
-                  ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(children: [
+              // Franja de color que se ensancha al pasar el mouse
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  width: _hover ? 5 : 3.5,
+                  color: c,
                 ),
+              ),
+              // Círculo decorativo
+              Positioned(
+                right: -18,
+                top: -18,
+                child: AnimatedScale(
+                  scale: _hover ? 1.15 : 1,
+                  duration: const Duration(milliseconds: 300),
+                  child: Container(
+                    width: 74,
+                    height: 74,
+                    decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.07)),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 16, 14),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(widget.label,
+                          style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 6),
+                      number == null
+                          ? Text(widget.value, style: valueStyle)
+                          : TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: number.toDouble()),
+                              duration: const Duration(milliseconds: 900),
+                              curve: Curves.easeOutCubic,
+                              builder: (_, v, __) => Text('${v.round()}', style: valueStyle),
+                            ),
+                      if (widget.caption != null) ...[
+                        const SizedBox(height: 4),
+                        Text(widget.caption!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600)),
+                      ],
+                    ]),
+                  ),
+                  if (widget.icon != null)
+                    AnimatedRotation(
+                      turns: _hover ? -0.03 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                        child: Icon(widget.icon, color: c, size: 19),
+                      ),
+                    ),
+                ]),
+              ),
+            ]),
+          ),
         ),
       ),
     );
@@ -220,7 +306,9 @@ class BSKpiRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cols = MediaQuery.of(context).size.width > 1000 ? items.length : 2;
-    return _bsGrid(items, cols, 12, 12);
+    return _bsGrid([
+      for (var i = 0; i < items.length; i++) BSEntrance(delay: Duration(milliseconds: 60 * i), child: items[i]),
+    ], cols, 12, 12);
   }
 }
 
@@ -501,7 +589,9 @@ class BSPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return BSPressable(
+      glowColor: onPressed == null || loading ? null : (color ?? AppTheme.primary),
+      child: SizedBox(
       height: 44,
       child: ElevatedButton.icon(
         onPressed: loading ? null : onPressed,
@@ -522,6 +612,7 @@ class BSPrimaryButton extends StatelessWidget {
             : Icon(icon ?? Icons.check_rounded, size: 18),
         label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
       ),
+      ),
     );
   }
 }
@@ -537,19 +628,22 @@ class BSOutlineButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = color ?? AppTheme.primary;
-    return SizedBox(
+    return BSPressable(
+      child: SizedBox(
       height: 44,
       child: OutlinedButton.icon(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: c,
-          side: BorderSide(color: c, width: 1.2),
+          backgroundColor: Colors.white,
+          side: BorderSide(color: c.withOpacity(0.55), width: 1.2),
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         icon: Icon(icon ?? Icons.arrow_forward_rounded, size: 18),
         label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+      ),
       ),
     );
   }
@@ -676,3 +770,120 @@ class _BSAvatarState extends State<BSAvatar> {
   }
 }
 
+
+
+// ─────────────────────────────────────────────────────────────
+// INTERACCIONES
+// ─────────────────────────────────────────────────────────────
+
+/// Envuelve cualquier widget para darle vida al tocarlo:
+/// se encoge un poco al presionar y (opcional) se eleva con brillo al pasar el mouse.
+/// Usa Listener, así no le quita el toque a los botones que envuelve.
+class BSPressable extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final double pressedScale;
+  final bool hoverLift;
+  final Color? glowColor;
+  const BSPressable({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.pressedScale = 0.97,
+    this.hoverLift = true,
+    this.glowColor,
+  });
+
+  @override
+  State<BSPressable> createState() => _BSPressableState();
+}
+
+class _BSPressableState extends State<BSPressable> {
+  bool _down = false;
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget child = AnimatedScale(
+      scale: _down ? widget.pressedScale : 1,
+      duration: const Duration(milliseconds: 110),
+      curve: Curves.easeOut,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        transform: Matrix4.translationValues(0, widget.hoverLift && _hover && !_down ? -1.5 : 0, 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: widget.glowColor != null && _hover
+              ? [BoxShadow(color: widget.glowColor!.withOpacity(0.32), blurRadius: 16, offset: const Offset(0, 6))]
+              : const [],
+        ),
+        child: widget.child,
+      ),
+    );
+    if (widget.onTap != null) {
+      child = GestureDetector(behavior: HitTestBehavior.opaque, onTap: widget.onTap, child: child);
+    }
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _down = false;
+      }),
+      child: Listener(
+        onPointerDown: (_) => setState(() => _down = true),
+        onPointerUp: (_) => setState(() => _down = false),
+        onPointerCancel: (_) => setState(() => _down = false),
+        child: child,
+      ),
+    );
+  }
+}
+
+/// Aparición suave (sube y se desvanece) la primera vez que se muestra.
+class BSEntrance extends StatefulWidget {
+  final Widget child;
+  final Duration delay;
+  final double offsetY;
+  const BSEntrance({super.key, required this.child, this.delay = Duration.zero, this.offsetY = 14});
+
+  @override
+  State<BSEntrance> createState() => _BSEntranceState();
+}
+
+class _BSEntranceState extends State<BSEntrance> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+  late final Animation<double> _a = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
+  Timer? _t;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.delay == Duration.zero) {
+      _c.forward();
+    } else {
+      _t = Timer(widget.delay, () {
+        if (mounted) _c.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _a,
+      builder: (_, child) => Opacity(
+        opacity: _a.value,
+        child: Transform.translate(offset: Offset(0, widget.offsetY * (1 - _a.value)), child: child),
+      ),
+      child: widget.child,
+    );
+  }
+}
