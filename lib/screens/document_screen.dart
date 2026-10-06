@@ -247,6 +247,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         extension: (meta['extension'] ?? 'pdf').toString(),
         metadata: {
           ...meta,
+          'id': doc['id'],
           'title': doc['title'],
           'status': doc['status'],
           'created_at': doc['created_at'],

@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
+import '../widgets/sign_ia_assistant.dart';
 import '../viewers/pdf_viewer_web.dart' if (dart.library.io) '../viewers/pdf_viewer_stub.dart';
 
 /// Visor de documentos.
@@ -158,8 +159,21 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width > 1000;
 
+    final docId = widget.metadata['id']?.toString();
     return Scaffold(
       backgroundColor: BSColors.page,
+      // Sign IA: preguntar sobre este documento
+      floatingActionButton: docId == null
+          ? null
+          : SignIaFab(
+              extended: wide,
+              onTap: () => showSignIa(
+                context,
+                onNavigate: (_) => Navigator.of(context).popUntil((r) => r.isFirst),
+                documentId: docId,
+                documentTitle: widget.title,
+              ),
+            ),
       body: SafeArea(
         child: Column(children: [
           _TopBar(

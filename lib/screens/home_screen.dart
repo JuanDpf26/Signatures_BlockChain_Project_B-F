@@ -9,6 +9,7 @@ import '../widgets/bs_ui.dart';
 import '../screens/document_screen.dart';
 import 'profile_screen.dart';
 import 'verify_screen.dart';
+import '../widgets/sign_ia_assistant.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -85,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (ok) {
       await AuthService.logout();
+      resetSignIa();
       if (mounted) Navigator.pushReplacementNamed(context, '/');
     }
   }
@@ -148,6 +150,7 @@ class _WebShellState extends State<_WebShell> {
 
     return Scaffold(
       backgroundColor: BSColors.page,
+      floatingActionButton: SignIaFab(onTap: () => showSignIa(context, onNavigate: widget.onNavTap)),
       body: Row(children: [
         _Sidebar(
           selectedIndex: widget.selectedIndex,
@@ -661,6 +664,7 @@ class _MobileShell extends StatelessWidget {
     final first = bsPrimerNombre(user.name);
     return Scaffold(
       backgroundColor: BSColors.page,
+      floatingActionButton: SignIaFab(extended: false, onTap: () => showSignIa(context, onNavigate: onNavTap)),
       body: SafeArea(
         child: Column(children: [
           // Encabezado con saludo, fecha y hora
