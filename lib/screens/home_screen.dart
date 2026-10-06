@@ -8,6 +8,7 @@ import '../widgets/sweet_alert.dart';
 import '../widgets/bs_ui.dart';
 import '../screens/document_screen.dart';
 import 'profile_screen.dart';
+import 'verify_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -93,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return const DocumentsScreen();
       case 2:
-        return const _VerifyPlaceholder();
+        return const VerifyScreen();
       case 3:
         return const ProfileScreen();
       default:
@@ -266,7 +267,7 @@ class _Sidebar extends StatelessWidget {
                   _SideLabel('PRINCIPAL', collapsed: c),
                   _NavItem(icon: Icons.space_dashboard_outlined, activeIcon: Icons.space_dashboard_rounded, label: 'Dashboard', selected: selectedIndex == 0, collapsed: c, onTap: () => onNavTap(0)),
                   _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description_rounded, label: 'Documentos', selected: selectedIndex == 1, collapsed: c, onTap: () => onNavTap(1)),
-                  _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', badge: 'Pronto', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
+                  _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
                   _SideLabel('CUENTA', collapsed: c),
                   _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
                 ]),
@@ -995,50 +996,3 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-// ── Verificar (próximamente) ───────────────────────────────────────────────
-class _VerifyPlaceholder extends StatelessWidget {
-  const _VerifyPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final pad = ResponsiveLayout.isWeb(context) ? 28.0 : 16.0;
-    return Container(
-      color: BSColors.page,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(pad, 20, pad, 28),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const BSPageHeader(
-            breadcrumb: ['Inicio', 'Verificar'],
-            title: 'Verificar firma',
-            subtitle: 'Comprueba la autenticidad de documentos firmados en blockchain.',
-          ),
-          const SizedBox(height: 20),
-          BSCard(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    width: 64, height: 64,
-                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
-                    child: const Icon(Icons.verified_outlined, color: AppTheme.primary, size: 30),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('Muy pronto', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Podrás subir un documento y comprobar su hash SHA-256\ncontra el registro en la blockchain Sepolia.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5),
-                  ),
-                  const SizedBox(height: 16),
-                  const BSPill(label: 'En desarrollo', color: BSColors.warning),
-                ]),
-              ),
-            ),
-          ),
-        ]),
-      ),
-    );
-  }
-}

@@ -259,6 +259,10 @@ class BSPill extends StatelessWidget {
         return const BSPill(label: 'Verificado', color: BSColors.success);
       case 'rejected':
         return const BSPill(label: 'Rechazado', color: BSColors.danger);
+      case 'chain':
+        return const BSPill(label: 'En blockchain…', color: AppTheme.featureCyan);
+      case 'revoked':
+        return const BSPill(label: 'Revocado', color: BSColors.danger);
       default:
         return BSPill(label: status, color: BSColors.neutral);
     }
@@ -298,6 +302,8 @@ String bsDocStatusLabel(String s) => const {
       'signed': 'Firmado',
       'verified': 'Verificado',
       'rejected': 'Rechazado',
+      'chain': 'En blockchain…',
+      'revoked': 'Revocado',
       'Todos': 'Todos',
     }[s] ??
     s;
@@ -618,24 +624,55 @@ class _BSLiveClockState extends State<BSLiveClock> {
   Widget build(BuildContext context) => widget.builder(context, _now);
 }
 
-/// Avatar circular con foto o iniciales
-class BSAvatar extends StatelessWidget {
+/// Avatar circular con foto o iniciales.
+/// Si la foto falla (p. ej. Google responde 429 por demasiadas descargas),
+/// muestra las iniciales y recuerda la URL fallida para no volver a pedirla.
+class BSAvatar extends StatefulWidget {
   final String? name;
   final String? url;
   final double radius;
   const BSAvatar({super.key, this.name, this.url, this.radius = 18});
 
+  /// URLs que ya fallaron en esta sesión
+  static final Set<String> failedUrls = {};
+
+  @override
+  State<BSAvatar> createState() => _BSAvatarState();
+}
+
+class _BSAvatarState extends State<BSAvatar> {
   @override
   Widget build(BuildContext context) {
-    final hasUrl = url != null && url!.isNotEmpty;
-    return CircleAvatar(
-      radius: radius,
-      backgroundColor: AppTheme.primary,
-      backgroundImage: hasUrl ? NetworkImage(url!) : null,
-      child: hasUrl
-          ? null
-          : Text(bsIniciales(name),
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: radius * 0.75)),
+    final url = widget.url;
+    final usable = url != null && url.isNotEmpty && !BSAvatar.failedUrls.contains(url);
+    final initials = Text(bsIniciales(widget.name),
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: widget.radius * 0.75));
+    final size = widget.radius * 2;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+      clipBehavior: Clip.antiAlias,
+      child: !usable
+          ? initials
+          : Image.network(
+              url,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+              frameBuilder: (_, child, frame, sync) => frame == null && !sync ? initials : child,
+              errorBuilder: (_, __, ___) {
+                if (BSAvatar.failedUrls.add(url)) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() {});
+                  });
+                }
+                return initials;
+              },
+            ),
     );
   }
 }
+
