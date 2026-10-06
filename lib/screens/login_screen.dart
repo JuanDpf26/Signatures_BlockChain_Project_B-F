@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../widgets/widgets.dart';
+import '../widgets/sweet_alert.dart';
+import '../widgets/bs_ui.dart';
+import '../widgets/bs_auth_layout.dart';
 import '../services/auth_service.dart';
 import '../utils/validators.dart';
 import '../theme/google_auth_theme.dart';
-import '../layout/responsive_layout.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,12 +29,16 @@ class _LoginScreenState extends State<LoginScreen> {
       final uri = Uri.base;
       final verified = uri.queryParameters['verified'];
       if (verified == 'true') {
-        showBS(context, '✅ ¡Cuenta verificada! Ya puedes iniciar sesión.');
-      } else if (verified == 'error') {
-        showBS(
+        SweetAlert.success(
           context,
-          'El enlace de verificación es inválido o ya expiró.',
-          isError: true,
+          title: '¡Cuenta verificada!',
+          text: 'Ya puedes iniciar sesión.',
+        );
+      } else if (verified == 'error') {
+        SweetAlert.error(
+          context,
+          title: 'Enlace inválido',
+          text: 'El enlace de verificación es inválido o ya expiró.',
         );
       }
     });
@@ -52,9 +58,32 @@ class _LoginScreenState extends State<LoginScreen> {
       final res = await AuthService.login(_email.text.trim(), _pass.text);
       if (!mounted) return;
       if (res['token'] != null) {
-        Navigator.pushReplacementNamed(context, '/home');
+        setState(() => _isLoading = false);
+        final now = DateTime.now();
+        final name = bsPrimerNombre(res['user']?['name']?.toString());
+        await SweetAlert.success(
+          context,
+          title: name.isEmpty ? '¡Bienvenido!' : '¡Bienvenido, $name!',
+          text: '${bsSaludo(now)} · ${bsFechaLarga(now)}, ${bsHora(now)}',
+          autoClose: const Duration(milliseconds: 2000),
+        );
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       } else {
-        showBS(context, res['error'] ?? 'Error al iniciar sesión', isError: true);
+        final msg = (res['error'] ?? 'Error al iniciar sesión').toString();
+        // Cuenta sin verificar → advertencia; credenciales u otro error → error
+        if (msg.toLowerCase().contains('verificar')) {
+          await SweetAlert.warning(
+            context,
+            title: 'Verifica tu correo',
+            text: msg,
+          );
+        } else {
+          await SweetAlert.error(
+            context,
+            title: 'No pudimos iniciar sesión',
+            text: msg,
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -67,9 +96,22 @@ class _LoginScreenState extends State<LoginScreen> {
       final res = await AuthService.loginWithGoogle();
       if (!mounted) return;
       if (res['token'] != null) {
-        Navigator.pushReplacementNamed(context, '/home');
+        setState(() => _isGoogleLoading = false);
+        final now = DateTime.now();
+        final name = bsPrimerNombre(res['user']?['name']?.toString());
+        await SweetAlert.success(
+          context,
+          title: name.isEmpty ? '¡Bienvenido!' : '¡Bienvenido, $name!',
+          text: 'Sesión iniciada con Google\n${bsFechaLarga(now)}, ${bsHora(now)}',
+          autoClose: const Duration(milliseconds: 2000),
+        );
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
       } else {
-        showBS(context, res['error'] ?? 'Error con Google', isError: true);
+        await SweetAlert.error(
+          context,
+          title: 'Error con Google',
+          text: (res['error'] ?? 'No se pudo iniciar sesión con Google.').toString(),
+        );
       }
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
@@ -78,233 +120,83 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = ResponsiveLayout.isWeb(context);
-
-    final content = SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: isWeb ? 48 : 24,
-            vertical: 24,
-          ),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Header solo en móvil
-                if (!isWeb) ...[
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [GoogleAuthTheme.primary, Color(0xFF06b6d4)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: [
-                              BoxShadow(
-                                color: GoogleAuthTheme.primary.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.verified_user_rounded,
-                              color: Colors.white, size: 32),
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          'BlockSign',
-                          style: TextStyle(
-                            fontSize: 30,
-                            fontWeight: FontWeight.w800,
-                            color: GoogleAuthTheme.text,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Center(
-                    child: Text(
-                      'Inicia sesión en tu cuenta',
-                      style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 15),
-                    ),
-                  ),
-                  const SizedBox(height: 36),
-                ],
-
-                if (isWeb) ...[
-                  const Text(
-                    'Iniciar sesión',
-                    style: TextStyle(
-                      color: GoogleAuthTheme.text,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Ingresa tus credenciales para continuar',
-                    style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14),
-                  ),
-                  const SizedBox(height: 32),
-                ],
-
-                BSTextField(
-                  label: 'Correo electrónico',
-                  hint: 'correo@ejemplo.com',
-                  controller: _email,
-                  icon: Icons.email_outlined,
-                  validator: Validators.email,
-                  keyboardType: TextInputType.emailAddress,
-                  light: true,
-                ),
-                const SizedBox(height: 16),
-
-                BSTextField(
-                  label: 'Contraseña',
-                  hint: '••••••••',
-                  controller: _pass,
-                  icon: Icons.lock_outline_rounded,
-                  obscureText: true,
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'La contraseña es requerida' : null,
-                  light: true,
-                ),
-                const SizedBox(height: 8),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/forgot'),
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                    child: const Text(
-                      '¿Olvidaste tu contraseña?',
-                      style: TextStyle(
-                          color: GoogleAuthTheme.primary, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: GoogleAuthTheme.primary,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: GoogleAuthTheme.primary.withOpacity(0.5),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2.5),
-                          )
-                        : const Text('Iniciar sesión',
-                            style: TextStyle(
-                                fontSize: 15, fontWeight: FontWeight.w700)),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: GoogleAuthTheme.border)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: Text('o continúa con',
-                          style: TextStyle(
-                              color: GoogleAuthTheme.textSecondary, fontSize: 13)),
-                    ),
-                    Expanded(child: Divider(color: GoogleAuthTheme.border)),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: _isGoogleLoading ? null : _loginWithGoogle,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: GoogleAuthTheme.border, width: 1),
-                      foregroundColor: GoogleAuthTheme.text,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: _isGoogleLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset('assets/images/google_logo.png',
-                                  width: 20, height: 20),
-                              const SizedBox(width: 10),
-                              const Text('Continuar con Google',
-                                  style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('¿No tienes cuenta? ',
-                        style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 14)),
-                    GestureDetector(
-                      onTap: () => Navigator.pushNamed(context, '/register'),
-                      child: const Text(
-                        'Regístrate',
-                        style: TextStyle(
-                            color: GoogleAuthTheme.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              ],
+    return BSAuthLayout(
+      title: 'Iniciar sesión',
+      subtitle: 'Ingresa tus credenciales para continuar.',
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BSTextField(
+              label: 'Correo electrónico',
+              hint: 'correo@ejemplo.com',
+              controller: _email,
+              icon: Icons.email_outlined,
+              validator: Validators.email,
+              keyboardType: TextInputType.emailAddress,
+              light: true,
             ),
-          ),
+            const SizedBox(height: 16),
+            BSTextField(
+              label: 'Contraseña',
+              hint: '••••••••',
+              controller: _pass,
+              icon: Icons.lock_outline_rounded,
+              obscureText: true,
+              validator: (v) => (v == null || v.isEmpty) ? 'La contraseña es requerida' : null,
+              light: true,
+            ),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(context, '/forgot'),
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                  child: Text('¿Olvidaste tu contraseña?',
+                      style: TextStyle(color: GoogleAuthTheme.primary, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            BSAuthButton(label: 'Iniciar sesión', loading: _isLoading, onPressed: _login),
+            const SizedBox(height: 22),
+            const BSAuthDivider(),
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: _isGoogleLoading ? null : _loginWithGoogle,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: GoogleAuthTheme.border, width: 1),
+                  foregroundColor: GoogleAuthTheme.text,
+                  minimumSize: const Size(0, 52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: _isGoogleLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('assets/images/google_logo.png', width: 20, height: 20),
+                          const SizedBox(width: 10),
+                          const Text('Continuar con Google', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 28),
+            BSAuthSwitch(
+              question: '¿No tienes cuenta?',
+              action: 'Regístrate',
+              onTap: () => Navigator.pushNamed(context, '/register'),
+            ),
+          ],
         ),
       ),
-    );
-
-    return Scaffold(
-      backgroundColor: GoogleAuthTheme.background,
-      body: isWeb
-          ? ResponsiveLayout(maxWidth: 480, light: true, child: content)
-          : content,
     );
   }
 }

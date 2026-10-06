@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../widgets/widgets.dart';
+import '../widgets/sweet_alert.dart';
+import '../widgets/bs_ui.dart';
+import '../widgets/bs_auth_layout.dart';
 import '../theme/app_theme.dart';
 import '../utils/validators.dart';
-import '../layout/responsive_layout.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String? token;
@@ -15,10 +17,21 @@ class ResetPasswordScreen extends StatefulWidget {
 }
 
 class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _newPass = TextEditingController();
   final _confirmPass = TextEditingController();
   bool _isLoading = false;
   bool _done = false;
+
+  bool get _hasToken => widget.token != null && widget.token!.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // Actualiza la lista de requisitos mientras se escribe
+    _newPass.addListener(() => setState(() {}));
+    _confirmPass.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() {
@@ -27,17 +40,16 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
+  void _goLogin() => Navigator.pushReplacementNamed(context, '/login');
+
   Future<void> _submit() async {
-    if (widget.token == null || widget.token!.isEmpty) {
-      showBS(context, 'Token inválido o expirado', isError: true);
+    if (!_hasToken) {
+      await SweetAlert.error(context, title: 'Enlace inválido', text: 'El enlace no tiene un token válido. Solicita uno nuevo.');
       return;
     }
+    if (!_formKey.currentState!.validate()) return;
     if (_newPass.text != _confirmPass.text) {
-      showBS(context, 'Las contraseñas no coinciden', isError: true);
-      return;
-    }
-    if (Validators.password(_newPass.text) != null) {
-      showBS(context, Validators.password(_newPass.text)!, isError: true);
+      await SweetAlert.warning(context, title: 'Las contraseñas no coinciden', text: 'Escribe la misma contraseña en ambos campos.');
       return;
     }
 
@@ -45,10 +57,25 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     try {
       final res = await AuthService.resetPassword(widget.token!, _newPass.text);
       if (!mounted) return;
+      setState(() => _isLoading = false);
       if (res.containsKey('error')) {
-        showBS(context, res['error'], isError: true);
+        final msg = res['error'].toString();
+        await SweetAlert.error(
+          context,
+          title: 'No se pudo cambiar',
+          text: msg.toLowerCase().contains('token')
+              ? 'El enlace es inválido o ya expiró (dura 1 hora). Solicita uno nuevo.'
+              : msg,
+        );
       } else {
         setState(() => _done = true);
+        final goLogin = await SweetAlert.success(
+          context,
+          title: '¡Contraseña actualizada!',
+          text: 'Ya puedes iniciar sesión con tu nueva contraseña.',
+          confirmText: 'Iniciar sesión',
+        );
+        if (goLogin == true && mounted) _goLogin();
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -57,207 +84,135 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = ResponsiveLayout.isWeb(context);
-
-    final content = SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: isWeb ? 48 : 24,
-            vertical: 24,
-          ),
-          child: _done
-              ? _SuccessView()
-              : _FormView(
-                  newPass: _newPass,
-                  confirmPass: _confirmPass,
-                  isLoading: _isLoading,
-                  onSubmit: _submit,
-                  isWeb: isWeb,
-                ),
-        ),
-      ),
-    );
-
-    return Scaffold(
-      backgroundColor: AppTheme.background,
-      // AppBar solo en móvil; en web el layout no tiene appBar
-      appBar: isWeb
-          ? null
-          : AppBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppTheme.text),
-                onPressed: () =>
-                    Navigator.pushReplacementNamed(context, '/login'),
-              ),
-            ),
-      body: isWeb
-          ? ResponsiveLayout(light: true, child: content)
-          : content,
-    );
-  }
-}
-
-class _FormView extends StatelessWidget {
-  final TextEditingController newPass;
-  final TextEditingController confirmPass;
-  final bool isLoading;
-  final VoidCallback onSubmit;
-  final bool isWeb;
-
-  const _FormView({
-    required this.newPass,
-    required this.confirmPass,
-    required this.isLoading,
-    required this.onSubmit,
-    required this.isWeb,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Botón volver solo en web (reemplaza el AppBar)
-        if (isWeb) ...[
-          TextButton.icon(
-            onPressed: () =>
-                Navigator.pushReplacementNamed(context, '/login'),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                size: 14, color: AppTheme.hint),
-            label: const Text('Volver al login',
-                style: TextStyle(color: AppTheme.hint, fontSize: 13)),
-            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+    // Enlace sin token
+    if (!_hasToken) {
+      return BSAuthLayout(
+        title: 'Enlace inválido',
+        subtitle: 'Este enlace para restablecer la contraseña no es válido o está incompleto.',
+        leading: const BSAuthIcon(icon: Icons.link_off_rounded, color: BSColors.danger),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const BSInfoBanner(
+            title: 'Solicita un enlace nuevo.',
+            text: 'Desde "¿Olvidaste tu contraseña?" te enviaremos otro correo. Cada enlace dura 1 hora.',
+            color: BSColors.warning,
+            icon: Icons.mail_outline_rounded,
           ),
           const SizedBox(height: 24),
-        ],
+          BSAuthButton(label: 'Solicitar nuevo enlace', onPressed: () => Navigator.pushReplacementNamed(context, '/forgot')),
+          const SizedBox(height: 18),
+          BSAuthSwitch(question: '¿Recordaste tu contraseña?', action: 'Inicia sesión', onTap: _goLogin),
+        ]),
+      );
+    }
 
-        Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppTheme.primary.withOpacity(0.12),
-            borderRadius: BorderRadius.circular(14),
+    // Contraseña cambiada
+    if (_done) {
+      return BSAuthLayout(
+        title: '¡Contraseña actualizada!',
+        subtitle: 'Ya puedes iniciar sesión con tu nueva contraseña.',
+        leading: const BSAuthIcon(icon: Icons.check_circle_rounded, color: BSColors.success),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const BSInfoBanner(
+            title: 'Tu cuenta está protegida.',
+            text: 'Si no fuiste tú quien hizo este cambio, recupera tu contraseña de inmediato.',
+            color: BSColors.success,
+            icon: Icons.security_rounded,
           ),
-          child: const Icon(Icons.lock_reset_rounded,
-              color: AppTheme.primary, size: 26),
-        ),
-        const SizedBox(height: 20),
-        const Text(
-          'Nueva contraseña',
-          style: TextStyle(
-              color: AppTheme.text,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Ingresa tu nueva contraseña para recuperar el acceso.',
-          style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.5),
-        ),
-        const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          BSAuthButton(label: 'Ir al inicio de sesión', onPressed: _goLogin),
+        ]),
+      );
+    }
 
-        BSTextField(
-          label: 'Nueva contraseña',
-          hint: '8+ caracteres, mayúscula y número',
-          controller: newPass,
-          icon: Icons.lock_outline_rounded,
-          obscureText: true,
-          validator: Validators.password,
-        ),
-        const SizedBox(height: 16),
+    // Formulario
+    final p = _newPass.text;
+    return BSAuthLayout(
+      title: 'Nueva contraseña',
+      subtitle: 'Crea una contraseña segura para recuperar el acceso a tu cuenta.',
+      leading: const BSAuthIcon(icon: Icons.lock_reset_rounded),
+      showBack: true,
+      onBack: _goLogin,
+      child: Form(
+        key: _formKey,
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          BSTextField(
+            label: 'Nueva contraseña',
+            hint: '8+ caracteres, mayúscula y número',
+            controller: _newPass,
+            icon: Icons.lock_outline_rounded,
+            obscureText: true,
+            validator: Validators.password,
+            light: true,
+          ),
+          const SizedBox(height: 14),
+          BSTextField(
+            label: 'Confirmar contraseña',
+            hint: 'Repite tu nueva contraseña',
+            controller: _confirmPass,
+            icon: Icons.lock_outline_rounded,
+            obscureText: true,
+            validator: (v) => Validators.confirmPassword(v, _newPass.text),
+            light: true,
+          ),
+          const SizedBox(height: 16),
 
-        BSTextField(
-          label: 'Confirmar contraseña',
-          hint: 'Repite tu nueva contraseña',
-          controller: confirmPass,
-          icon: Icons.lock_outline_rounded,
-          obscureText: true,
-          validator: (v) => Validators.confirmPassword(v, newPass.text),
-        ),
-        const SizedBox(height: 24),
-
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : onSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
+          // Requisitos en vivo
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: BSColors.page,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.border),
             ),
-            child: isLoading
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2.5))
-                : const Text('Cambiar contraseña',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700)),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Tu contraseña debe tener:',
+                  style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              _Rule(ok: p.length >= 8, text: 'Mínimo 8 caracteres'),
+              _Rule(ok: RegExp(r'[A-Z]').hasMatch(p), text: 'Una letra mayúscula'),
+              _Rule(ok: RegExp(r'[0-9]').hasMatch(p), text: 'Un número'),
+              _Rule(ok: p.isNotEmpty && p == _confirmPass.text, text: 'Ambas contraseñas iguales'),
+            ]),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+
+          BSAuthButton(label: 'Cambiar contraseña', loading: _isLoading, onPressed: _submit),
+          const SizedBox(height: 18),
+          BSAuthSwitch(question: '¿Recordaste tu contraseña?', action: 'Inicia sesión', onTap: _goLogin),
+        ]),
+      ),
     );
   }
 }
 
-class _SuccessView extends StatelessWidget {
+class _Rule extends StatelessWidget {
+  final bool ok;
+  final String text;
+  const _Rule({required this.ok, required this.text});
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 72,
-          height: 72,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 18,
+          height: 18,
           decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.12), shape: BoxShape.circle),
-          child: const Icon(Icons.check_circle_rounded,
-              color: Colors.green, size: 36),
-        ),
-        const SizedBox(height: 24),
-        const Text(
-          '¡Contraseña actualizada!',
-          style: TextStyle(
-              color: AppTheme.text,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'Ya puedes iniciar sesión con tu nueva contraseña.',
-          textAlign: TextAlign.center,
-          style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.6),
-        ),
-        const SizedBox(height: 36),
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: () =>
-                Navigator.pushReplacementNamed(context, '/login'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
-              elevation: 0,
-            ),
-            child: const Text('Ir al inicio de sesión',
-                style: TextStyle(fontWeight: FontWeight.w700)),
+            color: ok ? BSColors.success : Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(color: ok ? BSColors.success : AppTheme.border, width: 1.5),
           ),
+          child: ok ? const Icon(Icons.check_rounded, color: Colors.white, size: 12) : null,
         ),
-      ],
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(text,
+              style: TextStyle(color: ok ? BSColors.success : AppTheme.hint, fontSize: 12.5, fontWeight: ok ? FontWeight.w600 : FontWeight.w400)),
+        ),
+      ]),
     );
   }
 }

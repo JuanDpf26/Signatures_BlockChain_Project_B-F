@@ -45,3 +45,12 @@ app.*.map.json
 /android/app/release
 .vercel
 .env*
+
+# Dependencias de Node (no pertenecen a la app Flutter)
+node_modules/
+package.json
+package-lock.json
+
+# Variables de entorno
+.env
+.env.*
