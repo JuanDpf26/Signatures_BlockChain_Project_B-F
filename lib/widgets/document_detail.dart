@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -293,7 +294,19 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           color: BSColors.page,
           child: TabBarView(controller: _tabs, children: [
             _scroll(pad, [
-              DocFichaCard(d: d),
+              DocLifecycleCard(d: d),
+              const SizedBox(height: 12),
+              if (!narrow && MediaQuery.of(context).size.width > 900)
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: DocFichaCard(d: d)),
+                  const SizedBox(width: 12),
+                  SizedBox(width: 330, child: DocIntegrityCard(d: d)),
+                ])
+              else ...[
+                DocFichaCard(d: d),
+                const SizedBox(height: 12),
+                DocIntegrityCard(d: d),
+              ],
               const SizedBox(height: 12),
               DocAiCard(d: d, compact: true, onReanalyze: widget.onReanalyze, onMore: () => _tabs.animateTo(1)),
               const SizedBox(height: 12),
@@ -794,4 +807,204 @@ class _CopyRow extends StatelessWidget {
       ]),
     );
   }
+}
+
+
+// ─────────────────────────────────────────
+// CICLO DE VIDA DEL DOCUMENTO (como los gates de aprobación)
+// ─────────────────────────────────────────
+enum _Gate { done, current, pending, error }
+
+class DocLifecycleCard extends StatelessWidget {
+  final DocView d;
+  const DocLifecycleCard({super.key, required this.d});
+
+  @override
+  Widget build(BuildContext context) {
+    final m = d.meta;
+    final chain = m['blockchain_status']?.toString();
+    final signedOk = d.status == 'signed' || d.status == 'verified';
+    final inChain = chain == 'sending' || chain == 'confirming';
+    final revoked = m['revoked'] == true;
+
+    final steps = <(String, _Gate, String)>[
+      ('Subido', _Gate.done, 'Completado'),
+      d.analyzed
+          ? ('Análisis IA', _Gate.done, 'Completado')
+          : d.aiError != null
+              ? ('Análisis IA', _Gate.error, 'Con error')
+              : ('Análisis IA', _Gate.current, 'En curso'),
+      revoked
+          ? ('Firmado', _Gate.error, 'Revocado')
+          : signedOk || inChain
+              ? ('Firmado', _Gate.done, 'Aprobado')
+              : ('Firmado', d.analyzed ? _Gate.current : _Gate.pending, d.analyzed ? 'Por firmar' : 'Pendiente'),
+      signedOk
+          ? ('Blockchain', _Gate.done, m['blockchain_block'] != null ? 'Bloque #${m['blockchain_block']}' : 'Registrado')
+          : inChain
+              ? ('Blockchain', _Gate.current, 'Confirmando')
+              : chain == 'failed'
+                  ? ('Blockchain', _Gate.error, 'Falló')
+                  : ('Blockchain', _Gate.pending, 'Pendiente'),
+      d.status == 'verified'
+          ? ('Verificado', _Gate.done, 'Comprobado')
+          : ('Verificado', signedOk ? _Gate.current : _Gate.pending, signedOk ? 'Disponible' : 'Pendiente'),
+    ];
+
+    Color colorOf(_Gate g) => switch (g) {
+          _Gate.done => BSColors.success,
+          _Gate.current => AppTheme.primary,
+          _Gate.error => BSColors.danger,
+          _Gate.pending => BSColors.neutral,
+        };
+
+    return BSCard(
+      title: 'Ciclo de vida del documento',
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        for (var i = 0; i < steps.length; i++)
+          Expanded(
+            child: Column(children: [
+              Row(children: [
+                // Línea hacia el paso anterior
+                Expanded(
+                  child: i == 0
+                      ? const SizedBox()
+                      : Container(height: 3, color: steps[i - 1].$2 == _Gate.done && steps[i].$2 != _Gate.pending ? AppTheme.primary : AppTheme.border),
+                ),
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.6, end: 1),
+                  duration: Duration(milliseconds: 350 + i * 90),
+                  curve: Curves.easeOutBack,
+                  builder: (_, v, child) => Transform.scale(scale: v, child: child),
+                  child: Container(
+                    width: 34,
+                    height: 34,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: steps[i].$2 == _Gate.pending ? Colors.white : colorOf(steps[i].$2),
+                      border: Border.all(color: steps[i].$2 == _Gate.pending ? AppTheme.border : colorOf(steps[i].$2), width: 2),
+                    ),
+                    child: switch (steps[i].$2) {
+                      _Gate.done => const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                      _Gate.error => const Icon(Icons.close_rounded, color: Colors.white, size: 18),
+                      _ => Text('${i + 1}',
+                          style: TextStyle(
+                              color: steps[i].$2 == _Gate.current ? Colors.white : AppTheme.hint,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13)),
+                    },
+                  ),
+                ),
+                // Línea hacia el paso siguiente
+                Expanded(
+                  child: i == steps.length - 1
+                      ? const SizedBox()
+                      : Container(height: 3, color: steps[i].$2 == _Gate.done && steps[i + 1].$2 != _Gate.pending ? AppTheme.primary : AppTheme.border),
+                ),
+              ]),
+              const SizedBox(height: 10),
+              Text(steps[i].$1,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text(steps[i].$3,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: colorOf(steps[i].$2), fontSize: 12, fontWeight: FontWeight.w700)),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+// ─────────────────────────────────────────
+// INTEGRIDAD DEL DOCUMENTO (dona con porcentaje + lista de chequeo)
+// ─────────────────────────────────────────
+class DocIntegrityCard extends StatelessWidget {
+  final DocView d;
+  const DocIntegrityCard({super.key, required this.d});
+
+  @override
+  Widget build(BuildContext context) {
+    final m = d.meta;
+    final signedOk = d.status == 'signed' || d.status == 'verified';
+    // (texto, estado: true = ok, false = falla, null = pendiente)
+    final checks = <(String, bool?)>[
+      ('Huella SHA-256 calculada', d.hash != null),
+      ('Metadatos extraídos', m['word_count'] != null || m['pages'] != null),
+      ('Texto legible', m['has_text'] == null ? null : m['has_text'] == true),
+      ('Análisis con IA', d.analyzed ? true : (d.aiError != null ? false : null)),
+      ('Firma digital', m['revoked'] == true ? false : (signedOk || m['signature_hash'] != null ? true : null)),
+      ('Registro en blockchain', signedOk ? true : (m['blockchain_status'] == 'failed' ? false : null)),
+    ];
+    final ok = checks.where((c) => c.$2 == true).length;
+    final pct = ok / checks.length;
+
+    Color dot(bool? v) => v == true ? BSColors.success : (v == false ? BSColors.danger : BSColors.warning);
+
+    return BSCard(
+      title: 'Integridad y cumplimiento',
+      child: Column(children: [
+        Center(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: pct),
+            duration: const Duration(milliseconds: 1000),
+            curve: Curves.easeOutCubic,
+            builder: (_, v, __) => SizedBox(
+              width: 130,
+              height: 130,
+              child: CustomPaint(
+                painter: _DonutPainter(v),
+                child: Center(
+                  child: Text('${(v * 100).round()} %',
+                      style: const TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w900)),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        for (final c in checks)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(children: [
+              Container(width: 12, height: 12, decoration: BoxDecoration(color: dot(c.$2), shape: BoxShape.circle)),
+              const SizedBox(width: 10),
+              Expanded(child: Text(c.$1, style: const TextStyle(color: AppTheme.text, fontSize: 13.5))),
+            ]),
+          ),
+      ]),
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  final double value;
+  _DonutPainter(this.value);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 13.0;
+    final rect = Offset.zero & size;
+    final r = rect.deflate(stroke / 2);
+    final bg = Paint()
+      ..color = const Color(0xFFEEF1F6)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke;
+    final fg = Paint()
+      ..color = AppTheme.primary
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = stroke;
+    canvas.drawArc(r, 0, 2 * math.pi, false, bg);
+    if (value > 0) canvas.drawArc(r, -math.pi / 2, 2 * math.pi * value, false, fg);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter old) => old.value != value;
 }

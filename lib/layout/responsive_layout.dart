@@ -68,7 +68,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 380,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF2F6BDB).withOpacity(blobOpacity),
+                      color: const Color(0xFF0B45B5).withOpacity(blobOpacity),
                     ),
                   ),
                 ),
@@ -81,7 +81,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 320,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF1499AE).withOpacity(blobOpacity - 0.01),
+                      color: const Color(0xFF1565C0).withOpacity(blobOpacity - 0.01),
                     ),
                   ),
                 ),
@@ -94,7 +94,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 150,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF2F6BDB).withOpacity(blobOpacity - 0.04),
+                      color: const Color(0xFF0B45B5).withOpacity(blobOpacity - 0.04),
                     ),
                   ),
                 ),
@@ -115,14 +115,14 @@ class ResponsiveLayout extends StatelessWidget {
                           height: 68,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF2F6BDB), Color(0xFF1499AE)],
+                              colors: [Color(0xFF0B45B5), Color(0xFF1565C0)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF2F6BDB).withOpacity(0.35),
+                                color: const Color(0xFF0B45B5).withOpacity(0.35),
                                 blurRadius: 24,
                                 offset: const Offset(0, 10),
                               ),
@@ -164,7 +164,7 @@ class ResponsiveLayout extends StatelessWidget {
                         // Features
                         _WebFeature(
                           icon: Icons.lock_rounded,
-                          color: const Color(0xFF2F6BDB),
+                          color: const Color(0xFF0B45B5),
                           title: 'Criptografía asimétrica',
                           desc: 'PKI + SHA-256 para máxima seguridad',
                           light: light,
@@ -172,7 +172,7 @@ class ResponsiveLayout extends StatelessWidget {
                         const SizedBox(height: 24),
                         _WebFeature(
                           icon: Icons.link_rounded,
-                          color: const Color(0xFF1499AE),
+                          color: const Color(0xFF1565C0),
                           title: 'Trazabilidad blockchain',
                           desc: 'Registro inmutable de cada firma',
                           light: light,
@@ -180,7 +180,7 @@ class ResponsiveLayout extends StatelessWidget {
                         const SizedBox(height: 24),
                         _WebFeature(
                           icon: Icons.verified_rounded,
-                          color: const Color(0xFF1F9D55),
+                          color: const Color(0xFF2E7D32),
                           title: 'Validez legal',
                           desc: 'Cumple estándares internacionales',
                           light: light,

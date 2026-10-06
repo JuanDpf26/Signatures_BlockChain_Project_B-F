@@ -16,7 +16,7 @@ import 'sweet_alert.dart';
 // ─────────────────────────────────────────────────────────────
 
 const _iaA = Color(0xFF6C63E0); // violeta
-const _iaB = Color(0xFF2F6BDB); // azul BlockSign
+const _iaB = Color(0xFF0B45B5); // azul BlockSign
 const _iaC = Color(0xFF1499AE); // cian
 const _iaGradient = LinearGradient(colors: [_iaA, _iaB, _iaC], begin: Alignment.topLeft, end: Alignment.bottomRight);
 

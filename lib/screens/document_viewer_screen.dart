@@ -148,6 +148,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   }
 
   List<Widget> _panelChildren() => [
+        DocIntegrityCard(d: _d),
+        const SizedBox(height: 12),
         DocFichaCard(d: _d),
         const SizedBox(height: 12),
         DocAiCard(d: _d),

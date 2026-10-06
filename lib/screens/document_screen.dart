@@ -16,7 +16,10 @@ import 'document_viewer_screen.dart';
 
 //Juandiego son of ragnar//
 class DocumentsScreen extends StatefulWidget {
-  const DocumentsScreen({super.key});
+  /// Búsqueda o estado con los que abre (desde el buscador o la campana de la barra superior)
+  final String? initialSearch;
+  final String? initialStatus;
+  const DocumentsScreen({super.key, this.initialSearch, this.initialStatus});
 
   @override
   State<DocumentsScreen> createState() => _DocumentsScreenState();
@@ -42,6 +45,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialSearch != null) _searchCtrl.text = widget.initialSearch!;
+    if (widget.initialStatus != null) _selStatus = widget.initialStatus;
     _load();
   }
 
@@ -445,9 +450,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         key: ValueKey('doc-$docId'),
         delay: Duration(milliseconds: 35 * (i < 12 ? i : 12)),
         offsetY: 10,
-        child: isTable
-            ? _DocRow(info: info, actions: actions, onTap: () => _showDetail(doc))
-            : _DocTile(info: info, actions: actions, onTap: () => _showDetail(doc)),
+        // Material transparente: así el resaltado al pasar el mouse se ve sobre la tarjeta blanca
+        child: Material(
+          type: MaterialType.transparency,
+          child: isTable
+              ? _DocRow(info: info, actions: actions, onTap: () => _showDetail(doc))
+              : _DocTile(info: info, actions: actions, onTap: () => _showDetail(doc)),
+        ),
       ));
       if (i < _docs.length - 1) rows.add(const Divider(height: 1, color: AppTheme.border));
     }
@@ -514,9 +523,9 @@ class _TableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const s = TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700);
+    const s = TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w700);
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: const Row(children: [
         Expanded(flex: 5, child: Text('Documento', style: s)),
@@ -539,10 +548,10 @@ class _DocRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cell = TextStyle(color: AppTheme.text, fontSize: 13);
+    const cell = TextStyle(color: AppTheme.text, fontSize: 14);
     return InkWell(
       onTap: onTap,
-      hoverColor: AppTheme.primary.withOpacity(0.03),
+      hoverColor: BSColors.selected.withOpacity(0.7),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         child: Row(children: [
@@ -554,7 +563,7 @@ class _DocRow extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(info.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 3),
                   info.aiDesc != null
                       ? Row(children: [

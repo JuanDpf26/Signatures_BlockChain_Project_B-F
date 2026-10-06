@@ -60,7 +60,7 @@ Future<AnalysisResult> showAnalysisProgress(
 enum _Phase { uploading, extracting, ai, done, failed, slow }
 
 const _aiA = Color(0xFF6C63E0);
-const _aiB = Color(0xFF2F6BDB);
+const _aiB = Color(0xFF0B45B5);
 const _aiC = Color(0xFF1499AE);
 
 class AnalysisProgressPanel extends StatefulWidget {

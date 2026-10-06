@@ -9,11 +9,12 @@ import '../theme/app_theme.dart';
 
 // ── Colores semánticos ──────────────────────────────────────────────
 class BSColors {
-  static const success = Color(0xFF1F9D55);
-  static const warning = Color(0xFFD9861A);
-  static const danger = Color(0xFFDC4B4B);
-  static const neutral = Color(0xFF64748B);
-  static const page = Color(0xFFF5F7FA); // fondo gris claro de página
+  static const success = Color(0xFF2E7D32);
+  static const warning = Color(0xFFD99A00);
+  static const danger = Color(0xFFD32F2F);
+  static const neutral = Color(0xFF5F6670);
+  static const page = Color(0xFFF4F6FA); // fondo gris claro de página
+  static const selected = Color(0xFFE8EEFB); // fondo de opción/fila seleccionada
 }
 
 // ── Encabezado de página ────────────────────────────────────────────
@@ -42,7 +43,7 @@ class BSPageHeader extends StatelessWidget {
       children: [
         Text(
           breadcrumb.join(' / '),
-          style: const TextStyle(color: AppTheme.hint, fontSize: 12),
+          style: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -54,7 +55,7 @@ class BSPageHeader extends StatelessWidget {
               title,
               style: TextStyle(
                 color: AppTheme.text,
-                fontSize: isWide ? 26 : 22,
+                fontSize: isWide ? 32 : 24,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
               ),
@@ -358,26 +359,27 @@ class BSPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Píldora blanca con borde y punto de color (estilo de los mockups)
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.55)),
+        border: Border.all(color: color, width: 1.4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (dot) ...[
             Container(
-              width: 6,
-              height: 6,
+              width: 7,
+              height: 7,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
           ],
           Text(label,
-              style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+              style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -604,7 +606,7 @@ class BSPrimaryButton extends StatelessWidget {
           // El tema global usa ancho infinito; aquí el botón se ajusta a su contenido
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         icon: loading
             ? const SizedBox(
@@ -636,10 +638,10 @@ class BSOutlineButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: c,
           backgroundColor: Colors.white,
-          side: BorderSide(color: c.withOpacity(0.55), width: 1.2),
+          side: BorderSide(color: c, width: 1.4),
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         icon: Icon(icon ?? Icons.arrow_forward_rounded, size: 18),
         label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
 import '../widgets/bs_ui.dart';
@@ -188,7 +189,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
+            const BSInfoBanner(
+              title: 'Tu información está protegida.',
+              text: 'Las contraseñas se guardan cifradas y la sesión usa un token seguro con vencimiento.',
+              icon: Icons.info_rounded,
+            ),
+            const SizedBox(height: 24),
+            const Divider(height: 1, color: AppTheme.border),
+            const SizedBox(height: 20),
             BSAuthSwitch(
               question: '¿No tienes cuenta?',
               action: 'Regístrate',

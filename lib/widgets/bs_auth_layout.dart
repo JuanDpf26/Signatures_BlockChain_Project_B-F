@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'bs_ui.dart';
 
 /// Diseño común de las pantallas de acceso de BlockSign (login, registro,
 /// recuperar y restablecer contraseña, verificación de correo).
@@ -43,10 +44,8 @@ class BSAuthLayout extends StatelessWidget {
                 _BackLink(onTap: onBack ?? () => Navigator.maybePop(context)),
                 const SizedBox(height: 20),
               ],
-              if (!wide) ...[
-                const _BrandMark(dark: false),
-                const SizedBox(height: 28),
-              ],
+              _BrandMark(dark: false, big: wide),
+              SizedBox(height: wide ? 40 : 28),
               if (leading != null) ...[
                 leading!,
                 const SizedBox(height: 18),
@@ -55,7 +54,7 @@ class BSAuthLayout extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: AppTheme.text,
-                  fontSize: wide ? 30 : 26,
+                  fontSize: wide ? 34 : 26,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.6,
                 ),
@@ -66,6 +65,8 @@ class BSAuthLayout extends StatelessWidget {
               ],
               const SizedBox(height: 28),
               child,
+              const SizedBox(height: 32),
+              const _EnvPill(),
             ],
           ),
         ),
@@ -76,8 +77,8 @@ class BSAuthLayout extends StatelessWidget {
       backgroundColor: Colors.white,
       body: wide
           ? Row(children: [
-              const Expanded(flex: 5, child: _BrandPanel()),
-              Expanded(flex: 6, child: form),
+              const Expanded(flex: 9, child: _BrandPanel()),
+              Expanded(flex: 11, child: form),
             ])
           : SafeArea(child: form),
     );
@@ -91,56 +92,75 @@ class _BrandPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppTheme.primary, AppTheme.featureCyan],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+      color: AppTheme.primary,
       child: Stack(fit: StackFit.expand, children: [
-        // Círculos decorativos
-        Positioned(top: -80, right: -60, child: _Bubble(size: 260, opacity: 0.10)),
-        Positioned(bottom: -100, left: -70, child: _Bubble(size: 300, opacity: 0.08)),
-        Positioned(bottom: 140, right: 40, child: _Bubble(size: 90, opacity: 0.10)),
+        // Círculos decorativos (como en el mockup institucional)
+        Positioned(top: -90, right: -40, child: _Bubble(size: 320, opacity: 0.06)),
+        Positioned(bottom: -140, left: -110, child: _Bubble(size: 360, opacity: 0.06)),
         // Desplazable y con altura mínima de pantalla: en pantallas bajas no se desborda
         SingleChildScrollView(
-          padding: const EdgeInsets.all(48),
+          padding: const EdgeInsets.symmetric(horizontal: 72, vertical: 48),
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: (MediaQuery.of(context).size.height - 96).clamp(0, double.infinity).toDouble()),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _BrandMark(dark: true),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-                    const Text(
-                      'Firma digital con validez legal, respaldada por blockchain.',
-                      style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800, height: 1.2, letterSpacing: -0.6),
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Sube tus documentos, fírmalos y comprueba su integridad en cualquier momento.',
-                      style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 15, height: 1.5),
-                    ),
-                    const SizedBox(height: 32),
-                    const _Feature(icon: Icons.lock_outline_rounded, text: 'Cifrado SHA-256 de extremo a extremo'),
-                    const SizedBox(height: 14),
-                    const _Feature(icon: Icons.link_rounded, text: 'Registro inmutable en Ethereum Sepolia'),
-                    const SizedBox(height: 14),
-                    const _Feature(icon: Icons.auto_awesome_rounded, text: 'Análisis inteligente de documentos con IA'),
-                  ]),
+                const BSEntrance(
+                  child: Text(
+                    'Firma digital\ncon blockchain',
+                    style: TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w800, height: 1.15, letterSpacing: -0.8),
+                  ),
                 ),
+                const SizedBox(height: 22),
+                BSEntrance(
+                  delay: const Duration(milliseconds: 80),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Text(
+                      'Sube, analiza, firma y verifica tus documentos con validez y trazabilidad en un solo lugar.',
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 17, height: 1.55),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                for (final (i, t) in const [
+                  'Huella SHA-256 única por documento',
+                  'Registro inmutable en Ethereum Sepolia',
+                  'Análisis inteligente con IA',
+                  'Verificación pública sin subir el archivo',
+                ].indexed) ...[
+                  BSEntrance(delay: Duration(milliseconds: 160 + i * 70), child: _Feature(text: t)),
+                  const SizedBox(height: 20),
+                ],
+                const SizedBox(height: 28),
                 Text(
                   'Universidad Manuela Beltrán · IS25133 · 2026',
-                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12.5),
                 ),
               ],
             ),
           ),
         ),
+      ]),
+    );
+  }
+}
+
+/// Píldora de ambiente (como "Ambiente: Desarrollo" del mockup)
+class _EnvPill extends StatelessWidget {
+  const _EnvPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(color: const Color(0xFFF4F6FA), borderRadius: BorderRadius.circular(20)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFD99A00), shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        const Text('Red: Sepolia Testnet · datos de prueba',
+            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -158,49 +178,52 @@ class _Bubble extends StatelessWidget {
 }
 
 class _Feature extends StatelessWidget {
-  final IconData icon;
   final String text;
-  const _Feature({required this.icon, required this.text});
+  const _Feature({required this.text});
 
   @override
   Widget build(BuildContext context) {
     return Row(children: [
       Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, color: Colors.white, size: 18),
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), shape: BoxShape.circle),
+        child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
       ),
-      const SizedBox(width: 12),
-      Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w600))),
+      const SizedBox(width: 14),
+      Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w500))),
     ]);
   }
 }
 
-/// Logo + nombre. dark=true → sobre fondo de color (texto blanco).
+/// Logo + nombre. dark=true → sobre fondo de color (texto blanco). big → tamaño grande del panel de acceso.
 class _BrandMark extends StatelessWidget {
   final bool dark;
-  const _BrandMark({required this.dark});
+  final bool big;
+  const _BrandMark({required this.dark, this.big = false});
 
   @override
   Widget build(BuildContext context) {
+    final logo = big ? 76.0 : 46.0;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: dark ? Colors.white.withOpacity(0.18) : null,
-          gradient: dark ? null : const LinearGradient(colors: [AppTheme.primary, AppTheme.featureCyan], begin: Alignment.topLeft, end: Alignment.bottomRight),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 22),
+        width: logo,
+        height: logo,
+        decoration: BoxDecoration(color: dark ? Colors.white.withOpacity(0.18) : AppTheme.primary, shape: BoxShape.circle),
+        child: Icon(Icons.verified_user_rounded, color: Colors.white, size: logo * 0.52),
       ),
-      const SizedBox(width: 12),
+      SizedBox(width: big ? 16 : 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('BlockSign',
-            style: TextStyle(color: dark ? Colors.white : AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+        Text.rich(
+          TextSpan(children: [
+            TextSpan(text: 'Block', style: TextStyle(color: dark ? Colors.white : AppTheme.text)),
+            TextSpan(text: 'Sign', style: TextStyle(color: dark ? Colors.white : AppTheme.primary)),
+          ]),
+          style: TextStyle(fontSize: big ? 40 : 22, fontWeight: FontWeight.w900, letterSpacing: -0.8, height: 1.0),
+        ),
+        const SizedBox(height: 3),
         Text('Firma digital con blockchain',
-            style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: 11.5)),
+            style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: big ? 14 : 11.5)),
       ]),
     ]);
   }
@@ -238,7 +261,10 @@ class BSAuthButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return BSPressable(
+      pressedScale: 0.98,
+      glowColor: loading || onPressed == null ? null : AppTheme.primary,
+      child: SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
@@ -255,6 +281,7 @@ class BSAuthButton extends StatelessWidget {
         child: loading
             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
             : Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+      ),
       ),
     );
   }

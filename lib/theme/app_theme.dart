@@ -2,29 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Paleta natural: azul sereno, verde azulado y grises pizarra
-  // (menos saturada que la anterior para que todo se vea armónico).
+  // Paleta institucional (mockups): azul sólido profundo, rojo, ámbar,
+  // verde y gris para estados. Superficies blancas y planas.
   static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFF8FAFC);
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color primary = Color(0xFF2F6BDB);
-  static const Color primaryDark = Color(0xFF2353B3);
-  static const Color text = Color(0xFF1E293B);
-  static const Color hint = Color(0xFF64748B);
-  static const Color featureBlue = Color(0xFF4F7FE6);
-  static const Color featureCyan = Color(0xFF1499AE);
-  static const Color error = Color(0xFFDC4B4B);
-  static const Color success = Color(0xFF1F9D55);
+  static const Color surface = Color(0xFFF7F8FB);
+  static const Color border = Color(0xFFE3E7EE);
+  static const Color primary = Color(0xFF0B45B5);
+  static const Color primaryDark = Color(0xFF08368F);
+  static const Color text = Color(0xFF1B1F27);
+  static const Color hint = Color(0xFF5F6670);
+  static const Color featureBlue = Color(0xFF7E9FDB); // azul claro (series secundarias)
+  static const Color featureCyan = Color(0xFF1565C0);
+  static const Color error = Color(0xFFD32F2F);
+  static const Color success = Color(0xFF2E7D32);
 
   // Sombras suaves en capas: dan profundidad sin verse pesadas
   static List<BoxShadow> get cardShadow => [
-        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.04), blurRadius: 14, offset: const Offset(0, 4)),
-        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.03), blurRadius: 2, offset: const Offset(0, 1)),
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.025), blurRadius: 6, offset: const Offset(0, 1)),
       ];
 
   static List<BoxShadow> get hoverShadow => [
-        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.08), blurRadius: 24, offset: const Offset(0, 10)),
-        BoxShadow(color: primary.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2)),
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(0.07), blurRadius: 18, offset: const Offset(0, 6)),
       ];
 
   static ThemeData get dark {
@@ -113,7 +111,7 @@ class AppTheme {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ).copyWith(
