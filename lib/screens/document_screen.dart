@@ -8,6 +8,7 @@ import '../services/profile_service.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
 import '../widgets/signing_progress_dialog.dart';
+import '../widgets/analysis_progress_dialog.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
 import '../theme/app_theme.dart';
@@ -89,22 +90,16 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       }
       final mimeType = file.extension == 'pdf' ? 'application/pdf' : file.extension == 'doc' ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       setState(() => _isUploading = true);
-      final res = await DocumentService.uploadDocument(fileBytes: file.bytes!, fileName: file.name, mimeType: mimeType);
+      // Muestra el proceso completo: subida → huella → texto → IA → resultado
+      final r = await showAnalysisProgress(context, bytes: file.bytes!, fileName: file.name, mimeType: mimeType);
       if (!mounted) return;
-      if (res.containsKey('error')) {
-        setState(() => _isUploading = false);
-        await SweetAlert.error(context, title: 'No se pudo subir', text: res['error'].toString());
-      } else {
-        setState(() => _isUploading = false);
-        SweetAlert.success(
-          context,
-          title: 'Documento subido',
-          text: 'Lo estamos analizando con IA. Te avisamos cuando termine.',
-          autoClose: const Duration(milliseconds: 2200),
-        );
-        await _load();
-        final newId = res['document']?['id']?.toString();
-        if (newId != null) _watchAnalysis(newId, title: file.name);
+      setState(() => _isUploading = false);
+      await _load();
+      if (!mounted) return;
+      if (r.ok) {
+        SweetAlert.success(context, title: 'Análisis guardado', autoClose: const Duration(milliseconds: 1600));
+      } else if (r.background && r.docId != null) {
+        _watchAnalysis(r.docId!, title: file.name);
       }
     } catch (e) {
       if (mounted) await SweetAlert.error(context, title: 'Error al subir', text: '$e');
@@ -222,18 +217,18 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _reanalyze(String docId) async {
-    final res = await DocumentService.reanalyzeDocument(docId);
+    final doc = _docs.firstWhere((d) => d['id']?.toString() == docId, orElse: () => <String, dynamic>{});
+    final meta = (doc['metadata'] as Map?) ?? {};
+    final prevAnalyzedAt = meta['ai_analyzed_at']?.toString();
+    final prevErrorAt = meta['ai_error_at']?.toString();
+    final r = await showAnalysisProgress(context, docId: docId, title: doc['title']?.toString());
     if (!mounted) return;
-    if (res.containsKey('error')) {
-      await SweetAlert.error(context, title: 'No se pudo analizar', text: res['error'].toString());
-    } else {
-      SweetAlert.info(context, title: 'Análisis iniciado', text: 'La IA está revisando el documento. Te avisamos cuando termine.');
-      final doc = _docs.firstWhere((d) => d['id']?.toString() == docId, orElse: () => <String, dynamic>{});
-      final meta = (doc['metadata'] as Map?) ?? {};
-      _watchAnalysis(docId,
-          title: doc['title']?.toString(),
-          prevAnalyzedAt: meta['ai_analyzed_at']?.toString(),
-          prevErrorAt: meta['ai_error_at']?.toString());
+    await _load();
+    if (!mounted) return;
+    if (r.ok) {
+      SweetAlert.success(context, title: 'Análisis actualizado', autoClose: const Duration(milliseconds: 1600));
+    } else if (r.background) {
+      _watchAnalysis(docId, title: doc['title']?.toString(), prevAnalyzedAt: prevAnalyzedAt, prevErrorAt: prevErrorAt);
     }
   }
 
