@@ -124,7 +124,7 @@ class _UserInfo {
 }
 
 // ── Web shell ──────────────────────────────────────────────────────────────
-class _WebShell extends StatelessWidget {
+class _WebShell extends StatefulWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback onLogout;
@@ -133,15 +133,33 @@ class _WebShell extends StatelessWidget {
   const _WebShell({required this.selectedIndex, required this.onNavTap, required this.onLogout, required this.user, required this.content});
 
   @override
+  State<_WebShell> createState() => _WebShellState();
+}
+
+class _WebShellState extends State<_WebShell> {
+  bool? _userCollapsed; // null = automático según el ancho
+
+  @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    // En pantallas medianas (tablet / laptop pequeña) el menú arranca contraído
+    final collapsed = _userCollapsed ?? width < 1200;
+
     return Scaffold(
       backgroundColor: BSColors.page,
       body: Row(children: [
-        _Sidebar(selectedIndex: selectedIndex, onNavTap: onNavTap, onLogout: onLogout),
+        _Sidebar(
+          selectedIndex: widget.selectedIndex,
+          onNavTap: widget.onNavTap,
+          onLogout: widget.onLogout,
+          user: widget.user,
+          collapsed: collapsed,
+          onToggle: () => setState(() => _userCollapsed = !collapsed),
+        ),
         Expanded(
           child: Column(children: [
-            _TopBar(user: user, onProfile: () => onNavTap(3)),
-            Expanded(child: content),
+            _TopBar(user: widget.user, onProfile: () => widget.onNavTap(3)),
+            Expanded(child: widget.content),
           ]),
         ),
       ]),
@@ -149,123 +167,266 @@ class _WebShell extends StatelessWidget {
   }
 }
 
-// ── Menú lateral ───────────────────────────────────────────────────────────
+// ── Menú lateral (expandido 260 px / contraído 80 px) ──────────────────────
 class _Sidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onNavTap;
   final VoidCallback onLogout;
-  const _Sidebar({required this.selectedIndex, required this.onNavTap, required this.onLogout});
+  final _UserInfo user;
+  final bool collapsed;
+  final VoidCallback onToggle;
+
+  const _Sidebar({
+    required this.selectedIndex,
+    required this.onNavTap,
+    required this.onLogout,
+    required this.user,
+    required this.collapsed,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 240,
-      decoration: const BoxDecoration(
+    final c = collapsed;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: c ? 80 : 260,
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(right: BorderSide(color: AppTheme.border)),
+        border: const Border(right: BorderSide(color: AppTheme.border)),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 12, offset: const Offset(2, 0))],
       ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        // Logo
-        Container(
-          height: 76,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
-          child: Row(children: [
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.topLeft,
+          minWidth: c ? 80 : 260,
+          maxWidth: c ? 80 : 260,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            // Marca
             Container(
-              width: 38, height: 38,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.featureCyan], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('BlockSign', style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
-                Text('Firma digital con blockchain', style: TextStyle(color: AppTheme.hint, fontSize: 10.5)),
+              height: 76,
+              padding: EdgeInsets.symmetric(horizontal: c ? 0 : 18),
+              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+              child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [AppTheme.primary, AppTheme.featureCyan], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 10, offset: const Offset(0, 4))],
+                  ),
+                  child: const Icon(Icons.verified_user_rounded, color: Colors.white, size: 21),
+                ),
+                if (!c) ...[
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('BlockSign', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+                      Text('Firma digital con blockchain', style: TextStyle(color: AppTheme.hint, fontSize: 11)),
+                    ]),
+                  ),
+                ],
               ]),
             ),
+
+            // Navegación
+            Expanded(
+              child: ListView(padding: const EdgeInsets.symmetric(vertical: 8), children: [
+                _SideLabel('PRINCIPAL', collapsed: c),
+                _NavItem(icon: Icons.space_dashboard_outlined, activeIcon: Icons.space_dashboard_rounded, label: 'Dashboard', selected: selectedIndex == 0, collapsed: c, onTap: () => onNavTap(0)),
+                _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description_rounded, label: 'Documentos', selected: selectedIndex == 1, collapsed: c, onTap: () => onNavTap(1)),
+                _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', badge: 'Pronto', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
+                _SideLabel('CUENTA', collapsed: c),
+                _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
+              ]),
+            ),
+
+            // Estado de la red
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: c ? 12 : 14),
+              child: Tooltip(
+                message: c ? 'Red: Sepolia Testnet · v1.0.0' : '',
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: c ? 0 : 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: BSColors.success.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: BSColors.success.withOpacity(0.2)),
+                  ),
+                  child: c
+                      ? const Center(child: Icon(Icons.hub_outlined, color: BSColors.success, size: 18))
+                      : const Row(children: [
+                          Icon(Icons.circle, color: BSColors.success, size: 9),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('Sepolia Testnet', style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                              Text('UMB · IS25133 · v1.0.0', style: TextStyle(color: AppTheme.hint, fontSize: 10.5)),
+                            ]),
+                          ),
+                        ]),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Usuario + cerrar sesión
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: c ? 12 : 14),
+              padding: EdgeInsets.all(c ? 6 : 10),
+              decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+              child: c
+                  ? Column(children: [
+                      Tooltip(
+                        message: user.name.isEmpty ? 'Mi perfil' : user.name,
+                        child: InkWell(
+                          onTap: () => onNavTap(3),
+                          customBorder: const CircleBorder(),
+                          child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 17),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      IconButton(
+                        tooltip: 'Cerrar sesión',
+                        onPressed: onLogout,
+                        icon: const Icon(Icons.logout_rounded, color: BSColors.danger, size: 20),
+                      ),
+                    ])
+                  : Row(children: [
+                      InkWell(
+                        onTap: () => onNavTap(3),
+                        customBorder: const CircleBorder(),
+                        child: BSAvatar(name: user.name, url: user.avatarUrl, radius: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(user.name.isEmpty ? 'Mi cuenta' : user.name,
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                          if (user.email.isNotEmpty)
+                            Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
+                        ]),
+                      ),
+                      IconButton(
+                        tooltip: 'Cerrar sesión',
+                        onPressed: onLogout,
+                        icon: const Icon(Icons.logout_rounded, color: BSColors.danger, size: 20),
+                      ),
+                    ]),
+            ),
+
+            // Contraer / expandir
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: Tooltip(
+                message: c ? 'Expandir menú' : '',
+                child: InkWell(
+                  onTap: onToggle,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+                      Icon(c ? Icons.keyboard_double_arrow_right_rounded : Icons.keyboard_double_arrow_left_rounded, color: AppTheme.hint, size: 20),
+                      if (!c) ...[
+                        const SizedBox(width: 10),
+                        const Text('Contraer menú', style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      ],
+                    ]),
+                  ),
+                ),
+              ),
+            ),
           ]),
         ),
-
-        const _SideLabel('MENÚ'),
-        _NavItem(icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard_rounded, label: 'Dashboard', selected: selectedIndex == 0, onTap: () => onNavTap(0)),
-        _NavItem(icon: Icons.description_outlined, activeIcon: Icons.description_rounded, label: 'Documentos', selected: selectedIndex == 1, onTap: () => onNavTap(1)),
-        _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, onTap: () => onNavTap(2)),
-
-        const _SideLabel('CUENTA'),
-        _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, onTap: () => onNavTap(3)),
-
-        const Spacer(),
-
-        // Tarjeta de red / versión
-        Container(
-          margin: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
-          child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Icon(Icons.circle, color: BSColors.success, size: 8),
-              SizedBox(width: 6),
-              Text('Red: Sepolia Testnet', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
-            ]),
-            SizedBox(height: 4),
-            Text('UMB · IS25133 · v1.0.0', style: TextStyle(color: AppTheme.hint, fontSize: 11)),
-          ]),
-        ),
-        _NavItem(icon: Icons.logout_rounded, activeIcon: Icons.logout_rounded, label: 'Cerrar sesión', selected: false, color: BSColors.danger, onTap: onLogout),
-        const SizedBox(height: 12),
-      ]),
+      ),
     );
   }
 }
 
 class _SideLabel extends StatelessWidget {
   final String text;
-  const _SideLabel(this.text);
+  final bool collapsed;
+  const _SideLabel(this.text, {required this.collapsed});
+
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.fromLTRB(22, 20, 22, 8),
-        child: Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.9)),
+  Widget build(BuildContext context) {
+    if (collapsed) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        child: Divider(color: AppTheme.border, height: 1),
       );
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+      child: Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 1)),
+    );
+  }
 }
 
 class _NavItem extends StatelessWidget {
   final IconData icon, activeIcon;
   final String label;
-  final bool selected;
+  final String? badge;
+  final bool selected, collapsed;
   final VoidCallback onTap;
-  final Color? color;
-  const _NavItem({required this.icon, required this.activeIcon, required this.label, required this.selected, required this.onTap, this.color});
+
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.selected,
+    required this.collapsed,
+    required this.onTap,
+    this.badge,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? (selected ? AppTheme.primary : AppTheme.hint);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Material(
-        color: selected ? AppTheme.primary.withOpacity(0.08) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(children: [
-              // Indicador lateral del elemento activo
-              Container(
-                width: 3, height: 20,
-                decoration: BoxDecoration(color: selected ? AppTheme.primary : Colors.transparent, borderRadius: BorderRadius.circular(2)),
+    final color = selected ? AppTheme.primary : AppTheme.text.withOpacity(0.75);
+    final item = Material(
+      color: selected ? AppTheme.primary.withOpacity(0.09) : Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        hoverColor: AppTheme.primary.withOpacity(0.05),
+        child: SizedBox(
+          height: 46,
+          child: Row(mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
+            if (!collapsed)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 4,
+                height: selected ? 24 : 0,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(4)),
               ),
-              const SizedBox(width: 11),
-              Icon(selected ? activeIcon : icon, color: c, size: 19),
+            Icon(selected ? activeIcon : icon, color: color, size: 21),
+            if (!collapsed) ...[
               const SizedBox(width: 12),
-              Text(label, style: TextStyle(color: color ?? (selected ? AppTheme.primary : AppTheme.text), fontSize: 14, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
-            ]),
-          ),
+              Expanded(
+                child: Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: selected ? FontWeight.w700 : FontWeight.w500)),
+              ),
+              if (badge != null)
+                Container(
+                  margin: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(color: BSColors.warning.withOpacity(0.12), borderRadius: BorderRadius.circular(20)),
+                  child: Text(badge!, style: const TextStyle(color: BSColors.warning, fontSize: 10, fontWeight: FontWeight.w700)),
+                ),
+            ],
+          ]),
         ),
       ),
+    );
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: collapsed ? 14 : 12, vertical: 2),
+      child: collapsed ? Tooltip(message: label, preferBelow: false, child: item) : item,
     );
   }
 }

@@ -103,6 +103,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               child: TabBar(
                 controller: _tabController,
                 isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                padding: EdgeInsets.zero,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 18),
                 indicatorColor: AppTheme.primary,
                 indicatorWeight: 3,
                 labelColor: AppTheme.primary,
@@ -236,20 +239,28 @@ class _AvatarWidget extends StatelessWidget {
   }
 }
 
-// Limita el ancho del contenido de las pestañas en pantallas grandes
+// Contenido de cada pestaña: dos columnas en pantallas anchas, una en celular.
+// Ocupa todo el ancho disponible (sin espacios vacíos a la derecha).
 class _TabBody extends StatelessWidget {
-  final List<Widget> children;
-  const _TabBody({required this.children});
+  final List<Widget> left;
+  final List<Widget> right;
+  const _TabBody({required this.left, this.right = const []});
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topLeft,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 860),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
-      ),
-    );
+    final wide = MediaQuery.of(context).size.width > 1180 && right.isNotEmpty;
+    if (wide) {
+      return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: left)),
+        const SizedBox(width: 16),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: right)),
+      ]);
+    }
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      ...left,
+      if (right.isNotEmpty) const SizedBox(height: 16),
+      ...right,
+    ]);
   }
 }
 
@@ -306,7 +317,7 @@ class _InfoTabState extends State<_InfoTab> {
         : null;
     String two(int n) => n.toString().padLeft(2, '0');
 
-    return _TabBody(children: [
+    return _TabBody(left: [
       BSCard(
         title: 'Datos de la cuenta',
         child: BSLabelGrid(items: [
@@ -324,7 +335,7 @@ class _InfoTabState extends State<_InfoTab> {
         text: 'Identifican tu firma en los documentos registrados en blockchain.',
         icon: Icons.lock_outline_rounded,
       ),
-      const SizedBox(height: 16),
+    ], right: [
       BSCard(
         title: 'Datos personales',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -414,7 +425,7 @@ class _SecurityTabState extends State<_SecurityTab> {
   @override
   Widget build(BuildContext context) {
     final isGoogle = widget.user['google_id'] != null;
-    return _TabBody(children: [
+    return _TabBody(left: [
       if (!isGoogle)
         BSCard(
           title: 'Cambiar contraseña',
@@ -436,6 +447,16 @@ class _SecurityTabState extends State<_SecurityTab> {
           title: 'Tu cuenta usa Google.',
           text: 'La contraseña se gestiona desde tu cuenta de Google.',
         ),
+    ], right: [
+      const BSCard(
+        title: 'Recomendaciones de seguridad',
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          _Tip(icon: Icons.password_rounded, text: 'Usa una contraseña única de al menos 8 caracteres, con mayúsculas y números.'),
+          _Tip(icon: Icons.mark_email_read_outlined, text: 'Mantén tu correo verificado: por ahí recibes los enlaces de recuperación.'),
+          _Tip(icon: Icons.draw_outlined, text: 'Tu firma solo se aplica cuando confirmas cada documento.'),
+          _Tip(icon: Icons.logout_rounded, text: 'Cierra sesión al usar equipos compartidos.'),
+        ]),
+      ),
       const SizedBox(height: 16),
       BSCard(
         title: 'Zona de peligro',
@@ -580,7 +601,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
       );
     }
 
-    return _TabBody(children: [
+    return _TabBody(left: [
       const BSInfoBanner(
         title: 'Tu firma se estampa en los documentos que firmes.',
         text: 'Cada firma queda registrada en la blockchain Sepolia junto con el hash SHA-256 del documento.',
@@ -612,9 +633,20 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
             ),
           ]),
         ),
-        const SizedBox(height: 16),
-      ],
-
+      ] else
+        const BSCard(
+          title: 'Firma actual',
+          trailing: BSPill(label: 'Sin registrar', color: BSColors.warning),
+          child: Row(children: [
+            Icon(Icons.draw_outlined, color: BSColors.warning, size: 28),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text('Todavía no tienes una firma. Créala en el panel "Crear firma digital" para poder firmar documentos.',
+                  style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45)),
+            ),
+          ]),
+        ),
+    ], right: [
       BSCard(
         title: _savedSignatureUrl != null ? 'Actualizar firma' : 'Crear firma digital',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -744,4 +776,27 @@ class _SignaturePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_SignaturePainter old) => true;
+}
+
+class _Tip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _Tip({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+          child: Icon(icon, color: AppTheme.primary, size: 17),
+        ),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45))),
+      ]),
+    );
+  }
 }
