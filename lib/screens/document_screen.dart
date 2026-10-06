@@ -99,11 +99,12 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         SweetAlert.success(
           context,
           title: 'Documento subido',
-          text: 'Lo estamos analizando con IA. En unos segundos verás su descripción.',
-          autoClose: const Duration(milliseconds: 2500),
+          text: 'Lo estamos analizando con IA. Te avisamos cuando termine.',
+          autoClose: const Duration(milliseconds: 2200),
         );
         await _load();
-        Future.delayed(const Duration(seconds: 6), () { if (mounted) _load(); });
+        final newId = res['document']?['id']?.toString();
+        if (newId != null) _watchAnalysis(newId, title: file.name);
       }
     } catch (e) {
       if (mounted) await SweetAlert.error(context, title: 'Error al subir', text: '$e');
@@ -136,7 +137,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     setState(() => _signingDocId = docId);
     try {
       // Muestra el proceso real paso a paso: huella → firma → tx → bloque
-      await showSigningProgress(context, docId: docId, docTitle: docTitle);
+      final ok = await showSigningProgress(context, docId: docId, docTitle: docTitle);
+      if (ok && mounted) {
+        SweetAlert.success(
+          context,
+          title: '¡Documento firmado!',
+          text: '"$docTitle" quedó registrado en la blockchain Sepolia. Cualquiera puede comprobar su autenticidad desde Verificar.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _signingDocId = null);
     }
@@ -163,14 +171,69 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
   }
 
+  /// Consulta el documento cada 3 s hasta que la IA termine y muestra una alerta con el resultado.
+  final Set<String> _watching = {};
+  Future<void> _watchAnalysis(String docId, {String? title, String? prevAnalyzedAt, String? prevErrorAt}) async {
+    if (!_watching.add(docId)) return;
+    try {
+      for (var i = 0; i < 30; i++) {
+        await Future.delayed(const Duration(seconds: 3));
+        if (!mounted) return;
+        final res = await DocumentService.getDocument(docId);
+        final doc = res['document'];
+        if (doc is! Map) continue;
+        final meta = (doc['metadata'] as Map?) ?? {};
+        final analyzedAt = meta['ai_analyzed_at']?.toString();
+        final errorAt = meta['ai_error_at']?.toString();
+        final name = title ?? doc['title']?.toString() ?? 'el documento';
+
+        if (analyzedAt != null && analyzedAt != prevAnalyzedAt) {
+          await _load();
+          if (!mounted) return;
+          final cat = meta['ai_category']?.toString();
+          final desc = meta['ai_description']?.toString() ?? '';
+          final short = desc.length > 180 ? '${desc.substring(0, 180)}…' : desc;
+          SweetAlert.success(
+            context,
+            title: 'Análisis con IA listo',
+            text: [
+              name,
+              if (cat != null && cat.isNotEmpty) 'Categoría: $cat',
+              if (short.isNotEmpty) short,
+            ].join('\n\n'),
+          );
+          return;
+        }
+        if (errorAt != null && errorAt != prevErrorAt) {
+          await _load();
+          if (!mounted) return;
+          SweetAlert.error(
+            context,
+            title: 'No se pudo analizar',
+            text: '${meta['ai_error'] ?? 'La IA no respondió.'}\n\nPuedes intentarlo de nuevo desde el detalle del documento.',
+          );
+          return;
+        }
+      }
+      if (mounted) await _load();
+    } finally {
+      _watching.remove(docId);
+    }
+  }
+
   Future<void> _reanalyze(String docId) async {
     final res = await DocumentService.reanalyzeDocument(docId);
     if (!mounted) return;
     if (res.containsKey('error')) {
       await SweetAlert.error(context, title: 'No se pudo analizar', text: res['error'].toString());
     } else {
-      SweetAlert.info(context, title: 'Análisis iniciado', text: 'La IA está revisando el documento. Se actualizará en unos segundos.');
-      Future.delayed(const Duration(seconds: 6), () { if (mounted) _load(); });
+      SweetAlert.info(context, title: 'Análisis iniciado', text: 'La IA está revisando el documento. Te avisamos cuando termine.');
+      final doc = _docs.firstWhere((d) => d['id']?.toString() == docId, orElse: () => <String, dynamic>{});
+      final meta = (doc['metadata'] as Map?) ?? {};
+      _watchAnalysis(docId,
+          title: doc['title']?.toString(),
+          prevAnalyzedAt: meta['ai_analyzed_at']?.toString(),
+          prevErrorAt: meta['ai_error_at']?.toString());
     }
   }
 
