@@ -11,6 +11,9 @@ import 'profile_screen.dart';
 import 'verify_screen.dart';
 import 'audit_screen.dart';
 import '../widgets/sign_ia_assistant.dart';
+import '../services/collab_service.dart';
+import 'inbox_screen.dart';
+import 'teams_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _recentDocs = [];
   bool _loading = true;
+  int _unread = 0; // mensajes sin leer en la bandeja
 
   // Usuario (para el saludo de la barra superior)
   String _userName = '';
@@ -54,7 +58,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _refreshInbox() async {
+    final s = await CollabService.inboxSummary();
+    if (!mounted || s['error'] != null) return;
+    final n = int.tryParse('${s['unread'] ?? 0}') ?? 0;
+    if (n != _unread) setState(() => _unread = n);
+  }
+
   Future<void> _loadData() async {
+    _refreshInbox();
     setState(() => _loading = true);
     try {
       final statsRes = await DocumentService.getStats();
@@ -105,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = i;
     });
     if (leavingProfile) _loadUser(); // por si cambió el nombre o la foto
+    _refreshInbox();
     if (i == 0) _loadData();
   }
 
@@ -133,6 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return const ProfileScreen();
       case 4:
         return const AuditScreen();
+      case 5:
+        return InboxScreen(onChanged: _refreshInbox);
+      case 6:
+        return const TeamsScreen();
       default:
         return _DashboardContent(
           stats: _stats,
@@ -158,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onSearch: _searchDocs,
             pending: _pending,
             onShowPending: _showPending,
+            unread: _unread,
           )
         : _MobileShell(
             selectedIndex: _selectedIndex,
@@ -167,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
             content: _buildContent(),
             pending: _pending,
             onShowPending: _showPending,
+            unread: _unread,
           );
   }
 }
@@ -212,6 +231,7 @@ class _WebShell extends StatefulWidget {
   final ValueChanged<String> onSearch;
   final List<Map<String, dynamic>> pending;
   final VoidCallback onShowPending;
+  final int unread;
   const _WebShell({
     required this.selectedIndex,
     required this.onNavTap,
@@ -221,6 +241,7 @@ class _WebShell extends StatefulWidget {
     required this.onSearch,
     required this.pending,
     required this.onShowPending,
+    this.unread = 0,
   });
 
   @override
@@ -248,6 +269,7 @@ class _WebShellState extends State<_WebShell> {
           collapsed: collapsed,
           onToggle: () => setState(() => _userCollapsed = !collapsed),
           pendingCount: widget.pending.length,
+          inboxCount: widget.unread,
         ),
         Expanded(
           child: Column(children: [
@@ -276,6 +298,7 @@ class _Sidebar extends StatelessWidget {
   final bool collapsed;
   final VoidCallback onToggle;
   final int pendingCount;
+  final int inboxCount;
 
   const _Sidebar({
     required this.selectedIndex,
@@ -285,6 +308,7 @@ class _Sidebar extends StatelessWidget {
     required this.collapsed,
     required this.onToggle,
     this.pendingCount = 0,
+    this.inboxCount = 0,
   });
 
   @override
@@ -358,7 +382,20 @@ class _Sidebar extends StatelessWidget {
                     badgeTooltip: '$pendingCount por firmar',
                     onTap: () => onNavTap(1),
                   ),
+                  _NavItem(
+                    icon: Icons.inbox_outlined,
+                    activeIcon: Icons.inbox_rounded,
+                    label: 'Bandeja',
+                    selected: selectedIndex == 5,
+                    collapsed: c,
+                    badge: inboxCount,
+                    badgeColor: const Color(0xFF7E9FDB),
+                    badgeTooltip: '$inboxCount sin leer',
+                    onTap: () => onNavTap(5),
+                  ),
                   _NavItem(icon: Icons.verified_outlined, activeIcon: Icons.verified_rounded, label: 'Verificar', selected: selectedIndex == 2, collapsed: c, onTap: () => onNavTap(2)),
+                  section('COLABORACIÓN'),
+                  _NavItem(icon: Icons.groups_outlined, activeIcon: Icons.groups_rounded, label: 'Equipos', selected: selectedIndex == 6, collapsed: c, onTap: () => onNavTap(6)),
                   section('CONTROL'),
                   _NavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, label: 'Auditoría', selected: selectedIndex == 4, collapsed: c, onTap: () => onNavTap(4)),
                   _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
@@ -541,6 +578,7 @@ class _NavItem extends StatefulWidget {
   final bool selected, collapsed;
   final int badge;
   final String? badgeTooltip;
+  final Color badgeColor;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -552,6 +590,7 @@ class _NavItem extends StatefulWidget {
     required this.onTap,
     this.badge = 0,
     this.badgeTooltip,
+    this.badgeColor = BSColors.warning,
   });
 
   @override
@@ -572,7 +611,7 @@ class _NavItemState extends State<_NavItem> {
     if (widget.badge > 0) {
       icon = Badge(
         label: Text('${widget.badge > 99 ? '99+' : widget.badge}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
-        backgroundColor: BSColors.warning,
+        backgroundColor: widget.badgeColor,
         textColor: Colors.white,
         offset: const Offset(8, -6),
         child: icon,
@@ -604,11 +643,11 @@ class _NavItemState extends State<_NavItem> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: sel ? BSColors.warning.withOpacity(0.14) : Colors.white.withOpacity(0.16),
+                    color: sel ? widget.badgeColor.withOpacity(0.14) : Colors.white.withOpacity(0.16),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('${widget.badge}',
-                      style: TextStyle(color: sel ? BSColors.warning : Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: sel ? (widget.badgeColor == BSColors.warning ? BSColors.warning : AppTheme.primary) : Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800)),
                 ),
               ),
           ]);
@@ -871,6 +910,7 @@ class _MobileShell extends StatelessWidget {
   final Widget content;
   final List<Map<String, dynamic>> pending;
   final VoidCallback onShowPending;
+  final int unread;
   const _MobileShell({
     required this.selectedIndex,
     required this.onNavTap,
@@ -879,7 +919,11 @@ class _MobileShell extends StatelessWidget {
     required this.content,
     required this.pending,
     required this.onShowPending,
+    this.unread = 0,
   });
+
+  // Orden de la barra inferior → índice de sección
+  static const _order = [0, 1, 5, 2, 3];
 
   @override
   Widget build(BuildContext context) {
@@ -913,11 +957,14 @@ class _MobileShell extends StatelessWidget {
               PopupMenuButton<int>(
                 tooltip: 'Mi cuenta',
                 offset: const Offset(0, 46),
-                onSelected: (v) => v == 0 ? onNavTap(3) : onLogout(),
+                onSelected: (v) => v < 0 ? onLogout() : onNavTap(v),
                 itemBuilder: (_) => const [
-                  PopupMenuItem(value: 0, child: Row(children: [Icon(Icons.person_outline_rounded, size: 18), SizedBox(width: 10), Text('Mi perfil')])),
+                  PopupMenuItem(value: 3, child: Row(children: [Icon(Icons.person_outline_rounded, size: 18), SizedBox(width: 10), Text('Mi perfil')])),
+                  PopupMenuItem(value: 6, child: Row(children: [Icon(Icons.groups_outlined, size: 18), SizedBox(width: 10), Text('Equipos')])),
+                  PopupMenuItem(value: 4, child: Row(children: [Icon(Icons.receipt_long_outlined, size: 18), SizedBox(width: 10), Text('Auditoría')])),
+                  PopupMenuDivider(),
                   PopupMenuItem(
-                    value: 1,
+                    value: -1,
                     child: Row(children: [
                       Icon(Icons.logout_rounded, size: 18, color: BSColors.danger),
                       SizedBox(width: 10),
@@ -943,16 +990,20 @@ class _MobileShell extends StatelessWidget {
         child: NavigationBar(
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.transparent,
-          // En la barra inferior Auditoría va antes de Perfil
-          selectedIndex: selectedIndex == 4 ? 3 : (selectedIndex == 3 ? 4 : selectedIndex),
-          onDestinationSelected: (i) => onNavTap(i == 3 ? 4 : (i == 4 ? 3 : i)),
+          // Tablero · Docs · Bandeja · Verificar · Perfil (Equipos y Auditoría están en el menú del avatar)
+          selectedIndex: _order.contains(selectedIndex) ? _order.indexOf(selectedIndex) : 4,
+          onDestinationSelected: (i) => onNavTap(_order[i]),
           indicatorColor: BSColors.selected,
-          destinations: const [
-            NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
-            NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded, color: AppTheme.primary), label: 'Docs'),
-            NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
-            NavigationDestination(icon: Icon(Icons.receipt_long_outlined), selectedIcon: Icon(Icons.receipt_long_rounded, color: AppTheme.primary), label: 'Auditoría'),
-            NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
+          destinations: [
+            const NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
+            const NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded, color: AppTheme.primary), label: 'Docs'),
+            NavigationDestination(
+              icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.inbox_outlined)),
+              selectedIcon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.inbox_rounded, color: AppTheme.primary)),
+              label: 'Bandeja',
+            ),
+            const NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
+            const NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
           ],
         ),
       ),

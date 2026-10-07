@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/document_service.dart';
+import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
 import 'sweet_alert.dart';
@@ -51,7 +52,19 @@ class _SendPanelState extends State<_SendPanel> {
   final List<String> _to = [];
   bool _attach = true;
   bool _sending = false;
+  bool _review = false;
   String? _toError;
+  List<Map<String, dynamic>> _teams = [];
+  final Set<String> _selTeams = {};
+
+  @override
+  void initState() {
+    super.initState();
+    CollabService.teams().then((r) {
+      if (!mounted || r['error'] != null) return;
+      setState(() => _teams = ((r['teams'] as List?) ?? []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList());
+    });
+  }
 
   Map<String, dynamic> get _meta => Map<String, dynamic>.from((widget.doc['metadata'] as Map?) ?? {});
   String get _title => widget.doc['title']?.toString() ?? 'Documento';
@@ -89,8 +102,8 @@ class _SendPanelState extends State<_SendPanel> {
 
   Future<void> _send() async {
     if (!_commit()) return;
-    if (_to.isEmpty) {
-      setState(() => _toError = 'Escribe al menos un correo');
+    if (_to.isEmpty && _selTeams.isEmpty) {
+      setState(() => _toError = 'Escribe al menos un correo o elige un equipo');
       _toFocus.requestFocus();
       return;
     }
@@ -98,6 +111,8 @@ class _SendPanelState extends State<_SendPanel> {
     final res = await DocumentService.sendByEmail(
       docId: widget.doc['id'].toString(),
       recipients: _to,
+      teams: _selTeams.toList(),
+      review: _review,
       subject: _subjectCtrl.text,
       message: _msgCtrl.text,
       attach: _attach,
@@ -114,7 +129,9 @@ class _SendPanelState extends State<_SendPanel> {
       context,
       title: res['message']?.toString() ?? 'Documento enviado',
       text: [
-        (res['sent_to'] as List?)?.join('\n') ?? _to.join('\n'),
+        if ((res['teams'] as List?)?.isNotEmpty == true) 'Equipos: ${(res['teams'] as List).join(', ')}',
+        if ((int.tryParse('${res['in_app'] ?? 0}') ?? 0) > 0) '${res['in_app']} persona(s) también lo verán en su bandeja de BlockSign.',
+        if (_review) 'Verás sus aprobaciones en Bandeja → Enviados.',
         if (note != null && note.isNotEmpty) note,
       ].join('\n\n'),
     );
@@ -161,9 +178,9 @@ class _SendPanelState extends State<_SendPanel> {
           const SizedBox(width: 14),
           const Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Enviar por correo', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+              Text('Enviar documento', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
               SizedBox(height: 2),
-              Text('Se envía desde BlockSign con la huella y el enlace para verificarlo', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+              Text('Llega por correo y, a quien tenga cuenta, también a su bandeja de BlockSign', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
             ]),
           ),
           IconButton(
@@ -255,11 +272,51 @@ class _SendPanelState extends State<_SendPanel> {
           Padding(
             padding: const EdgeInsets.only(top: 6),
             child: Text(
-              _toError ?? 'Hasta 5 personas. Separa con coma o Enter.',
+              _toError ?? 'Hasta 5 correos. Separa con coma o Enter. Para más personas, usa un equipo.',
               style: TextStyle(color: _toError != null ? BSColors.danger : AppTheme.hint, fontSize: 12),
             ),
           ),
           const SizedBox(height: 16),
+
+          // Equipos
+          _label('Equipos'),
+          if (_teams.isEmpty)
+            const Text('Aún no tienes equipos. Créalos en la sección Equipos para enviar a varias personas a la vez.',
+                style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
+          else
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final t in _teams)
+                FilterChip(
+                  selected: _selTeams.contains(t['id'].toString()),
+                  onSelected: _sending
+                      ? null
+                      : (v) => setState(() {
+                            v ? _selTeams.add(t['id'].toString()) : _selTeams.remove(t['id'].toString());
+                            if (_selTeams.isNotEmpty) _toError = null;
+                          }),
+                  avatar: Icon(Icons.groups_rounded, size: 16, color: _selTeams.contains(t['id'].toString()) ? Colors.white : AppTheme.primary),
+                  label: Text('${t['name']} · ${t['members_count'] ?? 0}'),
+                  showCheckmark: false,
+                  selectedColor: AppTheme.primary,
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: _selTeams.contains(t['id'].toString()) ? AppTheme.primary : AppTheme.border),
+                  labelStyle: TextStyle(
+                    color: _selTeams.contains(t['id'].toString()) ? Colors.white : AppTheme.text,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                  ),
+                ),
+            ]),
+          const SizedBox(height: 18),
+
+          // Tipo de envío
+          _label('¿Para qué lo envías?'),
+          Row(children: [
+            Expanded(child: _kindOption(false, Icons.visibility_outlined, 'Para conocimiento', 'Solo para que lo vean')),
+            const SizedBox(width: 10),
+            Expanded(child: _kindOption(true, Icons.fact_check_outlined, 'Para revisión', 'Deben aprobarlo o rechazarlo')),
+          ]),
+          const SizedBox(height: 18),
 
           _label('Asunto (opcional)'),
           TextField(
@@ -335,7 +392,12 @@ class _SendPanelState extends State<_SendPanel> {
         child: Row(children: [
           Expanded(
             child: Text(
-              _to.isEmpty ? 'Sin destinatarios' : '${_to.length} destinatario${_to.length == 1 ? '' : 's'}',
+              _to.isEmpty && _selTeams.isEmpty
+                  ? 'Sin destinatarios'
+                  : [
+                      if (_to.isNotEmpty) '${_to.length} correo${_to.length == 1 ? '' : 's'}',
+                      if (_selTeams.isNotEmpty) '${_selTeams.length} equipo${_selTeams.length == 1 ? '' : 's'}',
+                    ].join(' + '),
               style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600),
             ),
           ),
@@ -350,6 +412,35 @@ class _SendPanelState extends State<_SendPanel> {
         ]),
       ),
     ]);
+  }
+
+  Widget _kindOption(bool review, IconData icon, String title, String help) {
+    final sel = _review == review;
+    final c = review ? AppTheme.featureCyan : AppTheme.primary;
+    return InkWell(
+      onTap: _sending ? null : () => setState(() => _review = review),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: sel ? c.withOpacity(0.08) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: sel ? c : AppTheme.border, width: sel ? 1.6 : 1),
+        ),
+        child: Row(children: [
+          Icon(icon, color: c, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: TextStyle(color: sel ? c : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
+              Text(help, maxLines: 2, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+            ]),
+          ),
+          if (sel) Icon(Icons.check_circle_rounded, color: c, size: 18),
+        ]),
+      ),
+    );
   }
 
   static String _ago(String? iso) {

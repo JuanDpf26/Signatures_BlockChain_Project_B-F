@@ -829,7 +829,7 @@ class _DocActions extends StatelessWidget {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       if (!info.canSign && quick) ...[
         _quick(Icons.visibility_outlined, 'Ver detalle', onDetail),
-        _quick(Icons.send_outlined, 'Enviar por correo', onSend),
+        _quick(Icons.send_outlined, 'Enviar', onSend),
       ],
       if (info.canSign)
         SizedBox(
@@ -866,7 +866,7 @@ class _DocActions extends StatelessWidget {
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'detail', child: _MenuItem(Icons.visibility_outlined, 'Ver detalle', AppTheme.text)),
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar', AppTheme.text)),
-          PopupMenuItem(value: 'send', child: _MenuItem(Icons.forward_to_inbox_rounded, 'Enviar por correo', AppTheme.text)),
+          PopupMenuItem(value: 'send', child: _MenuItem(Icons.send_outlined, 'Enviar o pedir revisión', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
           PopupMenuDivider(),
           PopupMenuItem(value: 'delete', child: _MenuItem(Icons.delete_outline_rounded, 'Eliminar', BSColors.danger)),

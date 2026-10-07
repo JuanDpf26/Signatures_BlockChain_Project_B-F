@@ -180,6 +180,8 @@ class DocumentService {
   static Future<Map<String, dynamic>> sendByEmail({
     required String docId,
     required List<String> recipients,
+    List<String> teams = const [],
+    bool review = false,
     String? subject,
     String? message,
     bool attach = true,
@@ -188,6 +190,8 @@ class DocumentService {
       final headers = await _authHeaders();
       final body = {
         'recipients': recipients,
+        'teams': teams,
+        'kind': review ? 'review' : 'info',
         if (subject != null && subject.trim().isNotEmpty) 'subject': subject.trim(),
         if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
         'attach': attach,

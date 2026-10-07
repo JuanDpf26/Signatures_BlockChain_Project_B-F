@@ -306,7 +306,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
               onPressed: widget.onSign,
             ),
           if (widget.onSend != null)
-            BSOutlineButton(label: 'Enviar por correo', icon: Icons.forward_to_inbox_rounded, onPressed: widget.onSend),
+            BSOutlineButton(label: 'Enviar', icon: Icons.send_outlined, onPressed: widget.onSend),
           BSOutlineButton(label: 'Analizar con IA', icon: Icons.auto_awesome_rounded, onPressed: widget.onReanalyze),
           BSOutlineButton(label: 'Eliminar', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: widget.onDelete),
         ]),
