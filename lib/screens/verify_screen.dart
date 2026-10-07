@@ -223,10 +223,17 @@ class _VerifyScreenState extends State<VerifyScreen> {
       if (_steps.isNotEmpty) ...[
         const SizedBox(height: 16),
         BSCard(
-          title: 'Proceso de verificación',
+          title: _running ? 'Verificando…' : 'Comprobaciones realizadas',
           trailing: _running
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
-              : null,
+              : Text(
+                  '${_steps.where((x) => x.state == ChainStepState.done).length} de ${_steps.length} correctas',
+                  style: TextStyle(
+                    color: _steps.any((x) => x.state == ChainStepState.error) ? BSColors.danger : BSColors.success,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
           child: ChainTimeline(steps: _steps),
         ),
       ],
@@ -240,6 +247,12 @@ class _VerifyScreenState extends State<VerifyScreen> {
       _NetworkCard(info: _network, loading: _loadingNetwork, onRefresh: _loadNetwork),
       const SizedBox(height: 16),
       const _HowItWorksCard(),
+      const SizedBox(height: 16),
+      const BSInfoBanner(
+        title: 'Verificación pública',
+        text: 'Quien recibe un documento por correo puede verificarlo con este mismo flujo, sin crear una cuenta.',
+        icon: Icons.public_rounded,
+      ),
     ]);
 
     return Container(
@@ -250,7 +263,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
           BSPageHeader(
             breadcrumb: const ['Inicio', 'Verificar'],
             title: 'Verificar documento',
-            subtitle: 'Comprueba si un archivo es auténtico y no fue modificado desde que se firmó.',
+            subtitle: 'Comprueba que un archivo es auténtico y que nadie lo modificó desde que se firmó.',
             badges: [
               BSPill(
                 label: _network?['connected'] == true ? 'Sepolia en línea' : (_loadingNetwork ? 'Conectando…' : 'Sin conexión'),

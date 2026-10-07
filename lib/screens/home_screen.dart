@@ -1024,9 +1024,9 @@ class _DashboardContent extends StatelessWidget {
                 onTap: () => onNavTap(1),
               ),
               BSKpiCard(
-                label: 'Tiempo promedio para firmar',
+                label: 'Tiempo promedio de firma',
                 value: v(hoursLabel(stats['avg_hours_to_sign'])),
-                caption: 'Desde que se sube hasta el bloque',
+                caption: 'Desde la carga hasta el bloque',
                 color: BSColors.warning,
                 icon: Icons.timer_outlined,
               ),
