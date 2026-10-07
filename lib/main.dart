@@ -6,6 +6,8 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/email_verified_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/verify_screen.dart';
+import 'widgets/bs_ui.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -40,6 +42,31 @@ class MyApp extends StatelessWidget {
           final success = uri.queryParameters['success'] == 'true';
           return MaterialPageRoute(
             builder: (_) => EmailVerifiedScreen(success: success),
+            settings: settings,
+          );
+        }
+
+        // /verify?hash=xxx → verificación pública (sin iniciar sesión), enlace de los correos
+        if (uri.path == '/verify') {
+          return MaterialPageRoute(
+            builder: (ctx) => Scaffold(
+              backgroundColor: BSColors.page,
+              appBar: AppBar(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                foregroundColor: AppTheme.text,
+                title: const Text('Verificar documento · BlockSign', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pushReplacementNamed('/login'),
+                    child: const Text('Iniciar sesión'),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+              body: VerifyScreen(initialHash: uri.queryParameters['hash']),
+            ),
             settings: settings,
           );
         }

@@ -140,6 +140,7 @@ Future<void> showDocumentDetail(
   required VoidCallback onReanalyze,
   required Future<Map<String, dynamic>?> Function(Map<String, dynamic> changes) onUpdate,
   VoidCallback? onReplaceFile,
+  VoidCallback? onSend,
   int initialTab = 0,
 }) {
   final size = MediaQuery.of(context).size;
@@ -152,6 +153,7 @@ Future<void> showDocumentDetail(
     onReanalyze: onReanalyze,
     onUpdate: onUpdate,
     onReplaceFile: onReplaceFile,
+    onSend: onSend,
     initialTab: initialTab,
   );
 
@@ -206,6 +208,7 @@ class DocumentDetailPanel extends StatefulWidget {
   /// Guarda los cambios; devuelve el documento actualizado o null si falló
   final Future<Map<String, dynamic>?> Function(Map<String, dynamic> changes) onUpdate;
   final VoidCallback? onReplaceFile;
+  final VoidCallback? onSend;
   final int initialTab;
 
   const DocumentDetailPanel({
@@ -218,6 +221,7 @@ class DocumentDetailPanel extends StatefulWidget {
     required this.onReanalyze,
     required this.onUpdate,
     this.onReplaceFile,
+    this.onSend,
     this.initialTab = 0,
   });
 
@@ -301,6 +305,8 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
               color: BSColors.success,
               onPressed: widget.onSign,
             ),
+          if (widget.onSend != null)
+            BSOutlineButton(label: 'Enviar por correo', icon: Icons.forward_to_inbox_rounded, onPressed: widget.onSend),
           BSOutlineButton(label: 'Analizar con IA', icon: Icons.auto_awesome_rounded, onPressed: widget.onReanalyze),
           BSOutlineButton(label: 'Eliminar', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: widget.onDelete),
         ]),

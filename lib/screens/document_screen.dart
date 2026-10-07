@@ -11,6 +11,7 @@ import '../widgets/signing_progress_dialog.dart';
 import '../widgets/analysis_progress_dialog.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
+import '../widgets/send_document_dialog.dart';
 import '../theme/app_theme.dart';
 import 'document_viewer_screen.dart';
 
@@ -299,7 +300,17 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         return Map<String, dynamic>.from(res['document'] as Map);
       },
       onReplaceFile: () => _replaceFile(doc),
+      onSend: () => _sendByEmail(doc),
     );
+  }
+
+  Future<void> _sendByEmail(Map<String, dynamic> doc) async {
+    // Usa los datos más recientes (por si se editó o se firmó hace un momento)
+    final fresh = await DocumentService.getDocument(doc['id'].toString());
+    if (!mounted) return;
+    final d = fresh['document'] is Map ? Map<String, dynamic>.from(fresh['document'] as Map) : doc;
+    final sent = await showSendDocumentDialog(context, d);
+    if (sent && mounted) _load();
   }
 
   /// Nueva versión del archivo: elegir → confirmar → subir → análisis con IA visible
@@ -512,6 +523,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onSign: () => _sign(docId, info.title),
         onDetail: () => _showDetail(doc),
         onEdit: () => _showDetail(doc, tab: 3),
+        onSend: () => _sendByEmail(doc),
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
       );
@@ -724,9 +736,9 @@ class _DocTile extends StatelessWidget {
 class _DocActions extends StatelessWidget {
   final _DocInfo info;
   final bool isSigning;
-  final VoidCallback onSign, onDetail, onEdit, onReanalyze, onDelete;
+  final VoidCallback onSign, onDetail, onEdit, onSend, onReanalyze, onDelete;
 
-  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onReanalyze, required this.onDelete});
+  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -759,12 +771,14 @@ class _DocActions extends StatelessWidget {
         onSelected: (v) {
           if (v == 'detail') onDetail();
           if (v == 'edit') onEdit();
+          if (v == 'send') onSend();
           if (v == 'ai') onReanalyze();
           if (v == 'delete') onDelete();
         },
         itemBuilder: (_) => const [
           PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalle', AppTheme.text)),
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar', AppTheme.text)),
+          PopupMenuItem(value: 'send', child: _MenuItem(Icons.forward_to_inbox_rounded, 'Enviar por correo', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
           PopupMenuDivider(),
           PopupMenuItem(value: 'delete', child: _MenuItem(Icons.delete_outline_rounded, 'Eliminar', BSColors.danger)),

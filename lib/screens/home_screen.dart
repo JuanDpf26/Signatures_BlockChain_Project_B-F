@@ -1438,7 +1438,8 @@ class _VBarState extends State<_VBar> {
 
   @override
   Widget build(BuildContext context) {
-    const maxH = 170.0;
+    // La columna mide 170: se reservan ~30 px para el número de arriba
+    const maxH = 135.0;
     final h = widget.value == 0 ? 3.0 : (widget.value / widget.max) * maxH;
     return Tooltip(
       message: widget.tooltip,
@@ -1632,6 +1633,8 @@ class _ActivityCard extends StatelessWidget {
       if (ai != null) events.add((ai, 'Análisis con IA completado', '$title · ${_categoryOf(m)}', AppTheme.primary));
       final edited = at('last_edited_at');
       if (edited != null) events.add((edited, 'Documento editado', title, AppTheme.featureCyan));
+      final shared = at('last_shared_at');
+      if (shared != null) events.add((shared, 'Enviado por correo', title, AppTheme.primary));
       final aiErr = at('ai_error_at');
       if (aiErr != null && (ai == null || aiErr.isAfter(ai))) events.add((aiErr, 'Análisis con IA falló', title, BSColors.danger));
       final sent = at('blockchain_sent_at');

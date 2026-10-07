@@ -166,7 +166,7 @@ class _AuditScreenState extends State<AuditScreen> {
             Expanded(flex: 3, child: Text('Recurso', style: head)),
             Expanded(flex: 3, child: Text('IP', style: head)),
             Expanded(flex: 3, child: Text('ID de petición', style: head)),
-            Expanded(flex: 2, child: Text('Resultado', style: head)),
+            SizedBox(width: 132, child: Text('Resultado', style: head)),
           ]),
         ),
       const Divider(height: 1, color: AppTheme.border),
@@ -242,7 +242,10 @@ class _AuditScreenState extends State<AuditScreen> {
       Expanded(flex: 3, child: Text(_short(e['resource']?.toString()), style: mono)),
       Expanded(flex: 3, child: Text(e['ip']?.toString() ?? '—', style: mono)),
       Expanded(flex: 3, child: Text(_short(e['request_id']?.toString(), 4), style: mono)),
-      Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: _pill(e))),
+      SizedBox(
+        width: 132,
+        child: Align(alignment: Alignment.centerLeft, child: FittedBox(fit: BoxFit.scaleDown, child: _pill(e))),
+      ),
     ]);
   }
 

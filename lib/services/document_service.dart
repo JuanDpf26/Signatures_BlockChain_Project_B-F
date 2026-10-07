@@ -176,6 +176,33 @@ class DocumentService {
     }
   }
 
+  /// Envía el documento por correo (adjunto o enlace) a 1–5 personas
+  static Future<Map<String, dynamic>> sendByEmail({
+    required String docId,
+    required List<String> recipients,
+    String? subject,
+    String? message,
+    bool attach = true,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      final body = {
+        'recipients': recipients,
+        if (subject != null && subject.trim().isNotEmpty) 'subject': subject.trim(),
+        if (message != null && message.trim().isNotEmpty) 'message': message.trim(),
+        'attach': attach,
+      };
+      final res = await http.post(Uri.parse('$baseUrl/$docId/send'), headers: headers, body: jsonEncode(body)).timeout(const Duration(seconds: 60));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      final data = jsonDecode(res.body);
+      if (data is! Map) return {'error': 'Respuesta inesperada del servidor'};
+      if (res.statusCode >= 400 && !data.containsKey('error')) return {'error': 'Error ${res.statusCode}'};
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      return {'error': 'No se pudo enviar: $e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> deleteDocument(String docId) async {
     try {
       final headers = await _authHeaders();
