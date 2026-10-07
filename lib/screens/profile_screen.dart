@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             const BSPageHeader(
               breadcrumb: ['Inicio', 'Mi perfil'],
               title: 'Mi perfil',
-              subtitle: 'Administra tus datos, la seguridad de tu cuenta y tu firma digital.',
+              subtitle: 'Tus datos, la seguridad de tu cuenta y tus llaves de firma.',
             ),
             const SizedBox(height: 20),
 
@@ -115,9 +115,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                 unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
                 tabs: const [
-                  Tab(text: 'Información'),
+                  Tab(text: 'Datos personales'),
                   Tab(text: 'Seguridad'),
-                  Tab(text: 'Mi firma'),
+                  Tab(text: 'Firma manuscrita'),
                 ],
               ),
             ),
@@ -189,17 +189,53 @@ class _ProfileCard extends StatelessWidget {
     );
 
     final avatar = _AvatarWidget(avatarUrl: avatarUrl, name: name, onTap: () => _pickAvatar(context));
+    // Aro blanco alrededor de la foto, para que resalte sobre la banda azul
+    final ringed = Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: AppTheme.cardShadow),
+      child: avatar,
+    );
+    const lift = 44.0; // cuánto sube la foto sobre la banda
 
-    return BSCard(
-      padding: EdgeInsets.all(isWeb ? 24 : 20),
-      child: isWeb
-          ? Row(children: [
-              avatar,
-              const SizedBox(width: 20),
-              Expanded(child: info),
-              BSOutlineButton(label: 'Cambiar foto', icon: Icons.photo_camera_outlined, onPressed: () => _pickAvatar(context)),
-            ])
-          : Column(children: [avatar, const SizedBox(height: 12), info]),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Banda azul institucional
+        Container(
+          height: isWeb ? 96 : 84,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(isWeb ? 24 : 16, 0, isWeb ? 24 : 16, 20),
+          child: isWeb
+              ? Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  SizedBox(
+                    width: 88,
+                    height: 88 - lift,
+                    child: Stack(clipBehavior: Clip.none, children: [Positioned(top: -lift, left: 0, child: ringed)]),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(child: Padding(padding: const EdgeInsets.only(top: 14), child: info)),
+                  BSOutlineButton(label: 'Cambiar foto', icon: Icons.photo_camera_outlined, onPressed: () => _pickAvatar(context)),
+                ])
+              : Column(children: [
+                  SizedBox(
+                    height: 88 - lift,
+                    child: Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [Positioned(top: -lift, child: ringed)]),
+                  ),
+                  const SizedBox(height: 10),
+                  info,
+                ]),
+        ),
+      ]),
     );
   }
 }
@@ -364,7 +400,52 @@ class _SecurityTabState extends State<_SecurityTab> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+    _newPassCtrl.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() { _currentPassCtrl.dispose(); _newPassCtrl.dispose(); _confirmPassCtrl.dispose(); super.dispose(); }
+
+  /// Medidor de fortaleza: 4 requisitos
+  Widget _strength() {
+    final p = _newPassCtrl.text;
+    final reqs = <(String, bool)>[
+      ('8 caracteres o más', p.length >= 8),
+      ('Una mayúscula', p.contains(RegExp(r'[A-Z]'))),
+      ('Un número', p.contains(RegExp(r'[0-9]'))),
+      ('Un símbolo', p.contains(RegExp(r'[^A-Za-z0-9]'))),
+    ];
+    final ok = reqs.where((r) => r.$2).length;
+    final color = ok <= 1 ? BSColors.danger : ok == 2 ? BSColors.warning : BSColors.success;
+    final label = p.isEmpty ? 'Escribe la nueva contraseña' : ok <= 1 ? 'Contraseña débil' : ok == 2 ? 'Contraseña aceptable' : 'Contraseña fuerte';
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        for (var i = 0; i < 4; i++) ...[
+          Expanded(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              height: 6,
+              decoration: BoxDecoration(color: i < ok && p.isNotEmpty ? color : AppTheme.border, borderRadius: BorderRadius.circular(3)),
+            ),
+          ),
+          if (i < 3) const SizedBox(width: 6),
+        ],
+      ]),
+      const SizedBox(height: 8),
+      Text(label, style: TextStyle(color: p.isEmpty ? AppTheme.hint : color, fontSize: 12.5, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 6),
+      Wrap(spacing: 16, runSpacing: 6, children: [
+        for (final r in reqs)
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(r.$2 ? Icons.check_rounded : Icons.close_rounded, size: 15, color: r.$2 ? BSColors.success : AppTheme.hint),
+            const SizedBox(width: 5),
+            Text(r.$1, style: TextStyle(color: r.$2 ? AppTheme.text : AppTheme.hint, fontSize: 12.5)),
+          ]),
+      ]),
+    ]);
+  }
 
   Future<void> _changePassword() async {
     if (_currentPassCtrl.text.isEmpty) {
@@ -426,6 +507,8 @@ class _SecurityTabState extends State<_SecurityTab> {
             BSTextField(label: 'Contraseña actual', hint: '••••••••', controller: _currentPassCtrl, icon: Icons.lock_outline_rounded, obscureText: true),
             const SizedBox(height: 14),
             BSTextField(label: 'Nueva contraseña', hint: '8+ caracteres, mayúscula y número', controller: _newPassCtrl, icon: Icons.lock_reset_rounded, obscureText: true),
+            const SizedBox(height: 10),
+            _strength(),
             const SizedBox(height: 14),
             BSTextField(label: 'Confirmar nueva contraseña', hint: 'Repite la nueva contraseña', controller: _confirmPassCtrl, icon: Icons.lock_reset_rounded, obscureText: true),
             const SizedBox(height: 20),
@@ -440,9 +523,9 @@ class _SecurityTabState extends State<_SecurityTab> {
           title: 'Tu cuenta usa Google.',
           text: 'La contraseña se gestiona desde tu cuenta de Google.',
         ),
-      const SizedBox(height: 16),
-      const _KeysCard(),
     ], right: [
+      const _KeysCard(),
+      const SizedBox(height: 16),
       const BSCard(
         title: 'Recomendaciones de seguridad',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -834,10 +917,31 @@ class _KeysCardState extends State<_KeysCard> {
     return parts.join(' ');
   }
 
+  String _date(String? iso) {
+    final d = DateTime.tryParse(iso ?? '')?.toLocal();
+    if (d == null) return '—';
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${two(d.day)}/${two(d.month)}/${d.year} · ${bsHora(d)}';
+  }
+
+  Widget _row(String k, String v, {bool mono = false}) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+        child: Row(children: [
+          Expanded(child: Text(k, style: const TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w600))),
+          Flexible(
+            child: SelectableText(v,
+                textAlign: TextAlign.right,
+                style: TextStyle(color: AppTheme.text, fontSize: mono ? 12.5 : 13.5, fontWeight: mono ? FontWeight.w600 : FontWeight.w700, fontFamily: mono ? 'monospace' : null)),
+          ),
+        ]),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final pem = _k?['publicKey']?.toString() ?? '';
     return BSCard(
-      title: 'Mis claves de firma',
+      title: 'Tus llaves de firma',
       trailing: const BSPill(label: 'ECDSA P-256', color: AppTheme.primary, dot: false),
       child: _error != null
           ? BSInfoBanner(title: 'No se pudieron cargar', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded)
@@ -845,52 +949,59 @@ class _KeysCardState extends State<_KeysCard> {
               ? const SizedBox(height: 90, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
               : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   const Text(
-                    'Cuando firmas, tu clave privada firma la huella del documento. Cualquiera puede comprobar esa firma con tu clave pública. '
-                    'La clave privada se guarda cifrada y nunca sale del servidor.',
+                    'Cada firma se hace con tu llave privada, que se guarda cifrada (AES-256-GCM) y nunca sale del servidor. '
+                    'Cualquiera puede comprobarla con tu llave pública.',
                     style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5),
                   ),
+                  const SizedBox(height: 6),
+                  _row('Huella de la llave', _group(_k!['fingerprint']?.toString() ?? ''), mono: true),
+                  _row('Creada', _date(_k!['createdAt']?.toString())),
+                  _row('Algoritmo', _k!['algorithm']?.toString() ?? 'ECDSA-P256-SHA256', mono: true),
                   const SizedBox(height: 14),
+                  // Llave pública en bloque oscuro, con copiar
                   Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
-                    child: Row(children: [
-                      const Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 30),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          const Text('Huella de tu clave pública', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 3),
-                          SelectableText(_group(_k!['fingerprint']?.toString() ?? ''),
-                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
-                        ]),
+                    padding: const EdgeInsets.fromLTRB(14, 10, 8, 14),
+                    decoration: BoxDecoration(color: const Color(0xFF0F1B33), borderRadius: BorderRadius.circular(10)),
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                      Row(children: [
+                        Expanded(child: Text('Llave pública (PEM)', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w700))),
+                        IconButton(
+                          tooltip: 'Copiar llave pública',
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(Icons.copy_rounded, size: 16, color: Colors.white.withOpacity(0.75)),
+                          onPressed: () async {
+                            await Clipboard.setData(ClipboardData(text: pem));
+                            if (context.mounted) SweetAlert.success(context, title: 'Llave pública copiada', autoClose: const Duration(milliseconds: 1100));
+                          },
+                        ),
+                      ]),
+                      AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 220),
+                        crossFadeState: _showKey ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                        firstChild: Text(
+                          pem.split('\n').where((l) => l.trim().isNotEmpty).take(3).join('\n'),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 11.5, fontFamily: 'monospace', height: 1.45),
+                        ),
+                        secondChild: SelectableText(pem, style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 11.5, fontFamily: 'monospace', height: 1.45)),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () => setState(() => _showKey = !_showKey),
+                          style: TextButton.styleFrom(foregroundColor: Colors.white, padding: EdgeInsets.zero, minimumSize: const Size(0, 30)),
+                          child: Text(_showKey ? 'Ver menos' : 'Ver completa', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                        ),
                       ),
                     ]),
                   ),
-                  const SizedBox(height: 10),
-                  Wrap(spacing: 10, runSpacing: 10, children: [
-                    BSOutlineButton(
-                      label: _showKey ? 'Ocultar clave pública' : 'Ver clave pública',
-                      icon: Icons.key_rounded,
-                      onPressed: () => setState(() => _showKey = !_showKey),
-                    ),
-                    BSOutlineButton(
-                      label: 'Copiar clave pública',
-                      icon: Icons.copy_rounded,
-                      onPressed: () async {
-                        await Clipboard.setData(ClipboardData(text: _k!['publicKey']?.toString() ?? ''));
-                        if (context.mounted) SweetAlert.success(context, title: 'Clave pública copiada', autoClose: const Duration(milliseconds: 1100));
-                      },
-                    ),
-                  ]),
-                  if (_showKey) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(10)),
-                      child: SelectableText(_k!['publicKey']?.toString() ?? '',
-                          style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 11.5, fontFamily: 'monospace', height: 1.4)),
-                    ),
-                  ],
+                  const SizedBox(height: 12),
+                  const BSInfoBanner(
+                    title: '¿Dónde está la criptografía asimétrica?',
+                    text: 'Tu llave privada firma y la pública verifica. Además, la billetera del servidor firma la transacción en Ethereum (ECDSA secp256k1).',
+                    icon: Icons.key_rounded,
+                  ),
                 ]),
     );
   }

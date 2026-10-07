@@ -85,7 +85,7 @@ class _AuditScreenState extends State<AuditScreen> {
             BSPageHeader(
               breadcrumb: const ['Inicio', 'Auditoría'],
               title: 'Auditoría',
-              subtitle: 'Cada acción de tu cuenta queda registrada con fecha, IP, ID de petición y resultado.',
+              subtitle: 'Cada acción queda registrada: quién la hizo, qué hizo, cuándo, desde dónde y con qué resultado.',
               actions: [BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : _load)],
             ),
             const SizedBox(height: 18),
@@ -96,16 +96,16 @@ class _AuditScreenState extends State<AuditScreen> {
             ),
             const SizedBox(height: 16),
             BSKpiRow(items: [
-              BSKpiCard(label: 'Eventos registrados', value: v(n('total')), caption: '${v(n('last7'))} en los últimos 7 días', color: AppTheme.primary, icon: Icons.receipt_long_outlined),
+              BSKpiCard(label: 'Eventos registrados', value: v(n('total')), caption: '${v(n('last7'))} en los últimos 7 días', color: AppTheme.primary, icon: Icons.monitor_heart_outlined),
+              BSKpiCard(label: 'Accesos denegados', value: v(n('denied')), caption: n('denied') > 0 ? 'Tokens vencidos o rechazados' : 'Sin intentos sospechosos', color: BSColors.warning, icon: Icons.gpp_maybe_outlined),
               BSKpiCard(
-                label: 'Último inicio de sesión',
+                label: 'Último ingreso',
                 value: _loading ? '–' : (_summary['last_login'] == null ? '—' : _fmt(_summary['last_login']?.toString()).split(' ').last),
                 caption: _summary['last_login'] == null ? 'Sin registro' : _fmt(_summary['last_login']?.toString()).split(' ').first,
                 color: BSColors.success,
-                icon: Icons.login_rounded,
+                icon: Icons.person_outline_rounded,
               ),
-              BSKpiCard(label: 'Accesos denegados', value: v(n('denied')), caption: n('denied') > 0 ? 'Revisa si fuiste tú' : 'Sin intentos sospechosos', color: BSColors.danger, icon: Icons.gpp_maybe_outlined),
-              BSKpiCard(label: 'IPs distintas', value: v(n('ips')), caption: '${v(n('errors'))} operaciones con error', color: BSColors.warning, icon: Icons.lan_outlined),
+              BSKpiCard(label: 'Direcciones IP', value: v(n('ips')), caption: '${v(n('errors'))} operaciones con error', color: AppTheme.featureCyan, icon: Icons.public_rounded),
             ]),
             const SizedBox(height: 16),
             BSCard(
@@ -155,18 +155,18 @@ class _AuditScreenState extends State<AuditScreen> {
         child: Center(child: Text('Aún no hay eventos con estos filtros.', style: TextStyle(color: AppTheme.hint))),
       );
     }
-    const head = TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w700);
+    const head = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Column(children: [
       if (table)
         const Padding(
           padding: EdgeInsets.fromLTRB(8, 0, 8, 12),
           child: Row(children: [
-            Expanded(flex: 3, child: Text('Fecha y hora', style: head)),
-            Expanded(flex: 5, child: Text('Evento', style: head)),
-            Expanded(flex: 3, child: Text('Recurso', style: head)),
+            Expanded(flex: 3, child: Text('FECHA Y HORA', style: head)),
+            Expanded(flex: 5, child: Text('EVENTO', style: head)),
+            Expanded(flex: 3, child: Text('RECURSO', style: head)),
             Expanded(flex: 3, child: Text('IP', style: head)),
-            Expanded(flex: 3, child: Text('ID de petición', style: head)),
-            SizedBox(width: 132, child: Text('Resultado', style: head)),
+            Expanded(flex: 3, child: Text('ID DE PETICIÓN', style: head)),
+            SizedBox(width: 132, child: Text('RESULTADO', style: head)),
           ]),
         ),
       const Divider(height: 1, color: AppTheme.border),

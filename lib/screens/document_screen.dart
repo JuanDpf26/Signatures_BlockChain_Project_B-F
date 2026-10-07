@@ -36,6 +36,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   String? _selCategory;
   String? _selStatus;
   String? _selExt;
+  Map<String, dynamic> _stats = {};
 
   final _categories = ['Todos', 'Contrato', 'Factura', 'Informe', 'Propuesta', 'Acta', 'Comunicado', 'Certificado', 'Autorización', 'Manual', 'Presupuesto', 'Documento'];
   final _statuses = ['Todos', 'pending', 'signed', 'verified', 'rejected'];
@@ -60,6 +61,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   Future<void> _load() async {
     setState(() => _isLoading = true);
     try {
+      DocumentService.getStats().then((st) {
+        if (mounted && st['error'] == null) setState(() => _stats = st);
+      });
       final res = await DocumentService.getDocuments(
         search: _searchCtrl.text.trim(),
         category: (_selCategory == 'Todos' || _selCategory == null) ? null : _selCategory,
@@ -380,10 +384,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final isTable = width > 980;
     final pad = isWeb ? 28.0 : 16.0;
 
-    final pending = _docs.where((d) => d['status'] == 'pending').length;
-    final signed = _docs.where((d) => d['status'] == 'signed').length;
-    final verified = _docs.where((d) => d['status'] == 'verified').length;
-
     return Container(
       color: BSColors.page,
       child: RefreshIndicator(
@@ -412,43 +412,42 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // KPIs
-            BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos', value: '${_docs.length}', caption: _hasFilters ? 'Con los filtros actuales' : 'En tu cuenta', color: AppTheme.primary, icon: Icons.folder_copy_outlined),
-              BSKpiCard(label: 'Pendientes de firma', value: '$pending', caption: pending > 0 ? 'Requieren tu firma' : 'Todo al día', color: BSColors.warning, icon: Icons.pending_actions_rounded),
-              BSKpiCard(label: 'Firmados', value: '$signed', caption: 'Registrados en Sepolia', color: AppTheme.featureCyan, icon: Icons.draw_outlined),
-              BSKpiCard(label: 'Verificados', value: '$verified', caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined),
-            ]),
+            // Resumen por estado (sirve también de filtro rápido)
+            _StatusTabs(
+              stats: _stats,
+              selected: _selStatus,
+              onSelect: (v) { setState(() => _selStatus = v); _load(); },
+            ),
             const SizedBox(height: 16),
 
             // Filtros
             BSCard(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               child: Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   SizedBox(
-                    width: isWeb ? 320 : double.infinity,
-                    height: 40,
+                    width: isWeb ? (width > 1250 ? 460 : 320) : double.infinity,
+                    height: 44,
                     child: TextField(
                       controller: _searchCtrl,
                       onSubmitted: (_) => _load(),
                       onChanged: (v) { setState(() {}); if (v.isEmpty) _load(); },
                       style: const TextStyle(color: AppTheme.text, fontSize: 13),
                       decoration: InputDecoration(
-                        hintText: 'Buscar por nombre, autor o descripción IA…',
+                        hintText: 'Buscar por nombre, autor, etiqueta o descripción…',
                         hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
                         prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
                         suffixIcon: _searchCtrl.text.isNotEmpty
                             ? IconButton(icon: const Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _load(); })
                             : null,
                         filled: true,
-                        fillColor: BSColors.page,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.border)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppTheme.primary)),
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.6)),
                         contentPadding: EdgeInsets.zero,
                       ),
                     ),
@@ -465,13 +464,6 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     value: _selCategory ?? 'Todos',
                     options: _categories,
                     onChanged: (v) { setState(() => _selCategory = v == 'Todos' ? null : v); _load(); },
-                  ),
-                  BSFilterDropdown(
-                    label: 'Estado',
-                    value: _selStatus ?? 'Todos',
-                    options: _statuses,
-                    display: bsDocStatusLabel,
-                    onChanged: (v) { setState(() => _selStatus = v == 'Todos' ? null : v); _load(); },
                   ),
                   if (_hasFilters)
                     TextButton.icon(
@@ -526,6 +518,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onSend: () => _sendByEmail(doc),
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
+        quick: isTable,
       );
       // Cada fila aparece con un pequeño escalonado
       rows.add(BSEntrance(
@@ -552,6 +545,79 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
     ));
     return Column(children: rows);
+  }
+}
+
+// ── Pestañas de resumen por estado (Todos · Por firmar · Firmados · Verificados) ──
+class _StatusTabs extends StatelessWidget {
+  final Map<String, dynamic> stats;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+  const _StatusTabs({required this.stats, required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    int n(String k) => int.tryParse('${stats[k] ?? 0}') ?? 0;
+    final tabs = <(String, String?, int, Color)>[
+      ('Todos', null, n('total'), AppTheme.primary),
+      ('Por firmar', 'pending', n('pending'), BSColors.warning),
+      ('Firmados', 'signed', n('signed'), AppTheme.primary),
+      ('Verificados', 'verified', n('verified'), BSColors.success),
+    ];
+    return Wrap(spacing: 10, runSpacing: 10, children: [
+      for (final t in tabs) _StatusTab(label: t.$1, count: t.$3, color: t.$4, selected: selected == t.$2, onTap: () => onSelect(t.$2)),
+    ]);
+  }
+}
+
+class _StatusTab extends StatefulWidget {
+  final String label;
+  final int count;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+  const _StatusTab({required this.label, required this.count, required this.color, required this.selected, required this.onTap});
+
+  @override
+  State<_StatusTab> createState() => _StatusTabState();
+}
+
+class _StatusTabState extends State<_StatusTab> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = widget.selected;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: sel ? AppTheme.primary : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: sel ? AppTheme.primary : (_hover ? AppTheme.primary.withOpacity(0.35) : AppTheme.border)),
+            boxShadow: sel ? [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))] : null,
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Text(widget.label, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
+              decoration: BoxDecoration(
+                color: sel ? Colors.white.withOpacity(0.2) : widget.color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text('${widget.count}', style: TextStyle(color: sel ? Colors.white : widget.color, fontSize: 12.5, fontWeight: FontWeight.w800)),
+            ),
+          ]),
+        ),
+      ),
+    );
   }
 }
 
@@ -605,17 +671,17 @@ class _TableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const s = TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w700);
+    const s = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
+      padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
       decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: const Row(children: [
-        Expanded(flex: 5, child: Text('Documento', style: s)),
-        Expanded(flex: 2, child: Text('Categoría', style: s)),
-        Expanded(flex: 2, child: Text('Tamaño', style: s)),
-        Expanded(flex: 2, child: Text('Fecha', style: s)),
-        Expanded(flex: 2, child: Text('Estado', style: s)),
-        SizedBox(width: 160, child: Text('Acciones', style: s, textAlign: TextAlign.right)),
+        Expanded(flex: 5, child: Text('DOCUMENTO', style: s)),
+        Expanded(flex: 2, child: Text('CATEGORÍA', style: s)),
+        Expanded(flex: 2, child: Text('TAMAÑO', style: s)),
+        Expanded(flex: 2, child: Text('FECHA', style: s)),
+        Expanded(flex: 2, child: Text('ESTADO', style: s)),
+        SizedBox(width: 168, child: Text('ACCIONES', style: s)),
       ]),
     );
   }
@@ -635,7 +701,7 @@ class _DocRow extends StatelessWidget {
       onTap: onTap,
       hoverColor: BSColors.selected.withOpacity(0.7),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
         child: Row(children: [
           Expanded(
             flex: 5,
@@ -663,12 +729,11 @@ class _DocRow extends StatelessWidget {
               ),
             ]),
           ),
-          Expanded(flex: 2, child: Text(info.category, style: cell, maxLines: 1, overflow: TextOverflow.ellipsis)),
-          Expanded(flex: 2, child: Text(info.pages != null ? '${info.sizeStr} · ${info.pages} págs' : info.sizeStr,
-              style: const TextStyle(color: AppTheme.hint, fontSize: 13))),
-          Expanded(flex: 2, child: Text(info.dateStr, style: const TextStyle(color: AppTheme.hint, fontSize: 13))),
+          Expanded(flex: 2, child: Text(info.category, style: const TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(flex: 2, child: Text(info.pages != null ? '${info.sizeStr} · ${info.pages} págs' : info.sizeStr, style: cell)),
+          Expanded(flex: 2, child: Text(info.dateStr, style: cell)),
           Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(info.status))),
-          SizedBox(width: 160, child: Align(alignment: Alignment.centerRight, child: actions)),
+          SizedBox(width: 168, child: Align(alignment: Alignment.centerLeft, child: actions)),
         ]),
       ),
     );
@@ -737,30 +802,53 @@ class _DocActions extends StatelessWidget {
   final _DocInfo info;
   final bool isSigning;
   final VoidCallback onSign, onDetail, onEdit, onSend, onReanalyze, onDelete;
+  /// En la tabla de escritorio se muestran accesos rápidos (ver / enviar)
+  final bool quick;
 
-  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete});
+  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete, this.quick = false});
+
+  Widget _quick(IconData icon, String tip, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.only(right: 6),
+        child: Tooltip(
+          message: tip,
+          child: Material(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: const BorderSide(color: AppTheme.border)),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(8),
+              hoverColor: BSColors.selected,
+              child: SizedBox(width: 34, height: 34, child: Icon(icon, size: 17, color: AppTheme.primary)),
+            ),
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
+      if (!info.canSign && quick) ...[
+        _quick(Icons.visibility_outlined, 'Ver detalle', onDetail),
+        _quick(Icons.send_outlined, 'Enviar por correo', onSend),
+      ],
       if (info.canSign)
         SizedBox(
-          height: 32,
+          height: 34,
           child: ElevatedButton.icon(
             onPressed: isSigning ? null : onSign,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primary,
+              backgroundColor: BSColors.success,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppTheme.primary.withOpacity(0.5),
+              disabledBackgroundColor: BSColors.success.withOpacity(0.5),
               elevation: 0,
-              minimumSize: const Size(0, 32),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+              minimumSize: const Size(0, 34),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             icon: isSigning
                 ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.6, color: Colors.white))
                 : const Icon(Icons.draw_rounded, size: 14),
-            label: const Text('Firmar', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+            label: const Text('Firmar', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800)),
           ),
         ),
       PopupMenuButton<String>(
@@ -776,7 +864,7 @@ class _DocActions extends StatelessWidget {
           if (v == 'delete') onDelete();
         },
         itemBuilder: (_) => const [
-          PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalle', AppTheme.text)),
+          PopupMenuItem(value: 'detail', child: _MenuItem(Icons.visibility_outlined, 'Ver detalle', AppTheme.text)),
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar', AppTheme.text)),
           PopupMenuItem(value: 'send', child: _MenuItem(Icons.forward_to_inbox_rounded, 'Enviar por correo', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
