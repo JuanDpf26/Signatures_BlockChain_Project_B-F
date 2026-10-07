@@ -37,11 +37,25 @@ class _InboxScreenState extends State<InboxScreen> {
   String? _selectedId;
   Map<String, dynamic> _summary = {};
   final _searchCtrl = TextEditingController();
+  String _readFilter = 'Todo'; // Todo | No leídos | Leídos | Por revisar
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  List<Map<String, dynamic>> get _visible {
+    if (_box == _Box.sent || _readFilter == 'Todo') return _items;
+    return _items.where((it) {
+      final st = it['status']?.toString();
+      return switch (_readFilter) {
+        'No leídos' => st == 'sent',
+        'Leídos' => st != 'sent',
+        'Por revisar' => it['kind'] == 'review' && (st == 'sent' || st == 'read'),
+        _ => true,
+      };
+    }).toList();
   }
 
   @override
@@ -119,7 +133,9 @@ class _InboxScreenState extends State<InboxScreen> {
 
     final list = _ListPanel(
       box: _box,
-      items: _items,
+      items: _visible,
+      readFilter: _readFilter,
+      onReadFilter: (v) => setState(() => _readFilter = v),
       loading: _loading,
       error: _error,
       selectedId: _selectedId,
@@ -198,6 +214,8 @@ class _Panel extends StatelessWidget {
 class _ListPanel extends StatelessWidget {
   final _Box box;
   final List<Map<String, dynamic>> items;
+  final String readFilter;
+  final ValueChanged<String> onReadFilter;
   final bool loading;
   final String? error;
   final String? selectedId;
@@ -210,6 +228,8 @@ class _ListPanel extends StatelessWidget {
   const _ListPanel({
     required this.box,
     required this.items,
+    required this.readFilter,
+    required this.onReadFilter,
     required this.loading,
     required this.error,
     required this.selectedId,
@@ -234,9 +254,9 @@ class _ListPanel extends StatelessWidget {
       body = _EmptyList(box: box);
     } else {
       body = ListView.separated(
-        padding: const EdgeInsets.fromLTRB(8, 4, 8, 12),
+        padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: AppTheme.border),
         itemBuilder: (_, i) => BSEntrance(
           delay: Duration(milliseconds: 25 * (i < 10 ? i : 10)),
           offsetY: 8,
@@ -266,10 +286,38 @@ class _ListPanel extends StatelessWidget {
             ]),
           ),
         ),
-        // Buscador
+        // Filtro de lectura + buscador
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-          child: SizedBox(
+          child: Row(children: [
+            if (box != _Box.sent) ...[
+              Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: readFilter,
+                    isDense: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppTheme.hint),
+                    style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600),
+                    borderRadius: BorderRadius.circular(10),
+                    dropdownColor: Colors.white,
+                    items: const [
+                      DropdownMenuItem(value: 'Todo', child: Text('Todo')),
+                      DropdownMenuItem(value: 'No leídos', child: Text('No leídos')),
+                      DropdownMenuItem(value: 'Leídos', child: Text('Leídos')),
+                      DropdownMenuItem(value: 'Por revisar', child: Text('Por revisar')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) onReadFilter(v);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: SizedBox(
             height: 42,
             child: TextField(
               controller: searchCtrl,
@@ -287,7 +335,8 @@ class _ListPanel extends StatelessWidget {
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
               ),
             ),
-          ),
+          )),
+          ]),
         ),
         const Divider(height: 1, color: AppTheme.border),
         Expanded(child: body),
@@ -374,37 +423,52 @@ class _InboxRow extends StatefulWidget {
 class _InboxRowState extends State<_InboxRow> {
   bool _hover = false;
 
+  static const _meses = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'];
+  static String _fecha(String? iso) {
+    final t = DateTime.tryParse(iso ?? '')?.toLocal();
+    if (t == null) return '';
+    final d = DateTime.now().difference(t);
+    if (d.inMinutes < 60) return d.inMinutes < 1 ? 'ahora' : 'hace ${d.inMinutes} min';
+    if (d.inHours < 12 && t.day == DateTime.now().day) return 'hoy, ${bsHora(t)}';
+    return '${t.day} ${_meses[t.month - 1]} ${t.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final it = widget.item;
     final review = it['kind'] == 'review';
-    final unread = !widget.sent && it['status'] == 'sent';
+    final status = it['status']?.toString();
+    final unread = !widget.sent && status == 'sent';
     final recipients = ((it['recipients'] as List?) ?? const []).whereType<Map>().toList();
-
-    String who;
-    if (widget.sent) {
-      final first = recipients.isNotEmpty ? (recipients.first['name'] ?? recipients.first['email']).toString() : '';
-      who = recipients.length <= 1 ? 'Para: $first' : 'Para: $first y ${recipients.length - 1} más';
-    } else {
-      who = (it['sender_name'] ?? it['sender_email'] ?? 'Alguien').toString();
-    }
     final title = (it['subject']?.toString().trim().isNotEmpty == true ? it['subject'] : it['doc_title'])?.toString() ?? 'Documento';
     final msg = it['message']?.toString().trim();
 
-    // Estado resumido
-    Widget statusPill;
+    // "Enviado por … | fecha"
+    String byline;
+    if (widget.sent) {
+      final first = recipients.isNotEmpty ? (recipients.first['name'] ?? recipients.first['email']).toString() : '';
+      byline = recipients.length <= 1 ? 'Enviado a $first' : 'Enviado a $first y ${recipients.length - 1} más';
+    } else {
+      byline = 'Enviado por ${it['sender_name'] ?? it['sender_email'] ?? 'alguien'}';
+    }
+    byline = '$byline  |  ${_fecha(it['created_at']?.toString())}';
+
+    // Línea de contexto (como el nombre del curso): equipo o tipo de envío
+    final context0 = (it['team_name'] ?? (review ? 'Solicitud de revisión' : 'Documento compartido')).toString().toUpperCase();
+
+    // Indicador a la derecha: círculo vacío = pendiente / check verde = leído o respondido
+    bool done;
+    String tip;
     if (widget.sent) {
       final responded = recipients.where((r) => r['status'] == 'approved' || r['status'] == 'rejected').length;
       final read = recipients.where((r) => r['status'] != 'sent').length;
-      statusPill = review
-          ? BSPill(label: '$responded/${recipients.length} respondieron', color: responded == recipients.length ? BSColors.success : BSColors.warning, dot: false)
-          : BSPill(label: '$read/${recipients.length} leído', color: BSColors.neutral, dot: false);
+      done = review ? responded == recipients.length : read == recipients.length;
+      tip = review ? '$responded de ${recipients.length} respondieron' : '$read de ${recipients.length} lo leyeron';
     } else {
-      final st = shareStatus(it['status']?.toString());
-      statusPill = review && (it['status'] == 'sent' || it['status'] == 'read')
-          ? const BSPill(label: 'Por revisar', color: BSColors.warning)
-          : BSPill(label: st.$1, color: st.$2);
+      done = review ? (status == 'approved' || status == 'rejected') : status != 'sent';
+      tip = review ? (done ? 'Ya respondiste' : 'Pendiente de tu revisión') : (done ? 'Leído' : 'Sin leer');
     }
+    final rejected = status == 'rejected';
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -414,66 +478,80 @@ class _InboxRowState extends State<_InboxRow> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.fromLTRB(10, 12, 12, 12),
+          padding: const EdgeInsets.fromLTRB(16, 16, 14, 14),
           decoration: BoxDecoration(
             color: widget.selected ? BSColors.selected : (_hover ? BSColors.page : Colors.white),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: widget.selected ? AppTheme.primary.withOpacity(0.3) : Colors.transparent),
+            border: Border(left: BorderSide(color: widget.selected ? AppTheme.primary : (unread ? AppTheme.primary.withOpacity(0.5) : Colors.transparent), width: 3)),
           ),
-          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Punto de no leído
-            SizedBox(
-              width: 10,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 14),
-                child: unread ? Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)) : null,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              widget.sent
+                  ? Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), shape: BoxShape.circle),
+                      child: const Icon(Icons.send_rounded, size: 20, color: AppTheme.primary),
+                    )
+                  : BSAvatar(name: (it['sender_name'] ?? it['sender_email'])?.toString(), radius: 24),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    if (review)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 6, top: 1),
+                        child: Icon(Icons.fact_check_outlined, size: 17, color: done ? AppTheme.hint : BSColors.warning),
+                      ),
+                    Expanded(
+                      child: Text(title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: AppTheme.text, fontSize: 14.5, height: 1.3, fontWeight: unread ? FontWeight.w900 : FontWeight.w700)),
+                    ),
+                  ]),
+                  const SizedBox(height: 6),
+                  Text(byline, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  Text(context0,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: it['team_name'] != null ? (parseHexColor(it['team_color']?.toString()) ?? AppTheme.hint) : AppTheme.hint,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      )),
+                ]),
               ),
+              const SizedBox(width: 10),
+              Tooltip(
+                message: tip,
+                child: done
+                    ? Icon(rejected ? Icons.close_rounded : Icons.check_rounded, color: rejected ? BSColors.danger : BSColors.success, size: 26)
+                    : Container(
+                        width: 22,
+                        height: 22,
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: unread ? AppTheme.primary : AppTheme.hint, width: 1.6)),
+                      ),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            Text(
+              (msg != null && msg.isNotEmpty) ? msg : '${it['doc_title'] ?? 'Documento'} · ${review ? 'te piden revisarlo y aprobarlo o rechazarlo' : 'compartido para tu conocimiento'}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: AppTheme.text, fontSize: 13.5),
             ),
-            const SizedBox(width: 4),
-            widget.sent
-                ? Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), shape: BoxShape.circle),
-                    child: const Icon(Icons.send_rounded, size: 17, color: AppTheme.primary),
-                  )
-                : BSAvatar(name: who, radius: 19),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  Expanded(
-                    child: Text(who,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: unread ? FontWeight.w900 : FontWeight.w700)),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(inboxAgo(it['created_at']?.toString()), style: TextStyle(color: unread ? AppTheme.primary : AppTheme.hint, fontSize: 11.5, fontWeight: unread ? FontWeight.w800 : FontWeight.w500)),
-                ]),
-                const SizedBox(height: 3),
-                Row(children: [
-                  Icon(Icons.description_outlined, size: 14, color: unread ? AppTheme.text : AppTheme.hint),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: unread ? FontWeight.w800 : FontWeight.w600)),
-                  ),
-                ]),
-                if (msg != null && msg.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(msg, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
-                ],
-                const SizedBox(height: 8),
-                Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
-                  statusPill,
-                  BSPill(label: review ? 'Para revisión' : 'Para conocimiento', color: review ? AppTheme.featureCyan : BSColors.neutral, dot: false),
-                  if (it['team_name'] != null) _TeamChip(name: it['team_name'].toString(), color: it['team_color']?.toString()),
-                ]),
-              ]),
-            ),
+            const SizedBox(height: 6),
+            Text('Más información',
+                style: TextStyle(
+                  color: AppTheme.primary,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  decoration: _hover ? TextDecoration.underline : TextDecoration.none,
+                  decorationColor: AppTheme.primary,
+                )),
           ]),
         ),
       ),

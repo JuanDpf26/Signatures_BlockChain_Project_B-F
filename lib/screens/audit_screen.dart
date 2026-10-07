@@ -5,6 +5,7 @@ import '../services/audit_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/sweet_alert.dart';
+import '../widgets/chain_steps.dart' show openExternal;
 
 /// Auditoría: todo lo que se hizo con la cuenta, con fecha, IP, ID de
 /// petición y resultado. Los datos vienen de la tabla audit_logs.
@@ -30,6 +31,8 @@ class _AuditScreenState extends State<AuditScreen> {
     'Firma y verificación': 'signing',
     'Perfil': 'profile',
     'Sign IA': 'agent',
+    'Bandeja': 'inbox',
+    'Equipos': 'team',
   };
   static const _results = ['Todos', 'permitido', 'denegado', 'error'];
 
@@ -60,6 +63,36 @@ class _AuditScreenState extends State<AuditScreen> {
     });
   }
 
+  /// Diálogo para descargar el registro: formato y periodo (usa los filtros actuales)
+  Future<void> _download() async {
+    final opts = await showDialog<(String, String)>(
+      context: context,
+      builder: (_) => _ExportDialog(filters: [if (_type != 'Todos') _type, if (_result != 'Todos') _result]),
+    );
+    if (opts == null || !mounted) return;
+    final r = await AuditService.exportLink(
+      format: opts.$1,
+      period: opts.$2,
+      action: _types[_type],
+      result: _result == 'Todos' ? null : _result,
+    );
+    if (!mounted) return;
+    if (r['error'] != null || r['url'] == null) {
+      await SweetAlert.error(context, title: 'No se pudo descargar', text: (r['error'] ?? 'Intenta de nuevo').toString());
+      return;
+    }
+    await openExternal(r['url'].toString());
+    if (!mounted) return;
+    SweetAlert.success(
+      context,
+      title: opts.$1 == 'csv' ? 'Descargando registro' : 'Informe abierto',
+      text: opts.$1 == 'csv'
+          ? 'El archivo CSV se abre en Excel. La descarga también queda registrada en la auditoría.'
+          : 'Usa “Imprimir o guardar como PDF” en la pestaña que se abrió.',
+      autoClose: const Duration(milliseconds: 2200),
+    );
+  }
+
   String _fmt(String? iso, {bool seconds = false}) {
     final d = DateTime.tryParse(iso ?? '')?.toLocal();
     if (d == null) return '—';
@@ -86,7 +119,10 @@ class _AuditScreenState extends State<AuditScreen> {
               breadcrumb: const ['Inicio', 'Auditoría'],
               title: 'Auditoría',
               subtitle: 'Cada acción queda registrada: quién la hizo, qué hizo, cuándo, desde dónde y con qué resultado.',
-              actions: [BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : _load)],
+              actions: [
+                BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : _load),
+                BSPrimaryButton(label: 'Descargar registro', icon: Icons.download_rounded, onPressed: _download),
+              ],
             ),
             const SizedBox(height: 18),
             const BSInfoBanner(
@@ -335,6 +371,110 @@ class _AuditScreenState extends State<AuditScreen> {
               ]),
             ]),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+
+// ── Diálogo de descarga ────────────────────────────────────
+class _ExportDialog extends StatefulWidget {
+  final List<String> filters;
+  const _ExportDialog({required this.filters});
+
+  @override
+  State<_ExportDialog> createState() => _ExportDialogState();
+}
+
+class _ExportDialogState extends State<_ExportDialog> {
+  String _format = 'csv';
+  String _period = '30d';
+
+  Widget _formatOption(String value, IconData icon, String title, String help) {
+    final sel = _format == value;
+    return InkWell(
+      onTap: () => setState(() => _format = value),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: sel ? AppTheme.primary.withOpacity(0.07) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: sel ? AppTheme.primary : AppTheme.border, width: sel ? 1.6 : 1),
+        ),
+        child: Row(children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: AppTheme.primary, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
+              const SizedBox(height: 2),
+              Text(help, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+            ]),
+          ),
+          if (sel) const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
+        ]),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const periods = {'7d': 'Últimos 7 días', '30d': 'Últimos 30 días', '90d': 'Últimos 90 días', 'all': 'Todo el historial'};
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            const Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            Text(
+              widget.filters.isEmpty ? 'Incluye todas las acciones y resultados.' : 'Con los filtros actuales: ${widget.filters.join(' · ')}.',
+              style: const TextStyle(color: AppTheme.hint, fontSize: 13),
+            ),
+            const SizedBox(height: 18),
+            _formatOption('csv', Icons.table_chart_outlined, 'Excel (CSV)', 'Para filtrar y analizar en Excel o Google Sheets.'),
+            const SizedBox(height: 10),
+            _formatOption('html', Icons.picture_as_pdf_outlined, 'Informe para PDF', 'Con resumen y tabla; se imprime o guarda como PDF.'),
+            const SizedBox(height: 18),
+            const Text('Periodo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final e in periods.entries)
+                ChoiceChip(
+                  label: Text(e.value),
+                  selected: _period == e.key,
+                  onSelected: (_) => setState(() => _period = e.key),
+                  showCheckmark: false,
+                  selectedColor: AppTheme.primary.withOpacity(0.12),
+                  backgroundColor: Colors.white,
+                  side: BorderSide(color: _period == e.key ? AppTheme.primary : AppTheme.border),
+                  labelStyle: TextStyle(color: _period == e.key ? AppTheme.primary : AppTheme.text, fontWeight: _period == e.key ? FontWeight.w700 : FontWeight.w500, fontSize: 12.5),
+                ),
+            ]),
+            const SizedBox(height: 16),
+            const BSInfoBanner(
+              title: 'Con huella de integridad',
+              text: 'Cada descarga incluye la huella SHA-256 del contenido y queda registrada en la auditoría.',
+              icon: Icons.fingerprint_rounded,
+            ),
+            const SizedBox(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+              const SizedBox(width: 8),
+              BSPrimaryButton(label: 'Descargar', icon: Icons.download_rounded, onPressed: () => Navigator.of(context).pop((_format, _period))),
+            ]),
+          ]),
         ),
       ),
     );
