@@ -12,15 +12,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.2.0
   flutter_secure_storage: ^9.0.0
-  flutter_recaptcha_v2_compat: ^1.0.5
   google_sign_in: ^6.2.1
   file_picker: ^8.0.0
   image_picker: ^1.1.2
   url_launcher: ^6.3.0
 
-  flutter_pdfview: ^1.3.2      # PDF nativo Android/iOS/Windows
-  syncfusion_flutter_pdfviewer: ^24.1.41  # Alternativa más completa
-  flutter_cache_manager: ^3.4.1  # Cache de archivos
 
   pdfx: ^2.11.0
   dio: ^5.4.0
