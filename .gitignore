@@ -54,3 +54,6 @@ package-lock.json
 # Variables de entorno
 .env
 .env.*
+
+# SDK de Flutter que descarga Vercel al compilar
+/flutter/

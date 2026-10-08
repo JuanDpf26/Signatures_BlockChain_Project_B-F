@@ -1,6 +1,7 @@
 name: Deploy Flutter Web to Vercel
 
-# Despliegue automático PAUSADO mientras el proyecto se trabaja en local.
+# YA NO HACE FALTA: Vercel está conectado al repo y compila Flutter solo (ver vercel.json).
+# Se deja como alternativa manual.
 # Para publicar: GitHub → Actions → "Deploy Flutter Web to Vercel" → Run workflow.
 # Para reactivarlo en cada push a main, descomenta las líneas de "push".
 on:
