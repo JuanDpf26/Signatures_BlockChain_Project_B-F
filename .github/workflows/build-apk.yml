@@ -1,0 +1,64 @@
+name: Build APK (prueba)
+
+# Genera el APK de Android y lo publica como "pre-release" en GitHub para
+# descargarlo directamente desde el celular.
+# GitHub → Actions → "Build APK (prueba)" → Run workflow.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'URL del backend (vacío = secreto API_URL o https://blocksign-backend.onrender.com)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Dependencias
+        run: flutter pub get
+
+      - name: Compilar APK
+        env:
+          API_URL: ${{ inputs.api_url || secrets.API_URL || 'https://blocksign-backend.onrender.com' }}
+        run: |
+          echo "Backend: $API_URL"
+          flutter build apk --release \
+            --dart-define=IS_LOCAL=false \
+            --dart-define=API_URL=$API_URL
+          cp build/app/outputs/flutter-apk/app-release.apk BlockSign-prueba-${{ github.run_number }}.apk
+
+      - name: Guardar APK como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: BlockSign-apk
+          path: BlockSign-prueba-${{ github.run_number }}.apk
+
+      - name: Publicar pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-prueba-${{ github.run_number }}
+          name: BlockSign APK de prueba ${{ github.run_number }}
+          prerelease: true
+          body: |
+            APK de prueba (firmado con llave de depuración).
+            Para instalar: descárgalo en el celular y permite "Instalar apps desconocidas".
+          files: BlockSign-prueba-${{ github.run_number }}.apk

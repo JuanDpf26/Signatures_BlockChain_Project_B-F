@@ -19,8 +19,9 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0'
-          channel: 'stable'
+          # El pubspec pide Dart ^3.11: Flutter 3.24 ya no sirve, se usa el estable más reciente
+          channel: stable
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get

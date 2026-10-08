@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 // ignore: avoid_web_libraries_in_flutter
-import 'dart:js' as js;
+import '../utils/js_bridge.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
 import '../widgets/bs_auth_layout.dart';
@@ -44,12 +44,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _checkCaptcha() {
     if (_captchaChecking) {
       // Si cerró el reto sin resolverlo, al tocar de nuevo se vuelve a mostrar
-      if (kIsWeb) js.context.callMethod('showCaptcha');
+      if (kIsWeb) jsCall('showCaptcha');
       return;
     }
     if (kIsWeb) {
       setState(() => _captchaChecking = true);
-      js.context.callMethod('showCaptcha');
+      jsCall('showCaptcha');
       Future.delayed(const Duration(seconds: 1), _pollCaptchaToken);
     } else {
       setState(() {
@@ -66,7 +66,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _captchaChecking = false);
       return;
     }
-    final token = js.context['captchaToken'];
+    final token = jsGet('captchaToken');
     if (token != null && token.toString().isNotEmpty) {
       setState(() {
         _captchaVerified = true;
@@ -82,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _resetCaptcha() {
-    if (kIsWeb) js.context.callMethod('resetCaptcha');
+    if (kIsWeb) jsCall('resetCaptcha');
     setState(() {
       _captchaVerified = false;
       _captchaChecking = false;

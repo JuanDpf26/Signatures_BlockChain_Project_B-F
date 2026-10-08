@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:js' as js;
+import '../utils/js_bridge.dart';
 import '../config/app_config.dart';
 
 class AuthService {
@@ -126,18 +126,18 @@ class AuthService {
   try {
     if (kIsWeb) {
       // Limpiar token anterior
-      js.context['googleIdToken'] = null;
+      jsSet('googleIdToken', null);
 
       // Mostrar el botón oficial de Google
-      js.context.callMethod('triggerGoogleSignIn');
+      jsCall('triggerGoogleSignIn');
 
       // Esperar hasta 60 segundos a que el usuario haga clic
       for (int i = 0; i < 60; i++) {
         await Future.delayed(const Duration(seconds: 1));
-        final token = js.context['googleIdToken'];
+        final token = jsGet('googleIdToken');
         if (token != null && token.toString().isNotEmpty) {
           // Ocultar overlay
-          js.context.callMethod('eval', [
+          jsCall('eval', [
             "document.getElementById('google-btn-container').style.cssText='position:fixed;top:-9999px;left:-9999px;'"
           ]);
 
@@ -153,7 +153,7 @@ class AuthService {
           if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
           final data = jsonDecode(res.body);
           if (data['token'] != null) await saveToken(data['token']);
-          js.context['googleIdToken'] = null;
+          jsSet('googleIdToken', null);
           return data;
         }
       }
