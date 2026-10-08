@@ -431,11 +431,15 @@ class _ExportDialogState extends State<_ExportDialog> {
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 500),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          // El contenido se desplaza si no cabe; los botones quedan siempre visibles.
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             const Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
             Text(
@@ -468,14 +472,17 @@ class _ExportDialogState extends State<_ExportDialog> {
               text: 'Cada descarga incluye la huella SHA-256 del contenido y queda registrada en la auditoría.',
               icon: Icons.fingerprint_rounded,
             ),
-            const SizedBox(height: 16),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              ]),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 8, 22, 18),
+            child: Wrap(alignment: WrapAlignment.end, spacing: 8, runSpacing: 8, children: [
               TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-              const SizedBox(width: 8),
               BSPrimaryButton(label: 'Descargar', icon: Icons.download_rounded, onPressed: () => Navigator.of(context).pop((_format, _period))),
             ]),
-          ]),
-        ),
+          ),
+        ]),
       ),
     );
   }
