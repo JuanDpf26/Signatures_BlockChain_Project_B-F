@@ -34,7 +34,7 @@ class DocumentService {
   }
 
   static Future<Map<String, dynamic>> getDocuments({
-    String? search, String? category, String? status, String? ext, int page = 1,
+    String? search, String? category, String? status, String? ext, String? dateFrom, int page = 1,
   }) async {
     try {
       final headers = await _authHeaders();
@@ -44,6 +44,7 @@ class DocumentService {
         if (category != null && category.isNotEmpty) 'category': category,
         if (status != null && status.isNotEmpty) 'status': status,
         if (ext != null && ext.isNotEmpty) 'ext': ext,
+        if (dateFrom != null && dateFrom.isNotEmpty) 'date_from': dateFrom,
       };
       final uri = Uri.parse(baseUrl).replace(queryParameters: params);
       final res = await http.get(uri, headers: headers).timeout(const Duration(seconds: 15));

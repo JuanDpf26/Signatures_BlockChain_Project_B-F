@@ -82,11 +82,17 @@ class BSPageHeader extends StatelessWidget {
             ],
           )
         : Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               titleBlock,
               const SizedBox(height: 14),
-              Wrap(spacing: 10, runSpacing: 10, children: actions),
+              // En celular los botones se reparten el ancho por igual
+              Row(children: [
+                for (var i = 0; i < actions.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  Expanded(child: actions[i]),
+                ],
+              ]),
             ],
           ));
   }
@@ -199,6 +205,12 @@ class _BSKpiCardState extends State<BSKpiCard> {
     final c = widget.color;
     final number = int.tryParse(widget.value);
     final valueStyle = const TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w800, height: 1.1);
+    final narrow = MediaQuery.of(context).size.width < 600;
+    Widget valueText(String t) => FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(t, maxLines: 1, style: valueStyle.copyWith(fontSize: narrow ? 24 : 28)),
+        );
     return MouseRegion(
       cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
       onEnter: (_) => setState(() => _hover = true),
@@ -211,86 +223,55 @@ class _BSKpiCardState extends State<BSKpiCard> {
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOut,
           transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
+          padding: EdgeInsets.fromLTRB(narrow ? 14 : 18, narrow ? 14 : 16, narrow ? 12 : 16, narrow ? 14 : 16),
           decoration: BoxDecoration(
+            color: Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: _hover ? c.withOpacity(0.35) : AppTheme.border),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.white, _hover ? c.withOpacity(0.07) : c.withOpacity(0.025)],
-            ),
             boxShadow: _hover
-                ? [BoxShadow(color: c.withOpacity(0.18), blurRadius: 22, offset: const Offset(0, 10))]
+                ? [BoxShadow(color: c.withOpacity(0.16), blurRadius: 20, offset: const Offset(0, 8))]
                 : AppTheme.cardShadow,
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Stack(children: [
-              // Franja de color que se ensancha al pasar el mouse
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: _hover ? 5 : 3.5,
-                  color: c,
-                ),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                child: Text(widget.label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppTheme.text.withOpacity(0.75), fontSize: narrow ? 12 : 13, fontWeight: FontWeight.w600, height: 1.25)),
               ),
-              // Círculo decorativo
-              Positioned(
-                right: -18,
-                top: -18,
-                child: AnimatedScale(
-                  scale: _hover ? 1.15 : 1,
-                  duration: const Duration(milliseconds: 300),
+              if (widget.icon != null) ...[
+                const SizedBox(width: 8),
+                AnimatedRotation(
+                  turns: _hover ? -0.03 : 0,
+                  duration: const Duration(milliseconds: 250),
                   child: Container(
-                    width: 74,
-                    height: 74,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: c.withOpacity(0.07)),
+                    width: narrow ? 32 : 38,
+                    height: narrow ? 32 : 38,
+                    decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                    child: Icon(widget.icon, color: c, size: narrow ? 17 : 19),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 16, 14),
-                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(widget.label,
-                          style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 6),
-                      number == null
-                          ? Text(widget.value, style: valueStyle)
-                          : TweenAnimationBuilder<double>(
-                              tween: Tween(begin: 0, end: number.toDouble()),
-                              duration: const Duration(milliseconds: 900),
-                              curve: Curves.easeOutCubic,
-                              builder: (_, v, __) => Text('${v.round()}', style: valueStyle),
-                            ),
-                      if (widget.caption != null) ...[
-                        const SizedBox(height: 4),
-                        Text(widget.caption!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: c, fontSize: 11, fontWeight: FontWeight.w600)),
-                      ],
-                    ]),
-                  ),
-                  if (widget.icon != null)
-                    AnimatedRotation(
-                      turns: _hover ? -0.03 : 0,
-                      duration: const Duration(milliseconds: 250),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-                        child: Icon(widget.icon, color: c, size: 19),
-                      ),
-                    ),
-                ]),
-              ),
+              ],
             ]),
-          ),
+            const Spacer(),
+            const SizedBox(height: 8),
+            number == null
+                ? valueText(widget.value)
+                : TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: number.toDouble()),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, v, __) => valueText('${v.round()}'),
+                  ),
+            if (widget.caption != null) ...[
+              const SizedBox(height: 6),
+              Text(widget.caption!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.3)),
+            ],
+          ]),
         ),
       ),
     );
@@ -324,7 +305,8 @@ Widget _bsGrid(List<Widget> items, int cols, double hGap, double vGap) {
       cells.add(Expanded(child: k < items.length ? items[k] : const SizedBox.shrink()));
     }
     if (rows.isNotEmpty) rows.add(SizedBox(height: vGap));
-    rows.add(Row(crossAxisAlignment: CrossAxisAlignment.start, children: cells));
+    // IntrinsicHeight + stretch: las tarjetas de una fila quedan del mismo alto
+    rows.add(IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: cells)));
   }
   return Column(crossAxisAlignment: CrossAxisAlignment.stretch, mainAxisSize: MainAxisSize.min, children: rows);
 }
@@ -524,6 +506,9 @@ class BSFilterDropdown extends StatelessWidget {
   final String Function(String)? display;
   final ValueChanged<String> onChanged;
 
+  /// true → etiqueta pequeña arriba y valor abajo; ocupa todo el ancho disponible
+  final bool stacked;
+
   const BSFilterDropdown({
     super.key,
     required this.label,
@@ -531,12 +516,54 @@ class BSFilterDropdown extends StatelessWidget {
     required this.options,
     required this.onChanged,
     this.display,
+    this.stacked = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final active = value != 'Todos';
     final String Function(String) show = display ?? ((String s) => s);
+    if (stacked) {
+      return Container(
+        height: 48,
+        padding: const EdgeInsets.only(left: 12, right: 8),
+        decoration: BoxDecoration(
+          color: active ? AppTheme.primary.withOpacity(0.06) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: active ? AppTheme.primary.withOpacity(0.45) : AppTheme.border),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            isExpanded: true,
+            isDense: true,
+            dropdownColor: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, color: active ? AppTheme.primary : AppTheme.hint, size: 18),
+            selectedItemBuilder: (_) => options
+                .map((o) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 1),
+                        Text(show(o),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: active ? AppTheme.primary : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                      ],
+                    ))
+                .toList(),
+            items: options
+                .map((o) => DropdownMenuItem(value: o, child: Text(show(o), style: const TextStyle(fontSize: 13, color: AppTheme.text))))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) onChanged(v);
+            },
+          ),
+        ),
+      );
+    }
     return Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 12),

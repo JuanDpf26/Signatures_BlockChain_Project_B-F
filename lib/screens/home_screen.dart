@@ -1044,7 +1044,8 @@ class _DashboardContent extends StatelessWidget {
         onRefresh: onRefresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(pad, 24, pad, 32),
+          // En celular deja espacio para el botón flotante de Sign IA
+          padding: EdgeInsets.fromLTRB(pad, isWeb ? 24 : 18, pad, isWeb ? 32 : 96),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             BSPageHeader(
               breadcrumb: const ['Inicio', 'Tablero'],
@@ -1081,7 +1082,7 @@ class _DashboardContent extends StatelessWidget {
               ),
               BSKpiCard(
                 label: 'Gas consumido',
-                value: v(gas == 0 ? '0' : gas.toStringAsFixed(gas < 0.001 ? 6 : 4)),
+                value: v(gas == 0 ? '0' : gas.toStringAsFixed(gas < 0.001 ? 6 : 4).replaceAll('.', ',')),
                 caption: stats['last_block'] != null ? 'ETH de prueba · último bloque #${stats['last_block']}' : 'ETH de prueba en Sepolia',
                 color: AppTheme.featureCyan,
                 icon: Icons.local_gas_station_outlined,
@@ -1324,14 +1325,15 @@ class _CountTileState extends State<_CountTile> {
                   style: TextStyle(color: c, fontSize: 28, fontWeight: FontWeight.w900, height: 1.05)),
             ),
             const SizedBox(height: 4),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Icon(widget.icon, size: 13, color: c),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(widget.label, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: c, fontSize: 12.5, fontWeight: FontWeight.w700)),
-              ),
-            ]),
+            // Se reduce si no cabe, en vez de cortar la palabra
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(widget.icon, size: 13, color: c),
+                const SizedBox(width: 4),
+                Text(widget.label, maxLines: 1, style: TextStyle(color: c, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              ]),
+            ),
           ]),
         ),
       ),
@@ -1587,11 +1589,12 @@ class _RecentRowState extends State<_RecentRow> {
     final pages = int.tryParse('${m['pages'] ?? ''}');
     final sub = [cat, if (m['size_mb'] != null) '${m['size_mb']} MB', if (pages != null && pages > 0) '$pages pág.'].join('  ·  ');
 
+    final tileSize = widget.wide ? 52.0 : 44.0;
     final tile = Container(
-      width: 52,
-      height: 52,
+      width: tileSize,
+      height: tileSize,
       decoration: BoxDecoration(color: tint.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
-      child: Icon(pdf ? Icons.picture_as_pdf_outlined : Icons.article_outlined, color: tint, size: 26),
+      child: Icon(pdf ? Icons.picture_as_pdf_outlined : Icons.article_outlined, color: tint, size: widget.wide ? 26 : 22),
     );
 
     final dateChip = Container(
@@ -1619,7 +1622,7 @@ class _RecentRowState extends State<_RecentRow> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _hover ? AppTheme.primary.withOpacity(0.25) : AppTheme.border),
           ),
-          child: Row(children: [
+          child: widget.wide ? Row(children: [
             tile,
             const SizedBox(width: 14),
             Expanded(
@@ -1628,16 +1631,38 @@ class _RecentRowState extends State<_RecentRow> {
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: _hover ? AppTheme.primary : AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                Text(widget.wide ? sub : '$cat · $date',
+                Text(sub,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
               ]),
             ),
             const SizedBox(width: 10),
-            if (widget.wide) ...[dateChip, const SizedBox(width: 10)],
+            dateChip,
+            const SizedBox(width: 10),
             SizedBox(
-              width: widget.wide ? 118 : null,
+              width: 118,
               child: Align(alignment: Alignment.centerRight, child: BSPill.docStatus(_visibleStatusOf(d))),
+            ),
+          ])
+          // Celular: el nombre usa todo el ancho y el estado va en la segunda línea
+          : Row(children: [
+            tile,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(d['title']?.toString() ?? 'Sin nombre',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 6),
+                Row(children: [
+                  Expanded(
+                    child: Text('$cat · $date', maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                  ),
+                  const SizedBox(width: 8),
+                  BSPill.docStatus(_visibleStatusOf(d)),
+                ]),
+              ]),
             ),
           ]),
         ),
