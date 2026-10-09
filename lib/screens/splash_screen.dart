@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 
 /// Pantalla de carga de la app móvil.
@@ -75,6 +76,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       return;
     }
     setState(() => _status = 'Listo');
+    // Android: si hay una versión nueva publicada, se ofrece antes de entrar
+    await UpdateService.checkAndPrompt(context);
+    if (!mounted) return;
     _go(results[1] == true);
   }
 
