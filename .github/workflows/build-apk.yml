@@ -49,27 +49,27 @@ jobs:
             grep -E "error|Error|ERROR|What went wrong|FAILURE|Exception|e: " build.log | grep -v "^\s*$" | tail -40 | while IFS= read -r l; do echo "::error::${l}"; done
             exit 1
           }
-          cp build/app/outputs/flutter-apk/app-release.apk BlockSign-prueba-${{ github.run_number }}.apk
+          cp build/app/outputs/flutter-apk/app-release.apk DocBlockSign-prueba-${{ github.run_number }}.apk
           # APK más liviano solo para celulares modernos (arm64), casi todos los Android actuales
           flutter build apk --release --split-per-abi --target-platform android-arm64 \
             --dart-define=IS_LOCAL=false --dart-define=API_URL=$API_URL
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk BlockSign-prueba-${{ github.run_number }}-arm64.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk DocBlockSign-prueba-${{ github.run_number }}-arm64.apk
 
       - name: Guardar APK como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: BlockSign-apk
-          path: BlockSign-prueba-${{ github.run_number }}*.apk
+          path: DocBlockSign-prueba-${{ github.run_number }}*.apk
 
       - name: Publicar pre-release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: apk-prueba-${{ github.run_number }}
-          name: BlockSign APK de prueba ${{ github.run_number }}
+          name: DocBlockSign APK de prueba ${{ github.run_number }}
           prerelease: true
           body: |
             APK de prueba (firmado con llave de depuración).
             - **-arm64.apk**: más liviano, para casi todos los celulares Android actuales (recomendado).
             - El otro sirve para cualquier celular, pero pesa más.
             Para instalar: descárgalo en el celular y permite "Instalar apps desconocidas".
-          files: BlockSign-prueba-${{ github.run_number }}*.apk
+          files: DocBlockSign-prueba-${{ github.run_number }}*.apk
