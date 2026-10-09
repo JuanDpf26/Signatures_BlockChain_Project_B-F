@@ -36,8 +36,21 @@ jobs:
       - name: Dependencias
         run: flutter pub get
 
+      - name: Llave de firma
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+            echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+            echo "Firmando con la llave fija de DocBlockSign"
+          else
+            echo "::warning::Sin ANDROID_KEYSTORE_BASE64: se firma con llave temporal (Google Sign-In no funcionará)"
+          fi
+
       - name: Compilar APK
         env:
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           API_URL: ${{ inputs.api_url || secrets.API_URL || 'https://blocksign-backend.onrender.com' }}
         run: |
           echo "Backend: $API_URL"

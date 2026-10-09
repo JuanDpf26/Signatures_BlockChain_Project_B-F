@@ -57,3 +57,8 @@ package-lock.json
 
 # SDK de Flutter que descarga Vercel al compilar
 /flutter/
+
+# Llave de firma de Android (nunca se sube)
+android/key.properties
+*.jks
+*.keystore

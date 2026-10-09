@@ -11,12 +11,18 @@ class AuthService {
   static const _storage = FlutterSecureStorage();
   static const _tokenKey = 'auth_token';
 
+  // ID del cliente OAuth de tipo "Aplicación web" (Google Cloud → Credenciales).
+  static const _webClientId = '652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com';
+
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-  scopes: ['email', 'profile'],
-  clientId: kIsWeb
-      ? '652903067880-d199sdfhh57qlmj52h2miim4kidfbec5.apps.googleusercontent.com' // Web Client ID
-      : null, // Android usa google-services.json
-);
+    scopes: ['email', 'profile'],
+    // Web: el cliente web directamente.
+    clientId: kIsWeb ? _webClientId : null,
+    // Android: pide el idToken para el cliente web, que es el que valida el backend
+    // (GOOGLE_CLIENT_ID). Además, Google exige un cliente OAuth "Android" con el
+    // nombre del paquete y la huella SHA-1 de la llave con que se firma el APK.
+    serverClientId: kIsWeb ? null : _webClientId,
+  );
 
   //static String get baseUrl {
     //**if (kIsWeb) return 'http://localhost:3000/api/auth';
@@ -163,8 +169,8 @@ class AuthService {
       final googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return {'error': 'Cancelado'};
       final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken ?? googleAuth.accessToken;
-      if (idToken == null) return {'error': 'No se pudo obtener token'};
+      final idToken = googleAuth.idToken;
+      if (idToken == null) return {'error': 'Google no entregó el token de identidad. Revisa la configuración del cliente OAuth.'};
       final res = await http.post(
         Uri.parse('$baseUrl/google'),
         headers: {'Content-Type': 'application/json'},
@@ -178,7 +184,14 @@ class AuthService {
   } on SocketException {
     return {'error': 'Sin conexión a internet'};
   } catch (e) {
-    return {'error': 'Error con Google: $e'};
+    final msg = e.toString();
+    // ApiException 10 = DEVELOPER_ERROR: el paquete o la huella SHA-1 del APK
+    // no están registrados en un cliente OAuth de Android en Google Cloud.
+    if (msg.contains('ApiException: 10') || msg.contains('sign_in_failed')) {
+      return {'error': 'Google rechazó esta versión de la app (falta registrar su huella SHA-1 en Google Cloud). Mientras tanto, entra con correo y contraseña.'};
+    }
+    if (msg.contains('network_error')) return {'error': 'Sin conexión con Google. Revisa tu internet.'};
+    return {'error': 'Error con Google: $msg'};
   }
 }
 
