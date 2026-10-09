@@ -1,0 +1,36 @@
+name: Web preview (local API)
+
+# Compila la versión web apuntando a http://localhost:3000 y la publica como
+# release "web-preview" para revisar la interfaz con un backend local.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Compilar web
+        run: |
+          set -o pipefail
+          flutter build web --release 2>&1 | tee build.log || {
+            grep -E "error|Error|ERROR" build.log | tail -40 | while IFS= read -r l; do echo "::error::${l}"; done
+            exit 1
+          }
+          cd build/web && zip -qr ../../web-preview.zip .
+      - name: Publicar
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: web-preview
+          name: Web preview (API local)
+          prerelease: true
+          make_latest: false
+          files: web-preview.zip
