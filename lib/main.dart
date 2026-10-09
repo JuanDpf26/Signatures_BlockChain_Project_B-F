@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/forgot_password_screen.dart';
@@ -74,6 +76,12 @@ class MyApp extends StatelessWidget {
         // Rutas normales
         switch (uri.path) {
           case '/':
+            // En la app móvil, pantalla de carga (despierta el servidor y revisa la sesión)
+            return MaterialPageRoute(
+              builder: (_) => kIsWeb ? const WelcomeScreen() : const SplashScreen(),
+              settings: settings,
+            );
+          case '/welcome':
             return MaterialPageRoute(
               builder: (_) => const WelcomeScreen(),
               settings: settings,
