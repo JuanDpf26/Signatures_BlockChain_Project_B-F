@@ -1,0 +1,53 @@
+name: Build iOS (sin firmar)
+
+# Genera un .ipa SIN FIRMA para instalarlo en un iPhone con Sideloadly o
+# AltStore usando un Apple ID gratuito (la app dura 7 días y luego se
+# reinstala). Para TestFlight/App Store se necesita la cuenta de Apple Developer.
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: 'URL del backend (vacío = secreto API_URL o https://blocksign-backend.onrender.com)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Compilar iOS (sin firma)
+        env:
+          API_URL: ${{ inputs.api_url || secrets.API_URL || 'https://blocksign-backend.onrender.com' }}
+        run: |
+          set -o pipefail
+          flutter build ios --release --no-codesign \
+            --dart-define=IS_LOCAL=false \
+            --dart-define=API_URL=$API_URL 2>&1 | tee build.log || {
+            grep -E "error|Error|ERROR" build.log | tail -40 | while IFS= read -r l; do echo "::error::${l}"; done
+            exit 1
+          }
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr DocBlockSign-ios-${{ github.run_number }}.ipa Payload
+      - name: Publicar pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-prueba-${{ github.run_number }}
+          name: DocBlockSign iOS de prueba ${{ github.run_number }} (sin firmar)
+          prerelease: true
+          make_latest: false
+          body: |
+            .ipa SIN FIRMA. Instálalo desde tu PC con Sideloadly (https://sideloadly.io)
+            usando tu Apple ID: conecta el iPhone por cable, arrastra el .ipa y pulsa Start.
+            En el iPhone: Ajustes → General → VPN y gestión de dispositivos → confía en tu Apple ID.
+            Con Apple ID gratuito la app vence a los 7 días (se vuelve a instalar igual).
+          files: DocBlockSign-ios-${{ github.run_number }}.ipa
