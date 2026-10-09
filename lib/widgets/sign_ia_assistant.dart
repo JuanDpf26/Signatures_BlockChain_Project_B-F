@@ -10,13 +10,13 @@ import 'signing_progress_dialog.dart';
 import 'sweet_alert.dart';
 
 // ─────────────────────────────────────────────────────────────
-// SIGN IA — asistente con IA (plus de BlockSign)
+// SIGN IA — asistente con IA (plus de DocBlockSign)
 // Botón flotante + panel de chat. El agente consulta tus documentos,
 // los revisa antes de firmar, responde preguntas y verifica huellas.
 // ─────────────────────────────────────────────────────────────
 
 const _iaA = Color(0xFF08368F); // azul profundo (paleta institucional)
-const _iaB = Color(0xFF0B45B5); // azul BlockSign
+const _iaB = Color(0xFF0B45B5); // azul DocBlockSign
 const _iaC = Color(0xFF4F7FD9); // azul claro
 const _iaGradient = LinearGradient(colors: [_iaA, _iaB, _iaC], begin: Alignment.topLeft, end: Alignment.bottomRight);
 

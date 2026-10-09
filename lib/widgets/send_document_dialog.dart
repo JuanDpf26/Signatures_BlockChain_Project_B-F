@@ -130,7 +130,7 @@ class _SendPanelState extends State<_SendPanel> {
       title: res['message']?.toString() ?? 'Documento enviado',
       text: [
         if ((res['teams'] as List?)?.isNotEmpty == true) 'Equipos: ${(res['teams'] as List).join(', ')}',
-        if ((int.tryParse('${res['in_app'] ?? 0}') ?? 0) > 0) '${res['in_app']} persona(s) también lo verán en su bandeja de BlockSign.',
+        if ((int.tryParse('${res['in_app'] ?? 0}') ?? 0) > 0) '${res['in_app']} persona(s) también lo verán en su bandeja de DocBlockSign.',
         if (_review) 'Verás sus aprobaciones en Bandeja → Enviados.',
         if (note != null && note.isNotEmpty) note,
       ].join('\n\n'),
@@ -180,7 +180,7 @@ class _SendPanelState extends State<_SendPanel> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Enviar documento', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
               SizedBox(height: 2),
-              Text('Llega por correo y, a quien tenga cuenta, también a su bandeja de BlockSign', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+              Text('Llega por correo y, a quien tenga cuenta, también a su bandeja de DocBlockSign', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
             ]),
           ),
           IconButton(
@@ -359,7 +359,7 @@ class _SendPanelState extends State<_SendPanel> {
           BSInfoBanner(
             title: _signed ? 'Podrán verificar que es auténtico' : 'Aún no está firmado',
             text: _signed
-                ? 'El correo incluye el bloque, la transacción y un enlace para verificarlo en BlockSign sin crear cuenta.'
+                ? 'El correo incluye el bloque, la transacción y un enlace para verificarlo en DocBlockSign sin crear cuenta.'
                 : 'El correo incluye su huella SHA-256. Si lo firmas antes de enviarlo, podrán comprobar en blockchain que nadie lo modificó.',
             color: _signed ? BSColors.success : BSColors.warning,
             icon: _signed ? Icons.verified_rounded : Icons.info_outline_rounded,

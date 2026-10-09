@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../widgets/brand.dart';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -137,7 +138,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           BoxShadow(color: Colors.black.withOpacity(0.22), blurRadius: 24, offset: const Offset(0, 10)),
                         ],
                       ),
-                      child: const Icon(Icons.verified_user_rounded, color: AppTheme.primary, size: 56),
+                      padding: const EdgeInsets.all(20),
+                      child: const BrandSymbol(size: 64),
                     ),
                   ),
                 ),
@@ -145,10 +147,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 FadeTransition(
                   opacity: fade,
                   child: const Column(children: [
-                    Text(
-                      'BlockSign',
-                      style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -0.5),
-                    ),
+                    BrandWordmark(fontSize: 32, onDark: true),
                     SizedBox(height: 6),
                     Text(
                       'Firma y verificación de documentos con blockchain',

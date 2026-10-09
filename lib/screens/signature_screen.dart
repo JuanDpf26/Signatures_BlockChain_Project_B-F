@@ -546,7 +546,7 @@ class _SignatureScreenState extends State<SignatureScreen>
                           SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'La imagen será usada como tu firma digital en los documentos firmados con BlockSign.',
+                              'La imagen será usada como tu firma digital en los documentos firmados con DocBlockSign.',
                               style: TextStyle(
                                   color: AppTheme.hint,
                                   fontSize: 12, height: 1.4),

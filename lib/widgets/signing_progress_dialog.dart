@@ -208,7 +208,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
       ChainStep(
         'Preparar transacción',
         state: _s(2),
-        detail: _s(2) == ChainStepState.waiting ? null : 'Llamada a signDocument() del contrato, firmada por la wallet de BlockSign.',
+        detail: _s(2) == ChainStepState.waiting ? null : 'Llamada a signDocument() del contrato, firmada por la wallet de DocBlockSign.',
         extra: [if (_wallet != null && _visualStep >= 2) ChainValueRow(label: 'Wallet', value: _wallet!)],
       ),
       ChainStep(

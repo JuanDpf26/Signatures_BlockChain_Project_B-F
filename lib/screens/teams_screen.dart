@@ -7,7 +7,7 @@ import '../widgets/chain_steps.dart';
 import '../widgets/sweet_alert.dart';
 import 'inbox_screen.dart' show parseHexColor, inboxAgo;
 
-/// Equipos: grupos de personas con cuenta en BlockSign para compartir
+/// Equipos: grupos de personas con cuenta en DocBlockSign para compartir
 /// documentos y pedir revisiones a todos a la vez.
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});

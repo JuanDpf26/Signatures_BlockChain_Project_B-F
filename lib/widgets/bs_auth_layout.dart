@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'brand.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
 
-/// Diseño común de las pantallas de acceso de BlockSign (login, registro,
+/// Diseño común de las pantallas de acceso de DocBlockSign (login, registro,
 /// recuperar y restablecer contraseña, verificación de correo).
 ///
 /// - Web (> 900 px): panel de marca a la izquierda + formulario a la derecha.
@@ -206,21 +207,10 @@ class _BrandMark extends StatelessWidget {
   Widget build(BuildContext context) {
     final logo = big ? 76.0 : 46.0;
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: logo,
-        height: logo,
-        decoration: BoxDecoration(color: dark ? Colors.white.withOpacity(0.18) : AppTheme.primary, shape: BoxShape.circle),
-        child: Icon(Icons.verified_user_rounded, color: Colors.white, size: logo * 0.52),
-      ),
+      BrandSymbol(size: logo, onDark: dark),
       SizedBox(width: big ? 16 : 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text.rich(
-          TextSpan(children: [
-            TextSpan(text: 'Block', style: TextStyle(color: dark ? Colors.white : AppTheme.text)),
-            TextSpan(text: 'Sign', style: TextStyle(color: dark ? Colors.white : AppTheme.primary)),
-          ]),
-          style: TextStyle(fontSize: big ? 40 : 22, fontWeight: FontWeight.w900, letterSpacing: -0.8, height: 1.0),
-        ),
+        BrandWordmark(fontSize: big ? 38 : 22, onDark: dark),
         const SizedBox(height: 3),
         Text('Firma digital con blockchain',
             style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: big ? 14 : 11.5)),

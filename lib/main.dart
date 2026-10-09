@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BlockSign',
+      title: 'DocBlockSign',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       initialRoute: '/',
@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
                 surfaceTintColor: Colors.transparent,
                 elevation: 0,
                 foregroundColor: AppTheme.text,
-                title: const Text('Verificar documento · BlockSign', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                title: const Text('Verificar documento · DocBlockSign', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pushReplacementNamed('/login'),

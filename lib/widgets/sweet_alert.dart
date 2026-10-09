@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Alertas estilo SweetAlert2 para BlockSign, sin dependencias externas.
+/// Alertas estilo SweetAlert2 para DocBlockSign, sin dependencias externas.
 ///
 /// Uso:
 ///   await SweetAlert.success(context, title: '¡Listo!', text: 'Cuenta creada');
@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 ///   final ok = await SweetAlert.confirm(context, title: '¿Seguro?', text: '...');
 enum SweetAlertType { success, error, warning, info, question }
 
-const _kBrand = Color(0xFF0B45B5); // azul BlockSign
+const _kBrand = Color(0xFF0B45B5); // azul DocBlockSign
 const _kCancel = Color(0xFF6E7881);
 
 Color _typeColor(SweetAlertType t) {

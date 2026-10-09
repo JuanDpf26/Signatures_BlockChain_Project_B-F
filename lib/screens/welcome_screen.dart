@@ -14,7 +14,7 @@ class WelcomeScreen extends StatelessWidget {
     final wide = MediaQuery.of(context).size.width > 900;
 
     return BSAuthLayout(
-      title: 'Bienvenido a BlockSign',
+      title: 'Bienvenido a DocBlockSign',
       subtitle: 'Firma documentos con validez legal, protegidos con criptografía y registro inmutable en blockchain.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

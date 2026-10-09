@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Componentes de interfaz de BlockSign (estilo panel administrativo):
+/// Componentes de interfaz de DocBlockSign (estilo panel administrativo):
 /// encabezado con migas de pan, tarjetas blancas con borde, KPIs con
 /// borde de color, píldoras de estado con punto, aviso informativo y
 /// pares etiqueta/valor.
@@ -337,7 +337,7 @@ class BSPill extends StatelessWidget {
 
   const BSPill({super.key, required this.label, required this.color, this.dot = true});
 
-  /// Estados de documentos de BlockSign
+  /// Estados de documentos de DocBlockSign
   factory BSPill.docStatus(String status) {
     switch (status) {
       case 'pending':

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/brand.dart';
 import '../theme/google_auth_theme.dart';
 
 class ResponsiveLayout extends StatelessWidget {
@@ -110,35 +111,12 @@ class ResponsiveLayout extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Logo
-                        Container(
-                          width: 68,
-                          height: 68,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF0B45B5), Color(0xFF1565C0)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFF0B45B5).withOpacity(0.35),
-                                blurRadius: 24,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.verified_user_rounded,
-                            color: Colors.white,
-                            size: 34,
-                          ),
-                        ),
+                        const BrandSymbol(size: 68),
                         const SizedBox(height: 36),
 
                         // Título
                         Text(
-                          'BlockSign',
+                          'DocBlockSign',
                           style: TextStyle(
                             color: titleColor,
                             fontSize: 48,

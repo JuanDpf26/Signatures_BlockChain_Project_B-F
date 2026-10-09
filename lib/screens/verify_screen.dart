@@ -142,13 +142,13 @@ class _VerifyScreenState extends State<VerifyScreen> {
 
   // ── Consulta al servidor + blockchain ──────────────────
   Future<void> _queryChain(String hash, {required int offset}) async {
-    _setStep(offset, const ChainStep('Consultar BlockSign y el contrato en Sepolia', state: ChainStepState.active,
+    _setStep(offset, const ChainStep('Consultar DocBlockSign y el contrato en Sepolia', state: ChainStepState.active,
         detail: 'Leyendo el registro inmutable del contrato…'));
     final res = await DocumentService.verifyByHash(hash);
     if (!mounted) return;
 
     if (res['error'] != null && res['verdict'] == null) {
-      _setStep(offset, ChainStep('Consultar BlockSign y el contrato en Sepolia', state: ChainStepState.error, detail: res['error'].toString()));
+      _setStep(offset, ChainStep('Consultar DocBlockSign y el contrato en Sepolia', state: ChainStepState.error, detail: res['error'].toString()));
       setState(() => _running = false);
       return;
     }
@@ -164,7 +164,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
       if (!mounted) return;
       final ok = m['ok'] == true;
       final key = m['key'];
-      // "No está en BlockSign" o "no está en el contrato" no son errores del sistema: son resultados.
+      // "No está en DocBlockSign" o "no está en el contrato" no son errores del sistema: son resultados.
       final softFail = !ok && (key == 'database');
       _setStep(
         i,
@@ -336,7 +336,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            picked ? '${_fmtSize(_fileSize ?? 0)} · toca para elegir otro' : 'PDF, Word o cualquier archivo firmado con BlockSign',
+            picked ? '${_fmtSize(_fileSize ?? 0)} · toca para elegir otro' : 'PDF, Word o cualquier archivo firmado con DocBlockSign',
             textAlign: TextAlign.center,
             style: const TextStyle(color: AppTheme.hint, fontSize: 12.5),
           ),

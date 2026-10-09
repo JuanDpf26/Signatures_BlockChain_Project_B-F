@@ -27,7 +27,7 @@ class _EmailVerifiedScreenState extends State<EmailVerifiedScreen> {
         context,
         title: '¡Correo verificado!',
         text: 'Tu cuenta ha sido verificada exitosamente.\n'
-            'Ya puedes iniciar sesión en BlockSign.',
+            'Ya puedes iniciar sesión en DocBlockSign.',
         confirmText: 'Iniciar sesión',
       );
       // Si pulsa "Iniciar sesión" va al login; si cierra la alerta, se queda en la pantalla
@@ -52,7 +52,7 @@ class _EmailVerifiedScreenState extends State<EmailVerifiedScreen> {
     return BSAuthLayout(
       title: ok ? '¡Correo verificado!' : 'Enlace inválido',
       subtitle: ok
-          ? 'Tu cuenta ha sido verificada exitosamente. Ya puedes iniciar sesión en BlockSign.'
+          ? 'Tu cuenta ha sido verificada exitosamente. Ya puedes iniciar sesión en DocBlockSign.'
           : 'El enlace de verificación es inválido, ya fue usado o expiró. Si ya verificaste tu cuenta, simplemente inicia sesión.',
       leading: BSAuthIcon(
         icon: ok ? Icons.verified_rounded : Icons.link_off_rounded,

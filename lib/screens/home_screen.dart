@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/brand.dart';
 import '../services/auth_service.dart';
 import '../services/document_service.dart';
 import '../services/profile_service.dart';
@@ -356,8 +357,7 @@ class _Sidebar extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const Text('BlockSign',
-                            style: TextStyle(color: Colors.white, fontSize: 23, fontWeight: FontWeight.w900, letterSpacing: -0.6, height: 1.05)),
+                        const BrandWordmark(fontSize: 22, onDark: true),
                         Text('Firma digital con blockchain',
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11.5, fontWeight: FontWeight.w500)),
@@ -550,7 +550,7 @@ class _UserCard extends StatelessWidget {
   }
 }
 
-/// Logo de BlockSign: escudo en un círculo (azul sobre blanco o blanco sobre azul)
+/// Logo de DocBlockSign: el cubo verificado (claro sobre azul u original)
 class _LogoMark extends StatelessWidget {
   final double size;
   final bool onBlue;
@@ -558,16 +558,7 @@ class _LogoMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: onBlue ? Colors.white : AppTheme.primary,
-        shape: BoxShape.circle,
-        boxShadow: onBlue ? [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 6))] : null,
-      ),
-      child: Icon(Icons.verified_user_rounded, color: onBlue ? AppTheme.primary : Colors.white, size: size * 0.52),
-    );
+    return BrandSymbol(size: size, onDark: onBlue);
   }
 }
 

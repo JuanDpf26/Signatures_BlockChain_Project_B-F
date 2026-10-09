@@ -60,7 +60,7 @@ Future<AnalysisResult> showAnalysisProgress(
 enum _Phase { uploading, extracting, ai, done, failed, slow }
 
 const _aiA = Color(0xFF08368F); // azul profundo (paleta institucional)
-const _aiB = Color(0xFF0B45B5); // azul BlockSign
+const _aiB = Color(0xFF0B45B5); // azul DocBlockSign
 const _aiC = Color(0xFF4F7FD9); // azul claro
 
 class AnalysisProgressPanel extends StatefulWidget {

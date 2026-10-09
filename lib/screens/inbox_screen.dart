@@ -592,7 +592,7 @@ class _EmptyList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (title, text) = switch (box) {
-      _Box.received => ('Tu bandeja está vacía', 'Cuando alguien te comparta un documento por BlockSign, aparecerá aquí.'),
+      _Box.received => ('Tu bandeja está vacía', 'Cuando alguien te comparta un documento por DocBlockSign, aparecerá aquí.'),
       _Box.sent => ('Aún no has enviado documentos', 'Desde Documentos, usa “Enviar” para compartir con personas o equipos.'),
       _Box.archived => ('Nada archivado', 'Los mensajes que archives quedan guardados aquí.'),
     };
@@ -854,7 +854,7 @@ class _InboxDetailState extends State<_InboxDetail> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text((r['name'] ?? r['email']).toString(), style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
-                  Text([r['email'], if (r['team'] != null) 'equipo ${r['team']}', if (r['name'] == null) 'sin cuenta en BlockSign'].join(' · '),
+                  Text([r['email'], if (r['team'] != null) 'equipo ${r['team']}', if (r['name'] == null) 'sin cuenta en DocBlockSign'].join(' · '),
                       style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
                   if ((r['response']?.toString() ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),

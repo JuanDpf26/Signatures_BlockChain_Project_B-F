@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Android 12 o superior: el sistema muestra su propia pantalla de inicio.
-         Se configura con el azul y el logo de BlockSign. -->
+         Se configura con el azul y el logo de DocBlockSign. -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowSplashScreenBackground">@color/splash_background</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
