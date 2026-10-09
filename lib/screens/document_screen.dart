@@ -471,7 +471,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   label: 'Tipo',
                   value: _selExt ?? 'Todos',
                   options: _exts,
-                  display: (s) => s == 'Todos' ? 'PDF y Word' : s.toUpperCase(),
+                  display: (s) => s == 'Todos' ? (width > 980 ? 'PDF y Word' : 'Todos') : s.toUpperCase(),
                   onChanged: (v) { setState(() => _selExt = v == 'Todos' ? null : v); _load(); },
                 );
                 final date = BSFilterDropdown(

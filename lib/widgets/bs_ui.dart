@@ -267,7 +267,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
             if (widget.caption != null) ...[
               const SizedBox(height: 6),
               Text(widget.caption!,
-                  maxLines: 2,
+                  maxLines: narrow ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.3)),
             ],
@@ -639,7 +639,8 @@ class BSPrimaryButton extends StatelessWidget {
             ? const SizedBox(
                 width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
             : Icon(icon ?? Icons.check_rounded, size: 18),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+        // Una sola línea: si el botón es angosto (celular) el texto se reduce un poco
+        label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))),
       ),
       ),
     );
@@ -671,7 +672,8 @@ class BSOutlineButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         icon: Icon(icon ?? Icons.arrow_forward_rounded, size: 18),
-        label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+        // Una sola línea: si el botón es angosto (celular) el texto se reduce un poco
+        label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))),
       ),
       ),
     );
