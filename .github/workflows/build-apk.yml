@@ -39,7 +39,12 @@ jobs:
       - name: Llave de firma
         env:
           KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
+          if [ -n "$KEYSTORE_B64" ] && [ -z "$KEY_PASS" ]; then
+            echo "::error::Existe ANDROID_KEYSTORE_BASE64 pero falta ANDROID_KEY_PASSWORD (revisa el nombre exacto del secreto)"
+            exit 1
+          fi
           if [ -n "$KEYSTORE_B64" ]; then
             echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
             echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
@@ -67,6 +72,12 @@ jobs:
           flutter build apk --release --split-per-abi --target-platform android-arm64 \
             --dart-define=IS_LOCAL=false --dart-define=API_URL=$API_URL
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk DocBlockSign-prueba-${{ github.run_number }}-arm64.apk
+
+      - name: Huella SHA-1 del APK
+        run: |
+          AS=$(ls -d $ANDROID_HOME/build-tools/*/ | sort -V | tail -1)apksigner
+          SHA1=$($AS verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -m1 "SHA-1" | awk '{print $NF}' | sed 's/../&:/g; s/:$//' | tr a-z A-Z)
+          echo "::notice::SHA-1 del APK: $SHA1 (debe ser 4F:E0:E4:88:66:3E:84:F1:AE:F0:F4:97:7A:9A:DE:D4:17:64:1C:77)"
 
       - name: Guardar APK como artefacto
         uses: actions/upload-artifact@v4
