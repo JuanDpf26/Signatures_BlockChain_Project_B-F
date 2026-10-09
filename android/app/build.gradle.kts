@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -7,7 +9,7 @@ plugins {
 
 // Firma de publicación: se lee de variables de entorno (GitHub Actions) o de
 // android/key.properties en tu PC. Si no hay llave, se usa la de depuración.
-val keyProps = java.util.Properties().apply {
+val keyProps = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) f.inputStream().use { load(it) }
 }
