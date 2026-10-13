@@ -55,6 +55,11 @@ class UpdateService {
   static Future<void> checkAndPrompt(BuildContext context) async {
     final upd = await latest();
     if (upd == null || !context.mounted) return;
+    await prompt(context, upd);
+  }
+
+  /// Muestra el aviso para una versión ya consultada.
+  static Future<void> prompt(BuildContext context, ({int build, String url}) upd) async {
     await showDialog<void>(
       context: context,
       barrierDismissible: false,

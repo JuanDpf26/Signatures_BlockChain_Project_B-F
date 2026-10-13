@@ -24,7 +24,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  static const _minVisible = Duration(milliseconds: 1800);
+  static const _minVisible = Duration(milliseconds: 900);
   static const _slowAfter = Duration(seconds: 5);
   static const _giveUpAfter = Duration(seconds: 70);
 
@@ -63,6 +63,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     final shown = Future.delayed(_minVisible);
     final loggedIn = AuthService.isLoggedIn();
     final serverOk = _wakeServer();
+    // La consulta de versión nueva corre en paralelo (no suma tiempo de espera)
+    final update = UpdateService.latest();
 
     final results = await Future.wait([serverOk, loggedIn, shown]);
     _slowTimer?.cancel();
@@ -77,7 +79,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     }
     setState(() => _status = 'Listo');
     // Android: si hay una versión nueva publicada, se ofrece antes de entrar
-    await UpdateService.checkAndPrompt(context);
+    final upd = await update.timeout(const Duration(seconds: 2), onTimeout: () => null);
+    if (upd != null && mounted) await UpdateService.prompt(context, upd);
     if (!mounted) return;
     _go(results[1] == true);
   }

@@ -1,0 +1,26 @@
+name: Mantener activo el backend
+
+# El plan gratuito de Render apaga el servidor tras ~15 min sin peticiones y la
+# primera petición tarda ~50 s en despertarlo. Esta tarea lo consulta cada
+# 10 minutos para que la app abra rápido.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Consultar /health
+        env:
+          API_URL: ${{ secrets.API_URL || 'https://blocksign-backend.onrender.com' }}
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 70 "${API_URL%/}/health" || true)
+            echo "Intento $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 10
+          done
+          echo "::warning::El backend no respondió"
