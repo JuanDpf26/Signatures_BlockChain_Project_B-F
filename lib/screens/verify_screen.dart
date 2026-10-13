@@ -460,15 +460,14 @@ class _VerdictCard extends StatelessWidget {
     final bc = result['blockchain'] is Map ? Map<String, dynamic>.from(result['blockchain']) : null;
     final tx = result['transaction'] is Map ? Map<String, dynamic>.from(result['transaction']) : null;
     final doc = result['document'] is Map ? Map<String, dynamic>.from(result['document']) : null;
-    final wide = MediaQuery.of(context).size.width > 720;
 
     final sig = result['signature'] is Map ? Map<String, dynamic>.from(result['signature']) : null;
-    final details = <(String, String)>[
-      if (bc?['documentTitle'] != null) ('Documento', bc!['documentTitle'].toString()),
-      if (doc?['signerName'] != null) ('Firmado por', doc!['signerName'].toString()),
-      if (bc?['signerEmail'] != null) ('Correo del firmante', bc!['signerEmail'].toString()),
-      if (bc?['signedAt'] != null) ('Fecha de registro', fmtFechaHora(bc!['signedAt'].toString())),
-      ('Comprobado', fmtFechaHora(result['checkedAt']?.toString())),
+    final details = <Fact>[
+      if (bc?['documentTitle'] != null) Fact(Icons.insert_drive_file_outlined, 'Documento', value: bc!['documentTitle'].toString()),
+      if (doc?['signerName'] != null) Fact(Icons.person_outline_rounded, 'Firmado por', value: doc!['signerName'].toString()),
+      if (bc?['signerEmail'] != null) Fact(Icons.alternate_email_rounded, 'Correo del firmante', value: bc!['signerEmail'].toString()),
+      if (bc?['signedAt'] != null) Fact(Icons.event_available_outlined, 'Fecha de registro', value: fmtFechaHora(bc!['signedAt'].toString())),
+      Fact(Icons.fact_check_outlined, 'Comprobado', value: fmtFechaHora(result['checkedAt']?.toString())),
     ];
 
     final tech = <TechRow>[
@@ -534,22 +533,8 @@ class _VerdictCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if (details.length > 1) ...[
-              Wrap(
-                spacing: 24,
-                runSpacing: 14,
-                children: [
-                  for (final d in details)
-                    SizedBox(
-                      width: wide ? 220 : double.infinity,
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(d.$1, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 3),
-                        Text(d.$2, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
-                      ]),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 16),
+              FactGrid(facts: details),
+              const SizedBox(height: 12),
             ],
             if (result['hash'] != null)
               HuellaField(label: 'Huella digital del archivo (SHA-256)', value: result['hash'].toString()),

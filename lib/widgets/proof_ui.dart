@@ -237,7 +237,8 @@ class _TechDetailsState extends State<TechDetails> {
   Widget build(BuildContext context) {
     if (widget.rows.isEmpty) return const SizedBox.shrink();
     return Container(
-      decoration: BoxDecoration(
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+      foregroundDecoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppTheme.border),
       ),
