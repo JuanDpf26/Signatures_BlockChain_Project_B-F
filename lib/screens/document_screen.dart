@@ -1227,14 +1227,29 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
               decoration: const BoxDecoration(color: BSColors.page, border: Border(top: BorderSide(color: AppTheme.border))),
-              child: Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
-                BSOutlineButton(label: 'Cancelar', icon: Icons.close_rounded, color: AppTheme.hint, onPressed: () => Navigator.pop(context, false)),
-                BSPrimaryButton(
-                  label: 'Firmar documento',
-                  icon: Icons.draw_rounded,
-                  onPressed: hasSig && _agree ? () => Navigator.pop(context, true) : null,
-                ),
-              ]),
+              child: narrow
+                  ? Row(children: [
+                      Expanded(
+                        child: BSOutlineButton(
+                            label: 'Cancelar', icon: Icons.close_rounded, color: AppTheme.hint, onPressed: () => Navigator.pop(context, false)),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: BSPrimaryButton(
+                          label: 'Firmar',
+                          icon: Icons.draw_rounded,
+                          onPressed: hasSig && _agree ? () => Navigator.pop(context, true) : null,
+                        ),
+                      ),
+                    ])
+                  : Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
+                      BSOutlineButton(label: 'Cancelar', icon: Icons.close_rounded, color: AppTheme.hint, onPressed: () => Navigator.pop(context, false)),
+                      BSPrimaryButton(
+                        label: 'Firmar documento',
+                        icon: Icons.draw_rounded,
+                        onPressed: hasSig && _agree ? () => Navigator.pop(context, true) : null,
+                      ),
+                    ]),
             ),
           ]),
         ),

@@ -319,7 +319,9 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
       // Acciones
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-        child: Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
+        child: Builder(builder: (context) {
+          final buttons = <Widget>[
+
           if (_explorerUrl != null && (done || _phase == _Phase.slow || _phase == _Phase.confirming))
             BSOutlineButton(label: 'Ver comprobante', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(_explorerUrl!)),
           if (failed && _txHash == null)
@@ -338,7 +340,17 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
             )
           else
             const BSPrimaryButton(label: 'Procesando…', loading: true),
-        ]),
+          ];
+          if (MediaQuery.of(context).size.width >= 560 || buttons.length > 2) {
+            return Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: buttons);
+          }
+          return Row(children: [
+            for (var i = 0; i < buttons.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: buttons[i]),
+            ],
+          ]);
+        }),
       ),
     ]);
   }
