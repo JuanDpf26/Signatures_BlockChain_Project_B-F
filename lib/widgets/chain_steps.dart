@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
+import 'proof_ui.dart';
 import 'sweet_alert.dart';
 
 /// Piezas compartidas para mostrar procesos de blockchain paso a paso
@@ -166,7 +167,7 @@ class ChainValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final shown = shorten && value.length > 26 ? '${value.substring(0, 12)}…${value.substring(value.length - 10)}' : value;
+    final shown = shorten && value.length > 26 ? fmtHuella(value) : value;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

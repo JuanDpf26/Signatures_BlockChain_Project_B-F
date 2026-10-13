@@ -1029,7 +1029,6 @@ class _DashboardContent extends StatelessWidget {
 
     int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
     String v(String x) => loading ? '–' : x;
-    final gas = double.tryParse('${stats['gas_eth'] ?? 0}') ?? 0;
 
     final activity7 = _WeekChartCard(days: ((stats['activity'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
     final statusCard = _StatusMixCard(stats: stats, loading: loading, onNavTap: onNavTap);
@@ -1081,11 +1080,16 @@ class _DashboardContent extends StatelessWidget {
                 icon: Icons.auto_awesome_outlined,
               ),
               BSKpiCard(
-                label: 'Gas consumido',
-                value: v(gas == 0 ? '0' : gas.toStringAsFixed(gas < 0.001 ? 6 : 4).replaceAll('.', ',')),
-                caption: stats['last_block'] != null ? 'ETH de prueba · último bloque #${stats['last_block']}' : 'ETH de prueba en Sepolia',
+                label: 'Pendientes de firma',
+                value: v('${n('pending')}'),
+                caption: n('in_chain') > 0
+                    ? '${n('in_chain')} registrándose en blockchain'
+                    : n('pending') == 0
+                        ? 'Todo está firmado'
+                        : 'Listos para firmar y registrar',
                 color: AppTheme.featureCyan,
-                icon: Icons.local_gas_station_outlined,
+                icon: Icons.pending_actions_outlined,
+                onTap: () => onNavTap(1),
               ),
             ]),
             const SizedBox(height: 20),

@@ -1,9 +1,9 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
+import 'proof_ui.dart';
 import 'sweet_alert.dart';
 
 /// Detalle de un documento: resumen, análisis IA, metadatos y edición.
@@ -37,7 +37,14 @@ class DocView {
   /// Lo editado a mano tiene prioridad sobre lo que propuso la IA
   String get category => docCategoryOf(meta);
   String? get hash => raw['file_hash']?.toString();
-  String? get tx => raw['blockchain_tx']?.toString();
+  String? get tx => _s(raw['blockchain_tx']) ?? _s(meta['blockchain_tx']);
+  String? get explorerUrl => _s(meta['blockchain_explorer']) ?? (tx != null ? 'https://sepolia.etherscan.io/tx/$tx' : null);
+  String? get signerName => _s(meta['signer_name']) ?? _s(meta['signer_email']);
+  String? get signerEmail => _s(meta['signer_email']);
+  String? get signedAt => _s(meta['signed_at']) ?? _s(meta['blockchain_confirmed_at']);
+  String? get block => _s(meta['blockchain_block']);
+  bool get signedOk => status == 'signed' || status == 'verified';
+  bool get revoked => meta['revoked'] == true;
   String? get fileUrl => raw['file_url']?.toString();
 
   String? get aiDescription => _s(meta['ai_description']);
@@ -66,12 +73,7 @@ class DocView {
   List<Map<String, dynamic>> get editHistory =>
       ((meta['edit_history'] as List?) ?? const []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
 
-  String get sizeLabel {
-    final mb = meta['size_mb'];
-    final kb = meta['size_kb'];
-    if (mb == null) return '-';
-    return kb != null ? '$mb MB ($kb KB)' : '$mb MB';
-  }
+  String get sizeLabel => fmtTamano(meta);
 
   String? get pages {
     final p = int.tryParse('${meta['pages'] ?? ''}');
@@ -90,8 +92,7 @@ class DocView {
     if (iso == null) return null;
     final d = DateTime.tryParse(iso)?.toLocal();
     if (d == null) return iso;
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(d.day)}/${two(d.month)}/${d.year} · ${bsHora(d)}';
+    return fmtFechaHora(iso);
   }
 }
 
@@ -385,7 +386,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
 // TARJETAS REUTILIZABLES (detalle y visor)
 // ─────────────────────────────────────────
 
-/// Información general
+/// Información general del documento
 class DocFichaCard extends StatelessWidget {
   final DocView d;
   const DocFichaCard({super.key, required this.d});
@@ -393,27 +394,32 @@ class DocFichaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = d.meta;
-    final items = <BSLabelValue>[
-      BSLabelValue(label: 'Nombre original', value: m['original_name']?.toString() ?? d.title),
-      BSLabelValue(label: 'Tipo', value: d.ext.toUpperCase()),
-      BSLabelValue(label: 'Tamaño', value: d.sizeLabel),
-      if (d.pages != null) BSLabelValue(label: 'Páginas', value: d.pages!),
-      BSLabelValue(label: 'Categoría', value: d.category),
-      BSLabelValue(label: 'Confidencialidad', value: d.confidentiality ?? 'Sin definir'),
-      BSLabelValue(label: 'Estado', value: bsDocStatusLabel(d.status)),
-      BSLabelValue(label: 'Subido', value: d.createdLabel),
-      if (d.version > 1) BSLabelValue(label: 'Versión', value: 'v${d.version}'),
-      if (d.editedLabel != null) BSLabelValue(label: 'Última edición', value: d.editedLabel!),
-      if (DocView._s(m['author']) != null) BSLabelValue(label: 'Autor', value: m['author'].toString()),
+    final conf = d.confidentiality;
+    final tipo = [d.ext.toUpperCase(), d.sizeLabel, if (d.pages != null) '${d.pages} ${d.pages == '1' ? 'página' : 'páginas'}'].join(' · ');
+    final facts = <Fact>[
+      Fact(Icons.insert_drive_file_outlined, 'Archivo', value: m['original_name']?.toString() ?? d.title),
+      Fact(Icons.straighten_rounded, 'Formato', value: tipo),
+      Fact(Icons.folder_outlined, 'Categoría', value: d.category),
+      Fact(Icons.shield_outlined, 'Confidencialidad',
+          valueWidget: Align(
+            alignment: Alignment.centerLeft,
+            child: BSPill(label: conf ?? 'Sin definir', color: confidentialityColor(conf), dot: false),
+          )),
+      Fact(Icons.flag_outlined, 'Estado',
+          valueWidget: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(d.status))),
+      Fact(Icons.event_outlined, 'Subido', value: d.createdLabel),
+      if (DocView._s(m['author']) != null) Fact(Icons.person_outline_rounded, 'Autor', value: m['author'].toString()),
+      if (d.version > 1) Fact(Icons.layers_outlined, 'Versión', value: 'Versión ${d.version}'),
+      if (d.editedLabel != null) Fact(Icons.edit_calendar_outlined, 'Última edición', value: d.editedLabel!),
     ];
     return BSCard(
       title: 'Información general',
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (d.userDescription != null) ...[
           Text(d.userDescription!, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45)),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
         ],
-        BSLabelGrid(items: items),
+        FactGrid(facts: facts),
         if (d.tags.isNotEmpty) ...[
           const SizedBox(height: 12),
           Wrap(spacing: 6, runSpacing: 6, children: d.tags.map((t) => _TagChip(t)).toList()),
@@ -535,49 +541,106 @@ class DocAiCard extends StatelessWidget {
   }
 }
 
-/// Hash SHA-256 y registro en blockchain
+/// Registro en blockchain: estado, quién y cuándo; lo técnico, plegado
 class DocSecurityCard extends StatelessWidget {
   final DocView d;
   const DocSecurityCard({super.key, required this.d});
 
   @override
   Widget build(BuildContext context) {
+    final m = d.meta;
+    final chain = m['blockchain_status']?.toString();
+
+    final Widget seal;
+    if (d.revoked) {
+      seal = const StatusSeal(
+        icon: Icons.gpp_bad_rounded,
+        color: BSColors.danger,
+        title: 'Firma revocada',
+        subtitle: 'El registro sigue en la blockchain, pero la firma ya no es válida.',
+      );
+    } else if (d.signedOk) {
+      seal = StatusSeal(
+        icon: Icons.verified_rounded,
+        color: BSColors.success,
+        title: 'Registrado en blockchain',
+        subtitle: 'Cualquier persona puede comprobar que este archivo no ha cambiado desde que se firmó.',
+        trailing: MediaQuery.of(context).size.width < 600 ? null : const BSPill(label: 'Vigente', color: BSColors.success),
+      );
+    } else if (d.inChain) {
+      seal = const StatusSeal(
+        icon: Icons.hourglass_top_rounded,
+        color: BSColors.warning,
+        title: 'Registrando en blockchain',
+        subtitle: 'La red está confirmando la firma. Suele tardar menos de un minuto.',
+      );
+    } else if (chain == 'failed') {
+      seal = const StatusSeal(
+        icon: Icons.error_outline_rounded,
+        color: BSColors.danger,
+        title: 'No se pudo registrar',
+        subtitle: 'La firma no llegó a la blockchain. Puedes intentarlo de nuevo.',
+      );
+    } else {
+      seal = const StatusSeal(
+        icon: Icons.edit_note_rounded,
+        color: AppTheme.primary,
+        title: 'Aún no está firmado',
+        subtitle: 'Al firmarlo, su huella quedará registrada de forma permanente en la blockchain.',
+      );
+    }
+
+    final facts = <Fact>[
+      if (d.signedOk && d.signerName != null) Fact(Icons.person_outline_rounded, 'Firmado por', value: d.signerName!),
+      if (d.signedOk && d.signedAt != null) Fact(Icons.event_available_outlined, 'Fecha de registro', value: fmtFechaHora(d.signedAt)),
+      if (d.signedOk || d.inChain) const Fact(Icons.hub_outlined, 'Red', value: 'Ethereum · Sepolia (prueba)'),
+      if (d.signedOk && d.block != null) Fact(Icons.tag_rounded, 'Bloque', value: fmtMiles(d.block)),
+    ];
+
+    final tech = <TechRow>[
+      if (d.tx != null) TechRow('Transacción', fmtHuella(d.tx), copyValue: d.tx, url: d.explorerUrl, mono: true),
+      if (d.block != null) TechRow('Bloque', fmtMiles(d.block)),
+      if (DocView._s(m['signature_hash']) != null)
+        TechRow('Hash de la firma', fmtHuella(m['signature_hash'].toString()), copyValue: m['signature_hash'].toString(), mono: true),
+      if (DocView._s(m['signer_key_fingerprint']) != null)
+        TechRow('Llave del firmante', fmtHuella(m['signer_key_fingerprint'].toString()),
+            copyValue: m['signer_key_fingerprint'].toString(), mono: true),
+      if (d.signerEmail != null && d.signedOk) TechRow('Correo registrado', d.signerEmail!),
+      if (DocView._s(m['blockchain_gas_used']) != null) TechRow('Gas usado', '${fmtMiles(m['blockchain_gas_used'])} unidades'),
+      if (d.tx != null) TechRow('Costo de red', fmtCostoRed(m['blockchain_fee_eth'])),
+      if (d.tx != null) const TechRow('Algoritmo', 'ECDSA P-256 · SHA-256'),
+    ];
+
     return BSCard(
-      title: 'Integridad y blockchain',
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (d.hash != null)
-          _CopyRow(
-            icon: Icons.fingerprint_rounded,
-            label: 'Hash SHA-256',
-            value: d.hash!,
-            onCopy: () => copyToClipboard(context, d.hash!, 'Hash'),
-          ),
-        const SizedBox(height: 12),
-        if (d.tx != null) ...[
-          _CopyRow(
-            icon: Icons.link_rounded,
-            label: 'Transacción en Sepolia',
-            value: d.tx!,
-            onCopy: () => copyToClipboard(context, d.tx!, 'Transacción'),
-          ),
+      title: 'Registro en blockchain',
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        seal,
+        if (facts.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          FactGrid(facts: facts),
+        ],
+        if (d.hash != null) ...[
           const SizedBox(height: 10),
+          HuellaField(
+            label: 'Huella digital del archivo (SHA-256)',
+            value: d.hash!,
+            help: 'Identifica este archivo exacto. Si cambia un solo carácter, la huella es otra.',
+          ),
+        ],
+        if (d.explorerUrl != null && d.tx != null) ...[
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
-            child: BSOutlineButton(
-              label: 'Ver en Etherscan',
-              icon: Icons.open_in_new_rounded,
-              onPressed: () => launchUrl(Uri.parse('https://sepolia.etherscan.io/tx/${d.tx}'), mode: LaunchMode.externalApplication),
-            ),
+            child: BSOutlineButton(label: 'Ver comprobante público', icon: Icons.open_in_new_rounded, onPressed: () => abrirEnlace(d.explorerUrl!)),
           ),
-        ] else
-          BSInfoBanner(
-            title: d.canSign ? 'Aún no está firmado' : 'Sin transacción registrada',
-            text: d.canSign
-                ? 'Al firmarlo, el hash quedará registrado de forma inmutable en la blockchain Sepolia.'
-                : 'Este documento no tiene una transacción asociada.',
-            color: d.canSign ? BSColors.warning : BSColors.neutral,
-            icon: Icons.info_outline_rounded,
+        ],
+        if (tech.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          TechDetails(
+            rows: tech,
+            note: 'Datos de la transacción en Ethereum Sepolia, la red de prueba que usa DocBlockSign.',
           ),
+        ],
       ]),
     );
   }
@@ -1111,7 +1174,7 @@ class _FileVersionCard extends StatelessWidget {
               child: Row(children: [
                 const Icon(Icons.fingerprint_rounded, color: AppTheme.hint, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(shortHash(d.hash!), style: const TextStyle(color: AppTheme.text, fontFamily: 'monospace', fontSize: 12))),
+                Expanded(child: Text(fmtHuella(d.hash!), style: const TextStyle(color: AppTheme.text, fontFamily: 'monospace', fontSize: 12))),
                 const Icon(Icons.copy_rounded, color: AppTheme.hint, size: 14),
               ]),
             ),
@@ -1151,7 +1214,7 @@ class _FileVersionCard extends StatelessWidget {
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(v['name']?.toString() ?? 'Archivo', maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
-                        Text('Reemplazado ${DocView.fmtDate(v['replaced_at']?.toString()) ?? ''} · ${shortHash('${v['file_hash'] ?? ''}')}',
+                        Text('Reemplazado ${DocView.fmtDate(v['replaced_at']?.toString()) ?? ''} · ${fmtHuella('${v['file_hash'] ?? ''}')}',
                             maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
                       ]),
                     ),
@@ -1291,42 +1354,6 @@ class _TagChip extends StatelessWidget {
   }
 }
 
-class _CopyRow extends StatelessWidget {
-  final IconData icon;
-  final String label, value;
-  final VoidCallback onCopy;
-  const _CopyRow({required this.icon, required this.label, required this.value, required this.onCopy});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
-      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
-      child: Row(children: [
-        Icon(icon, color: AppTheme.primary, size: 18),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 2),
-            Tooltip(
-              message: value,
-              child: Text(shortHash(value),
-                  style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'monospace')),
-            ),
-          ]),
-        ),
-        IconButton(
-          tooltip: 'Copiar',
-          onPressed: onCopy,
-          icon: const Icon(Icons.copy_rounded, color: AppTheme.hint, size: 18),
-        ),
-      ]),
-    );
-  }
-}
-
-
 // ─────────────────────────────────────────
 // CICLO DE VIDA DEL DOCUMENTO (como los gates de aprobación)
 // ─────────────────────────────────────────
@@ -1354,10 +1381,10 @@ class DocLifecycleCard extends StatelessWidget {
       revoked
           ? ('Firmado', _Gate.error, 'Revocado')
           : signedOk || inChain
-              ? ('Firmado', _Gate.done, 'Aprobado')
+              ? ('Firmado', _Gate.done, 'Completado')
               : ('Firmado', d.analyzed ? _Gate.current : _Gate.pending, d.analyzed ? 'Por firmar' : 'Pendiente'),
       signedOk
-          ? ('Blockchain', _Gate.done, m['blockchain_block'] != null ? 'Bloque #${m['blockchain_block']}' : 'Registrado')
+          ? ('Blockchain', _Gate.done, 'Registrado')
           : inChain
               ? ('Blockchain', _Gate.current, 'Confirmando')
               : chain == 'failed'
@@ -1449,79 +1476,59 @@ class DocIntegrityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final m = d.meta;
-    final signedOk = d.status == 'signed' || d.status == 'verified';
     // (texto, estado: true = ok, false = falla, null = pendiente)
     final checks = <(String, bool?)>[
-      ('Huella SHA-256 calculada', d.hash != null),
+      ('Huella digital calculada', d.hash != null),
       ('Metadatos extraídos', m['word_count'] != null || m['pages'] != null),
       ('Texto legible', m['has_text'] == null ? null : m['has_text'] == true),
       ('Análisis con IA', d.analyzed ? true : (d.aiError != null ? false : null)),
-      ('Firma digital', m['revoked'] == true ? false : (signedOk || m['signature_hash'] != null ? true : null)),
-      ('Registro en blockchain', signedOk ? true : (m['blockchain_status'] == 'failed' ? false : null)),
+      ('Firma electrónica', d.revoked ? false : (d.signedOk || m['signature_hash'] != null ? true : null)),
+      ('Registro en blockchain', d.signedOk ? true : (m['blockchain_status'] == 'failed' ? false : null)),
     ];
     final ok = checks.where((c) => c.$2 == true).length;
-    final pct = ok / checks.length;
+    final allOk = ok == checks.length;
 
-    Color dot(bool? v) => v == true ? BSColors.success : (v == false ? BSColors.danger : BSColors.warning);
+    (IconData, Color, String) look(bool? v) => v == true
+        ? (Icons.check_circle_rounded, BSColors.success, 'Listo')
+        : v == false
+            ? (Icons.cancel_rounded, BSColors.danger, 'Con error')
+            : (Icons.schedule_rounded, BSColors.warning, 'Pendiente');
 
     return BSCard(
-      title: 'Integridad y cumplimiento',
-      child: Column(children: [
-        Center(
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: pct),
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.easeOutCubic,
-            builder: (_, v, __) => SizedBox(
-              width: 130,
-              height: 130,
-              child: CustomPaint(
-                painter: _DonutPainter(v),
-                child: Center(
-                  child: Text('${(v * 100).round()} %',
-                      style: const TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w900)),
-                ),
-              ),
+      title: 'Controles del documento',
+      trailing: Text('$ok de ${checks.length}',
+          style: TextStyle(color: allOk ? BSColors.success : AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w800)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: ok / checks.length),
+          duration: const Duration(milliseconds: 700),
+          curve: Curves.easeOutCubic,
+          builder: (_, v, __) => ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: v,
+              minHeight: 6,
+              color: allOk ? BSColors.success : AppTheme.primary,
+              backgroundColor: const Color(0xFFEEF1F6),
             ),
           ),
         ),
-        const SizedBox(height: 16),
-        for (final c in checks)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
+        const SizedBox(height: 6),
+        for (var i = 0; i < checks.length; i++)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              border: i == checks.length - 1 ? null : const Border(bottom: BorderSide(color: Color(0xFFEDF0F5))),
+            ),
             child: Row(children: [
-              Container(width: 12, height: 12, decoration: BoxDecoration(color: dot(c.$2), shape: BoxShape.circle)),
+              Icon(look(checks[i].$2).$1, size: 18, color: look(checks[i].$2).$2),
               const SizedBox(width: 10),
-              Expanded(child: Text(c.$1, style: const TextStyle(color: AppTheme.text, fontSize: 13.5))),
+              Expanded(child: Text(checks[i].$1, style: const TextStyle(color: AppTheme.text, fontSize: 13.5))),
+              Text(look(checks[i].$2).$3,
+                  style: TextStyle(color: look(checks[i].$2).$2, fontSize: 12, fontWeight: FontWeight.w700)),
             ]),
           ),
       ]),
     );
   }
-}
-
-class _DonutPainter extends CustomPainter {
-  final double value;
-  _DonutPainter(this.value);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const stroke = 13.0;
-    final rect = Offset.zero & size;
-    final r = rect.deflate(stroke / 2);
-    final bg = Paint()
-      ..color = const Color(0xFFEEF1F6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = stroke;
-    final fg = Paint()
-      ..color = AppTheme.primary
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = stroke;
-    canvas.drawArc(r, 0, 2 * math.pi, false, bg);
-    if (value > 0) canvas.drawArc(r, -math.pi / 2, 2 * math.pi * value, false, fg);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DonutPainter old) => old.value != value;
 }

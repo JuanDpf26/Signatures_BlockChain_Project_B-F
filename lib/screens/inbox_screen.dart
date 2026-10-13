@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
+import '../widgets/proof_ui.dart';
 import '../widgets/chain_steps.dart';
 import '../widgets/sweet_alert.dart';
 
@@ -925,11 +926,15 @@ class _DocumentCard extends StatelessWidget {
           Text(doc['description'].toString(), style: const TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45)),
         ],
         const SizedBox(height: 12),
-        if (hash.isNotEmpty) ChainValueRow(label: 'Huella', value: hash),
-        if (signed && doc['blockchain_tx'] != null)
-          ChainValueRow(label: 'Tx', value: doc['blockchain_tx'].toString(), url: doc['blockchain_explorer']?.toString()),
-        if (signed && doc['blockchain_block'] != null)
-          ChainValueRow(label: 'Bloque', value: '#${doc['blockchain_block']}', mono: false, copy: false, shorten: false),
+        if (hash.isNotEmpty) HuellaField(label: 'Huella digital del archivo', value: hash),
+        if (signed && doc['blockchain_tx'] != null) ...[
+          const SizedBox(height: 8),
+          TechDetails(rows: [
+            TechRow('Transacción', fmtHuella(doc['blockchain_tx'].toString()),
+                copyValue: doc['blockchain_tx'].toString(), url: doc['blockchain_explorer']?.toString(), mono: true),
+            if (doc['blockchain_block'] != null) TechRow('Bloque', fmtMiles(doc['blockchain_block'])),
+          ]),
+        ],
         const SizedBox(height: 12),
         Wrap(spacing: 10, runSpacing: 10, children: [
           if (doc['file_url'] != null)

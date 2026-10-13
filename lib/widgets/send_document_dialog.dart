@@ -3,6 +3,7 @@ import '../services/document_service.dart';
 import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
+import 'proof_ui.dart';
 import 'sweet_alert.dart';
 
 /// Enviar un documento por correo desde la plataforma.
@@ -157,7 +158,6 @@ class _SendPanelState extends State<_SendPanel> {
   @override
   Widget build(BuildContext context) {
     final hash = widget.doc['file_hash']?.toString() ?? '';
-    final shortHash = hash.length > 24 ? '${hash.substring(0, 12)}…${hash.substring(hash.length - 8)}' : hash;
     final shares = ((_meta['shares'] as List?) ?? const []).whereType<Map>().take(3).toList();
     final tint = _isPdf ? BSColors.danger : AppTheme.primary;
 
@@ -209,9 +209,9 @@ class _SendPanelState extends State<_SendPanel> {
                   Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
                   const SizedBox(height: 3),
-                  Text('${_meta['size_mb'] ?? '?'} MB · $shortHash',
+                  Text('${fmtTamano(_meta)}${hash.isNotEmpty ? ' · Huella ${fmtHuella(hash)}' : ''}',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontFamily: 'monospace')),
+                      style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
               ),
               const SizedBox(width: 8),

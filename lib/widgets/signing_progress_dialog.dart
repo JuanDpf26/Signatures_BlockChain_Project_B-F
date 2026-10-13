@@ -4,6 +4,7 @@ import '../services/document_service.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
 import 'chain_steps.dart';
+import 'proof_ui.dart';
 
 /// Muestra en vivo cómo se firma un documento y se registra en Sepolia.
 /// Devuelve true si la firma quedó confirmada en un bloque.
@@ -183,62 +184,60 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
 
   List<ChainStep> get _steps {
     final elapsed = chainElapsed(DateTime.now().difference(_started));
-    final block = _tx?['blockNumber'];
-    final latest = _tx?['latestBlock'];
+    final mined = _txIsMined || _phase == _Phase.confirmed;
     return [
       ChainStep(
-        'Calcular huella del documento',
+        'Calcular la huella del documento',
         state: _s(0),
         detail: _documentHash == null
             ? 'Validando el documento y tu firma registrada…'
-            : 'SHA-256 del archivo: cualquier cambio, por mínimo que sea, la cambia por completo.',
-        extra: [if (_documentHash != null) ChainValueRow(label: 'Huella', value: _documentHash!)],
+            : 'Huella ${fmtHuella(_documentHash)}. Si el archivo cambia, aunque sea un carácter, la huella cambia.',
       ),
       ChainStep(
-        'Generar firma digital',
+        'Firmar con tu llave personal',
         state: _s(1),
-        detail: _s(1) == ChainStepState.waiting
-            ? null
-            : 'Tu clave privada ECDSA P-256 firma la huella junto con tu correo y la fecha exacta.',
-        extra: [
-          if (_keyFingerprint != null && _visualStep >= 1) ChainValueRow(label: 'Tu clave', value: _keyFingerprint!),
-          if (_signatureHash != null && _visualStep >= 1) ChainValueRow(label: 'Hash firma', value: _signatureHash!),
-        ],
+        detail: _s(1) == ChainStepState.waiting ? null : 'Tu llave privada firma la huella junto con tu correo y la hora exacta.',
       ),
       ChainStep(
-        'Preparar transacción',
+        'Preparar el registro',
         state: _s(2),
-        detail: _s(2) == ChainStepState.waiting ? null : 'Llamada a signDocument() del contrato, firmada por la wallet de DocBlockSign.',
-        extra: [if (_wallet != null && _visualStep >= 2) ChainValueRow(label: 'Wallet', value: _wallet!)],
+        detail: _s(2) == ChainStepState.waiting ? null : 'Se prepara el registro para el contrato inteligente de DocBlockSign.',
       ),
       ChainStep(
-        'Enviar a la red Sepolia',
+        'Enviar a la red Ethereum',
         state: _s(3),
-        detail: _s(3) == ChainStepState.waiting ? null : 'La transacción ya está en la red esperando a ser incluida en un bloque.',
-        extra: [
-          if (_txHash != null && _visualStep >= 3) ChainValueRow(label: 'Tx', value: _txHash!, url: _explorerUrl),
-        ],
+        detail: _s(3) == ChainStepState.waiting ? null : 'El registro ya está en la red, esperando entrar en un bloque.',
       ),
       ChainStep(
-        _txIsMined || _phase == _Phase.confirmed ? 'Incluida en el bloque #${block ?? '—'}' : 'Esperando confirmación del bloque',
+        mined ? 'Confirmado por la red' : 'Esperando confirmación de la red',
         state: _s(4),
         detail: _phase == _Phase.failed && _txHash != null
             ? _error
-            : _txIsMined || _phase == _Phase.confirmed
-                ? 'Minada el ${chainDate(_tx?['minedAt']?.toString())}'
+            : mined
+                ? 'Confirmado el ${fmtFechaHora(_tx?['minedAt']?.toString())}'
                 : _s(4) == ChainStepState.active
-                    ? 'Los validadores de Sepolia suelen tardar 12–30 s · llevas $elapsed${latest != null ? ' · bloque actual #$latest' : ''}'
+                    ? 'Suele tardar entre 12 y 30 segundos · van $elapsed'
                     : null,
-        extra: [
-          if (_tx?['gasUsed'] != null) ChainValueRow(label: 'Gas usado', value: '${_tx!['gasUsed']}', mono: false, copy: false),
-          if (_tx?['feeEth'] != null) ChainValueRow(label: 'Costo', value: '${_tx!['feeEth']} ETH (prueba)', mono: false, copy: false),
-        ],
       ),
       ChainStep(
         'Firma registrada',
         state: _s(5),
-        detail: _phase == _Phase.confirmed ? 'El documento quedó firmado de forma inmutable. Cualquiera puede verificarlo con su huella.' : null,
+        detail: _phase == _Phase.confirmed ? 'El documento quedó firmado de forma permanente. Cualquiera puede comprobarlo con su huella.' : null,
       ),
+    ];
+  }
+
+  List<TechRow> get _techRows {
+    final block = _tx?['blockNumber'];
+    return [
+      if (_txHash != null) TechRow('Transacción', fmtHuella(_txHash), copyValue: _txHash, url: _explorerUrl, mono: true),
+      if (block != null) TechRow('Bloque', fmtMiles(block)),
+      if (_documentHash != null) TechRow('Huella (SHA-256)', fmtHuella(_documentHash), copyValue: _documentHash, mono: true),
+      if (_signatureHash != null) TechRow('Hash de la firma', fmtHuella(_signatureHash), copyValue: _signatureHash, mono: true),
+      if (_keyFingerprint != null) TechRow('Tu llave pública', fmtHuella(_keyFingerprint), copyValue: _keyFingerprint, mono: true),
+      if (_wallet != null) TechRow('Cuenta emisora', fmtHuella(_wallet), copyValue: _wallet, mono: true),
+      if (_tx?['gasUsed'] != null) TechRow('Gas usado', '${fmtMiles(_tx!['gasUsed'])} unidades'),
+      if (_tx?['feeEth'] != null) TechRow('Costo de red', fmtCostoRed(_tx!['feeEth'])),
     ];
   }
 
@@ -286,7 +285,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
             ]),
           ),
           const SizedBox(width: 8),
-          const BSPill(label: 'Sepolia', color: AppTheme.featureCyan),
+          const BSPill(label: 'Ethereum', color: AppTheme.featureCyan),
         ]),
       ),
 
@@ -296,6 +295,10 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             ChainTimeline(steps: _steps),
+            if (done || failed || _phase == _Phase.slow) ...[
+              const SizedBox(height: 14),
+              TechDetails(rows: _techRows, note: 'Registro en Ethereum Sepolia, la red de prueba que usa DocBlockSign.'),
+            ],
             if (failed && _txHash == null && _error != null) ...[
               const SizedBox(height: 12),
               BSInfoBanner(title: 'Detalle', text: _error!, color: BSColors.danger, icon: Icons.info_outline_rounded),
@@ -318,7 +321,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
         child: Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
           if (_explorerUrl != null && (done || _phase == _Phase.slow || _phase == _Phase.confirming))
-            BSOutlineButton(label: 'Ver en Etherscan', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(_explorerUrl!)),
+            BSOutlineButton(label: 'Ver comprobante', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(_explorerUrl!)),
           if (failed && _txHash == null)
             BSOutlineButton(label: 'Reintentar', icon: Icons.refresh_rounded, onPressed: _run),
           if (_phase == _Phase.slow)

@@ -7,6 +7,7 @@ import '../services/document_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/chain_steps.dart';
+import '../widgets/proof_ui.dart';
 
 /// Verificar la autenticidad de un documento contra el contrato en Sepolia.
 /// El archivo NUNCA sale del dispositivo: aquí se calcula su SHA-256 y solo
@@ -185,20 +186,8 @@ class _VerifyScreenState extends State<VerifyScreen> {
     });
   }
 
-  List<Widget> _extraFor(dynamic key, Map<String, dynamic> res) {
-    final tx = res['transaction'] is Map ? Map<String, dynamic>.from(res['transaction']) : null;
-    final bc = res['blockchain'] is Map ? Map<String, dynamic>.from(res['blockchain']) : null;
-    if (key == 'blockchain' && bc != null) {
-      return [
-        if (bc['contractAddress'] != null)
-          ChainValueRow(label: 'Contrato', value: bc['contractAddress'].toString(), url: bc['contractUrl']?.toString()),
-      ];
-    }
-    if (key == 'transaction' && tx != null && tx['txHash'] != null) {
-      return [ChainValueRow(label: 'Tx', value: tx['txHash'].toString(), url: tx['explorerUrl']?.toString())];
-    }
-    return const [];
-  }
+  // Los datos técnicos (contrato, transacción) se muestran plegados en el veredicto
+  List<Widget> _extraFor(dynamic key, Map<String, dynamic> res) => const [];
 
   void _reset() {
     setState(() {
@@ -478,10 +467,25 @@ class _VerdictCard extends StatelessWidget {
       if (bc?['documentTitle'] != null) ('Documento', bc!['documentTitle'].toString()),
       if (doc?['signerName'] != null) ('Firmado por', doc!['signerName'].toString()),
       if (bc?['signerEmail'] != null) ('Correo del firmante', bc!['signerEmail'].toString()),
-      if (bc?['signedAt'] != null) ('Fecha de registro', chainDate(bc!['signedAt'].toString())),
-      if (tx?['blockNumber'] != null) ('Bloque', '#${tx!['blockNumber']}'),
-      if (tx?['confirmations'] != null) ('Confirmaciones', '${tx!['confirmations']}'),
-      ('Verificado', chainDate(result['checkedAt']?.toString())),
+      if (bc?['signedAt'] != null) ('Fecha de registro', fmtFechaHora(bc!['signedAt'].toString())),
+      ('Comprobado', fmtFechaHora(result['checkedAt']?.toString())),
+    ];
+
+    final tech = <TechRow>[
+      if (tx?['txHash'] != null)
+        TechRow('Transacción', fmtHuella(tx!['txHash'].toString()), copyValue: tx['txHash'].toString(), url: tx['explorerUrl']?.toString(), mono: true),
+      if (tx?['blockNumber'] != null) TechRow('Bloque', fmtMiles(tx!['blockNumber'])),
+      if (tx?['confirmations'] != null) TechRow('Confirmaciones', fmtMiles(tx!['confirmations'])),
+      if (bc?['signatureHash'] != null)
+        TechRow('Hash de la firma', fmtHuella(bc!['signatureHash'].toString()), copyValue: bc['signatureHash'].toString(), mono: true),
+      if (sig?['fingerprint'] != null)
+        TechRow('Llave pública', fmtHuella(sig!['fingerprint'].toString()), copyValue: sig['fingerprint'].toString(), mono: true),
+      if (sig?['algorithm'] != null) TechRow('Algoritmo', sig!['algorithm'].toString()),
+      if (bc?['signerWallet'] != null)
+        TechRow('Cuenta emisora', fmtHuella(bc!['signerWallet'].toString()), copyValue: bc['signerWallet'].toString(), mono: true),
+      if (bc?['contractAddress'] != null)
+        TechRow('Contrato', fmtHuella(bc!['contractAddress'].toString()),
+            copyValue: bc['contractAddress'].toString(), url: bc['contractUrl']?.toString(), mono: true),
     ];
 
     return Container(
@@ -547,16 +551,16 @@ class _VerdictCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
             ],
-            if (result['hash'] != null) ChainValueRow(label: 'Huella', value: result['hash'].toString()),
-            if (bc?['signatureHash'] != null) ChainValueRow(label: 'Firma', value: bc!['signatureHash'].toString()),
-            if (sig?['fingerprint'] != null) ChainValueRow(label: 'Clave pública', value: sig!['fingerprint'].toString()),
-            if (sig?['algorithm'] != null) ChainValueRow(label: 'Algoritmo', value: sig!['algorithm'].toString(), mono: false, copy: false, shorten: false),
-            if (bc?['signerWallet'] != null) ChainValueRow(label: 'Wallet', value: bc!['signerWallet'].toString()),
-            if (tx?['txHash'] != null) ChainValueRow(label: 'Tx', value: tx!['txHash'].toString(), url: tx['explorerUrl']?.toString()),
+            if (result['hash'] != null)
+              HuellaField(label: 'Huella digital del archivo (SHA-256)', value: result['hash'].toString()),
+            if (tech.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              TechDetails(rows: tech, note: 'Datos consultados directamente en el contrato de Ethereum Sepolia.'),
+            ],
             const SizedBox(height: 10),
             Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
               if (tx?['explorerUrl'] != null)
-                BSOutlineButton(label: 'Ver en Etherscan', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(tx!['explorerUrl'].toString())),
+                BSOutlineButton(label: 'Ver comprobante', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(tx!['explorerUrl'].toString())),
               BSPrimaryButton(label: 'Verificar otro', icon: Icons.refresh_rounded, onPressed: onReset),
             ]),
           ]),
@@ -596,30 +600,35 @@ class _NetworkCard extends StatelessWidget {
                 )
               : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                   Row(children: [
-                    _Stat(label: 'Bloque actual', value: '#${info!['latestBlock']}'),
-                    const SizedBox(width: 10),
-                    _Stat(label: 'Documentos', value: '${info!['totalDocuments'] ?? '—'}'),
+                    Container(width: 9, height: 9, decoration: const BoxDecoration(color: BSColors.success, shape: BoxShape.circle)),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text('Conectado a Ethereum · Sepolia',
+                          style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                    ),
                   ]),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 4),
+                  const Text('Red de prueba pública: los registros son reales y verificables, sin costo económico.',
+                      style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
+                  const SizedBox(height: 12),
                   Row(children: [
-                    _Stat(label: 'Red', value: '${info!['network']} (${info!['chainId']})'),
+                    _Stat(label: 'Documentos registrados', value: fmtMiles(info!['totalDocuments'] ?? '—')),
                     const SizedBox(width: 10),
-                    _Stat(
-                      label: 'Gas',
-                      value: info!['gasPriceGwei'] != null ? '${double.tryParse(info!['gasPriceGwei'].toString())?.toStringAsFixed(2)} gwei' : '—',
-                    ),
+                    _Stat(label: 'Último bloque', value: fmtMiles(info!['latestBlock'])),
                   ]),
-                  const SizedBox(height: 14),
-                  if (info!['contractAddress'] != null)
-                    ChainValueRow(label: 'Contrato', value: info!['contractAddress'].toString(), url: info!['contractUrl']?.toString()),
-                  if (info!['wallet'] != null) ChainValueRow(label: 'Wallet', value: info!['wallet'].toString()),
-                  if (info!['balanceEth'] != null)
-                    ChainValueRow(
-                      label: 'Saldo',
-                      value: '${double.tryParse(info!['balanceEth'].toString())?.toStringAsFixed(4)} ETH',
-                      mono: false,
-                      copy: false,
-                    ),
+                  const SizedBox(height: 12),
+                  TechDetails(rows: [
+                    if (info!['contractAddress'] != null)
+                      TechRow('Contrato', fmtHuella(info!['contractAddress'].toString()),
+                          copyValue: info!['contractAddress'].toString(), url: info!['contractUrl']?.toString(), mono: true),
+                    if (info!['wallet'] != null)
+                      TechRow('Cuenta emisora', fmtHuella(info!['wallet'].toString()), copyValue: info!['wallet'].toString(), mono: true),
+                    if (info!['balanceEth'] != null)
+                      TechRow('Saldo de prueba', '${(double.tryParse(info!['balanceEth'].toString()) ?? 0).toStringAsFixed(4).replaceAll('.', ',')} SepoliaETH'),
+                    if (info!['gasPriceGwei'] != null)
+                      TechRow('Precio del gas', '${(double.tryParse(info!['gasPriceGwei'].toString()) ?? 0).toStringAsFixed(2).replaceAll('.', ',')} gwei'),
+                    TechRow('Identificador de red', '${info!['network']} (${info!['chainId']})'),
+                  ]),
                 ]),
     );
   }
@@ -677,8 +686,8 @@ class _HowItWorksCard extends StatelessWidget {
     return BSCard(
       title: '¿Cómo funciona?',
       child: Column(children: [
-        item(Icons.fingerprint_rounded, 'Huella única', 'Se calcula el SHA-256 del archivo. Si cambia un solo byte, la huella es otra.'),
-        item(Icons.link_rounded, 'Registro inmutable', 'Al firmar, la huella se guarda en un contrato de Ethereum (Sepolia) que nadie puede editar.'),
+        item(Icons.fingerprint_rounded, 'Huella única', 'Se calcula una huella (SHA-256) del archivo. Si cambia un solo carácter, la huella es otra.'),
+        item(Icons.link_rounded, 'Registro permanente', 'Al firmar, la huella se guarda en un contrato de Ethereum que nadie puede modificar.'),
         item(Icons.search_rounded, 'Comprobación', 'Verificar consulta el contrato: si la huella existe y la firma sigue vigente, el documento es auténtico.'),
       ]),
     );
