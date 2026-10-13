@@ -11,6 +11,7 @@ import '../widgets/signing_progress_dialog.dart';
 import '../widgets/analysis_progress_dialog.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
+import '../widgets/proof_ui.dart';
 import '../widgets/send_document_dialog.dart';
 import '../theme/app_theme.dart';
 import 'document_viewer_screen.dart';
@@ -1041,8 +1042,8 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
     final pages = int.tryParse('${meta['pages'] ?? ''}');
     final info = [
       ext.toUpperCase(),
-      if (meta['size_mb'] != null) '${meta['size_mb']} MB',
-      if (pages != null && pages > 0) '$pages págs',
+      fmtTamano(meta),
+      if (pages != null && pages > 0) '$pages ${pages == 1 ? 'página' : 'páginas'}',
       docCategoryOf(meta),
     ].join(' · ');
     final hasSig = widget.signatureUrl != null;
@@ -1125,8 +1126,8 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                             const Icon(Icons.fingerprint_rounded, size: 14, color: AppTheme.primary),
                             const SizedBox(width: 4),
                             Expanded(
-                              child: Text(hash.length > 26 ? '${hash.substring(0, 14)}…${hash.substring(hash.length - 10)}' : hash,
-                                  style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontFamily: 'monospace')),
+                              child: Text('Huella ${fmtHuella(hash)}',
+                                  style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
                             ),
                           ]),
                         ],
@@ -1188,9 +1189,9 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 // Qué va a pasar
                 const Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
-                step(1, 'Se combina la huella SHA-256 del archivo con tu identidad y la fecha exacta.'),
-                step(2, 'Se envía una transacción al contrato en Ethereum Sepolia; verás cada paso en vivo.'),
-                step(3, 'Al confirmarse en un bloque, recibes el comprobante por correo.'),
+                step(1, 'Tu firma une la huella del archivo con tu identidad y la hora exacta.'),
+                step(2, 'La firma se registra en la blockchain de Ethereum; verás cada paso en vivo.'),
+                step(3, 'Cuando la red la confirme, recibirás el comprobante por correo.'),
                 const SizedBox(height: 12),
 
                 // Aceptación

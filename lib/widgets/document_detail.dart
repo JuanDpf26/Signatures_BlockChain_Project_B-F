@@ -612,7 +612,7 @@ class DocSecurityCard extends StatelessWidget {
     ];
 
     return BSCard(
-      title: 'Registro en blockchain',
+      title: 'Certificado de registro',
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         seal,
         if (facts.isNotEmpty) ...[
@@ -1448,17 +1448,27 @@ class DocLifecycleCard extends StatelessWidget {
                 ),
               ]),
               const SizedBox(height: 10),
-              Text(steps[i].$1,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(steps[i].$1,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(steps[i].$3,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: colorOf(steps[i].$2), fontSize: 12, fontWeight: FontWeight.w700)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(steps[i].$3,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      style: TextStyle(color: colorOf(steps[i].$2), fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
+              ),
             ]),
           ),
       ]),

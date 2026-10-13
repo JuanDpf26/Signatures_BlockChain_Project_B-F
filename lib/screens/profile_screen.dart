@@ -12,6 +12,7 @@ import '../services/profile_service.dart';
 import '../services/auth_service.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
+import '../widgets/proof_ui.dart';
 import '../widgets/bs_ui.dart';
 import '../theme/app_theme.dart';
 
@@ -94,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               BSKpiCard(label: 'Documentos', value: '${stats['total_docs'] ?? 0}', caption: 'Subidos', color: AppTheme.primary, icon: Icons.folder_copy_outlined),
               BSKpiCard(label: 'Firmados', value: '${stats['signed_docs'] ?? 0}', caption: 'Con registro en blockchain', color: AppTheme.featureCyan, icon: Icons.draw_outlined),
               BSKpiCard(label: 'Verificados', value: '${stats['verified_docs'] ?? 0}', caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined),
-              BSKpiCard(label: 'Almacenamiento', value: '${stats['total_size_mb'] ?? 0}', caption: 'MB usados', color: BSColors.warning, icon: Icons.cloud_outlined),
+              BSKpiCard(label: 'Almacenamiento', value: '${stats['total_size_mb'] ?? 0}'.replaceAll('.', ','), caption: 'MB usados', color: BSColors.warning, icon: Icons.cloud_outlined),
             ]),
             const SizedBox(height: 20),
 
@@ -354,7 +355,7 @@ class _InfoTabState extends State<_InfoTab> {
           BSLabelValue(label: 'Número de cédula', value: widget.user['document_id']?.toString() ?? 'No registrado'),
           BSLabelValue(label: 'Miembro desde', value: created != null ? '${two(created.day)}/${two(created.month)}/${created.year}' : '-'),
           BSLabelValue(label: 'Último acceso', value: widget.user['last_login'] != null
-              ? (DateTime.tryParse(widget.user['last_login'].toString())?.toLocal().toString().substring(0, 16) ?? '-')
+              ? fmtFechaHora(widget.user['last_login'].toString())
               : '-'),
         ]),
       ),

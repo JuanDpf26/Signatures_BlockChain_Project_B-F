@@ -888,7 +888,7 @@ class _DocumentCard extends StatelessWidget {
     final hash = doc['file_hash']?.toString() ?? '';
     final info = [
       doc['category'],
-      if (doc['size_mb'] != null) '${doc['size_mb']} MB',
+      if (doc['size_mb'] != null) fmtTamano(doc),
       if (doc['pages'] != null) '${doc['pages']} pág.',
       if (doc['owner_name'] != null) 'de ${doc['owner_name']}',
     ].whereType<Object>().join(' · ');

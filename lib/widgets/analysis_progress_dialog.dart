@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import '../services/document_service.dart';
 import '../theme/app_theme.dart';
+import 'proof_ui.dart';
 import 'bs_ui.dart';
 import 'chain_steps.dart';
 
@@ -266,7 +267,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
         _isUpload ? 'Subir archivo de forma segura' : 'Preparar el documento',
         state: _s(0),
         detail: _s(0) == ChainStepState.done
-            ? '${_meta['size_mb'] ?? '—'} MB · ${(_meta['extension'] ?? 'pdf').toString().toUpperCase()}'
+            ? '${fmtTamano(_meta)} · ${(_meta['extension'] ?? 'pdf').toString().toUpperCase()}'
             : (_isUpload ? 'Enviando el archivo al almacenamiento cifrado…' : 'Cargando la información del documento…'),
       ),
       ChainStep(

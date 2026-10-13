@@ -6,6 +6,7 @@ import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../layout/responsive_layout.dart';
 import '../widgets/sweet_alert.dart';
+import '../widgets/proof_ui.dart';
 import '../widgets/bs_ui.dart';
 import '../screens/document_screen.dart';
 import 'profile_screen.dart';
@@ -1277,7 +1278,7 @@ class _StatusMixCard extends StatelessWidget {
                     const Icon(Icons.auto_stories_outlined, size: 16, color: AppTheme.hint),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text('${n('pages')} páginas · ${stats['total_size_mb'] ?? 0} MB · ${n('pdfs')} PDF / ${n('words')} Word',
+                      child: Text('${n('pages')} páginas · ${'${stats['total_size_mb'] ?? 0}'.replaceAll('.', ',')} MB · ${n('pdfs')} PDF / ${n('words')} Word',
                           style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
                     ),
                   ]),
@@ -1591,7 +1592,7 @@ class _RecentRowState extends State<_RecentRow> {
     final date = '${two(created.day)}/${two(created.month)}/${created.year}';
     final cat = _categoryOf(m);
     final pages = int.tryParse('${m['pages'] ?? ''}');
-    final sub = [cat, if (m['size_mb'] != null) '${m['size_mb']} MB', if (pages != null && pages > 0) '$pages pág.'].join('  ·  ');
+    final sub = [cat, if (m['size_mb'] != null || m['size_bytes'] != null) fmtTamano(m), if (pages != null && pages > 0) '$pages pág.'].join('  ·  ');
 
     final tileSize = widget.wide ? 52.0 : 44.0;
     final tile = Container(
