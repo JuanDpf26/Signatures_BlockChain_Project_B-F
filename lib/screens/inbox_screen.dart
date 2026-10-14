@@ -1198,10 +1198,13 @@ class _ReadingState extends State<_Reading> {
           if (_isSender) _recipients(recipients),
           if (!widget.standalone || narrow) ...[
             const SizedBox(height: 16),
-            Wrap(spacing: 10, runSpacing: 10, children: [
-              BSOutlineButton(label: _isSender ? 'Responder a todos' : 'Responder', icon: Icons.reply_rounded, onPressed: _sending ? null : _reply),
-              BSOutlineButton(label: 'Reenviar', icon: Icons.forward_rounded, onPressed: _sending ? null : _forward),
-            ]),
+            Builder(builder: (_) {
+              final a = BSOutlineButton(label: _isSender ? 'Responder a todos' : 'Responder', icon: Icons.reply_rounded, onPressed: _sending ? null : _reply);
+              final b = BSOutlineButton(label: 'Reenviar', icon: Icons.forward_rounded, onPressed: _sending ? null : _forward);
+              return narrow
+                  ? Row(children: [Expanded(child: a), const SizedBox(width: 10), Expanded(child: b)])
+                  : Wrap(spacing: 10, runSpacing: 10, children: [a, b]);
+            }),
           ],
         ]),
       ),
@@ -1325,8 +1328,13 @@ class _Toolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, box) => _bar(context, box.maxWidth));
+  }
+
+  Widget _bar(BuildContext context, double width) {
     final narrow = MediaQuery.of(context).size.width < 600;
-    Widget action(IconData icon, String label, VoidCallback? onTap, {Color? color}) => narrow
+    final compact = width < 700; // panel angosto: solo íconos en acciones secundarias
+    Widget action(IconData icon, String label, VoidCallback? onTap, {Color? color, bool primary = false}) => narrow || (compact && !primary)
         ? IconButton(tooltip: label, onPressed: onTap, icon: Icon(icon, color: color ?? AppTheme.text, size: 22))
         : TextButton.icon(
             onPressed: onTap,
@@ -1336,16 +1344,34 @@ class _Toolbar extends StatelessWidget {
           );
     const sep = SizedBox(height: 22, child: VerticalDivider(width: 14, color: AppTheme.border));
 
+    final deco = const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border)));
+    if (narrow) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: deco,
+        child: Row(children: [
+          if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
+          const Spacer(),
+          action(archived ? Icons.unarchive_outlined : Icons.archive_outlined, archived ? 'Mover a la bandeja' : 'Archivar', onArchive),
+          action(deleted ? Icons.restore_from_trash_outlined : Icons.delete_outline_rounded, deleted ? 'Restaurar' : 'Eliminar', onDelete,
+              color: deleted ? null : BSColors.danger),
+          if (!isSender) ...[
+            action(unread ? Icons.mark_email_read_outlined : Icons.mark_email_unread_outlined, unread ? 'Marcar como leído' : 'Marcar como no leído', onRead),
+            action(flagged ? Icons.flag_rounded : Icons.flag_outlined, flagged ? 'Quitar marca' : 'Marcar', onFlag, color: flagged ? BSColors.danger : null),
+          ],
+        ]),
+      );
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
+      decoration: deco,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(children: [
           if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
           if (!narrow) ...[
-            action(Icons.reply_rounded, isSender ? 'Responder a todos' : 'Responder', busy ? null : onReply, color: AppTheme.primary),
-            action(Icons.forward_rounded, 'Reenviar', busy ? null : onForward, color: AppTheme.primary),
+            action(Icons.reply_rounded, isSender ? 'Responder a todos' : 'Responder', busy ? null : onReply, color: AppTheme.primary, primary: true),
+            action(Icons.forward_rounded, 'Reenviar', busy ? null : onForward, color: AppTheme.primary, primary: true),
             sep,
           ],
           action(archived ? Icons.unarchive_outlined : Icons.archive_outlined, archived ? 'Mover a la bandeja' : 'Archivar', onArchive),
@@ -1524,7 +1550,7 @@ class _DocumentCard extends StatelessWidget {
           ]),
         ],
         const SizedBox(height: 12),
-        Wrap(spacing: 10, runSpacing: 10, children: [
+        _cardButtons(context, [
           if (doc['file_url'] != null)
             BSPrimaryButton(
               label: 'Ver documento',
@@ -1547,7 +1573,7 @@ class _DocumentCard extends StatelessWidget {
             ),
           if (hash.isNotEmpty)
             BSOutlineButton(
-              label: 'Verificar autenticidad',
+              label: MediaQuery.of(context).size.width < 600 ? 'Verificar' : 'Verificar autenticidad',
               icon: Icons.verified_outlined,
               onPressed: () => Navigator.of(context).pushNamed('/verify?hash=$hash'),
             ),
@@ -1563,6 +1589,24 @@ class _DocumentCard extends StatelessWidget {
         ]),
       ]),
     );
+  }
+
+  /// En celular: botón principal a todo el ancho y los demás en dos columnas iguales
+  Widget _cardButtons(BuildContext context, List<Widget> b) {
+    if (MediaQuery.of(context).size.width >= 600 || b.isEmpty) return Wrap(spacing: 10, runSpacing: 10, children: b);
+    final rest = b.skip(1).toList();
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      b.first,
+      if (rest.isNotEmpty) ...[
+        const SizedBox(height: 10),
+        Row(children: [
+          for (var i = 0; i < rest.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(child: rest[i]),
+          ],
+        ]),
+      ],
+    ]);
   }
 }
 
