@@ -32,11 +32,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   bool _slow = false;
   bool _failed = false;
   Timer? _slowTimer;
+  bool _loggedIn = false;
+  bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
-    _start();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
   @override
@@ -47,25 +49,35 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _start() async {
-    setState(() {
-      _status = 'Iniciando…';
-      _slow = false;
-      _failed = false;
-    });
     // El servidor se despierta en segundo plano: no se espera aquí. Las
     // pantallas muestran su carga y sus peticiones esperan a que responda.
-    ServerWake.ready();
-    final update = UpdateService.latest();
-    final results = await Future.wait([AuthService.isLoggedIn(), Future.delayed(_minVisible)]);
-    if (!mounted) return;
+    unawaited(ServerWake.ready());
+    // Pase lo que pase, a los 6 s se sale de la pantalla de carga
+    _slowTimer = Timer(const Duration(seconds: 6), () => _go(_loggedIn));
+
+    try {
+      _loggedIn = await AuthService.isLoggedIn().timeout(const Duration(seconds: 3));
+    } catch (_) {
+      _loggedIn = false;
+    }
+    await Future.delayed(_minVisible);
+    if (!mounted || _navigated) return;
+
     // Android: si hay una versión nueva publicada, se ofrece antes de entrar
-    final upd = await update.timeout(const Duration(seconds: 2), onTimeout: () => null);
-    if (upd != null && mounted) await UpdateService.prompt(context, upd);
-    if (!mounted) return;
-    _go(results[0] == true);
+    try {
+      final upd = await UpdateService.latest().timeout(const Duration(seconds: 2));
+      if (upd != null && mounted && !_navigated) {
+        _slowTimer?.cancel();
+        await UpdateService.prompt(context, upd);
+      }
+    } catch (_) {}
+    _go(_loggedIn);
   }
 
   void _go(bool loggedIn) {
+    if (!mounted || _navigated) return;
+    _navigated = true;
+    _slowTimer?.cancel();
     Navigator.of(context).pushReplacementNamed(loggedIn ? '/home' : '/welcome');
   }
 
