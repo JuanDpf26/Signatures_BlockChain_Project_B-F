@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import 'server_wake.dart';
 import 'auth_service.dart';
 
 /// Registro de auditoría del usuario (GET /api/audit)
 class AuditService {
   static Future<Map<String, dynamic>> getMyAudit({String? action, String? result, int limit = 100}) async {
     try {
+      await ServerWake.ready();
       final token = await AuthService.getToken();
       final uri = Uri.parse('${AppConfig.apiUrl}/api/audit').replace(queryParameters: {
         'limit': '$limit',
@@ -25,6 +27,7 @@ class AuditService {
   /// Pide un enlace temporal para descargar el registro (format: csv | html)
   static Future<Map<String, dynamic>> exportLink({String format = 'csv', String period = '30d', String? action, String? result}) async {
     try {
+      await ServerWake.ready();
       final token = await AuthService.getToken();
       final res = await http
           .post(

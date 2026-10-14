@@ -2,10 +2,9 @@ import 'dart:async';
 import '../widgets/brand.dart';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
-import '../config/app_config.dart';
 import '../services/auth_service.dart';
+import '../services/server_wake.dart';
 import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 
@@ -25,8 +24,6 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
   static const _minVisible = Duration(milliseconds: 900);
-  static const _slowAfter = Duration(seconds: 5);
-  static const _giveUpAfter = Duration(seconds: 70);
 
   late final AnimationController _anim =
       AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
@@ -51,54 +48,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _start() async {
     setState(() {
-      _status = 'Conectando con el servidor…';
+      _status = 'Iniciando…';
       _slow = false;
       _failed = false;
     });
-    _slowTimer?.cancel();
-    _slowTimer = Timer(_slowAfter, () {
-      if (mounted) setState(() => _slow = true);
-    });
-
-    final shown = Future.delayed(_minVisible);
-    final loggedIn = AuthService.isLoggedIn();
-    final serverOk = _wakeServer();
-    // La consulta de versión nueva corre en paralelo (no suma tiempo de espera)
+    // El servidor se despierta en segundo plano: no se espera aquí. Las
+    // pantallas muestran su carga y sus peticiones esperan a que responda.
+    ServerWake.ready();
     final update = UpdateService.latest();
-
-    final results = await Future.wait([serverOk, loggedIn, shown]);
-    _slowTimer?.cancel();
+    final results = await Future.wait([AuthService.isLoggedIn(), Future.delayed(_minVisible)]);
     if (!mounted) return;
-
-    if (results[0] != true) {
-      setState(() {
-        _failed = true;
-        _status = 'No se pudo conectar con el servidor';
-      });
-      return;
-    }
-    setState(() => _status = 'Listo');
     // Android: si hay una versión nueva publicada, se ofrece antes de entrar
     final upd = await update.timeout(const Duration(seconds: 2), onTimeout: () => null);
     if (upd != null && mounted) await UpdateService.prompt(context, upd);
     if (!mounted) return;
-    _go(results[1] == true);
-  }
-
-  /// Consulta /health hasta que responda o se agote el tiempo.
-  Future<bool> _wakeServer() async {
-    final url = Uri.parse('${AppConfig.apiUrl}/health');
-    final deadline = DateTime.now().add(_giveUpAfter);
-    while (DateTime.now().isBefore(deadline)) {
-      try {
-        final res = await http.get(url).timeout(const Duration(seconds: 20));
-        if (res.statusCode == 200) return true;
-      } catch (_) {
-        // servidor dormido o sin red: se reintenta
-      }
-      await Future.delayed(const Duration(seconds: 2));
-    }
-    return false;
+    _go(results[0] == true);
   }
 
   void _go(bool loggedIn) {

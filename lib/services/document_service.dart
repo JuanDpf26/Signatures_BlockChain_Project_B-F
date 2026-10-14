@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../config/app_config.dart';
+import 'server_wake.dart';
 import 'auth_service.dart';
 
 class DocumentService {
@@ -11,6 +12,7 @@ class DocumentService {
   static String get signingUrl => '${AppConfig.apiUrl}/api/signing';
 
   static Future<Map<String, String>> _authHeaders() async {
+    await ServerWake.ready();
     final token = await AuthService.getToken();
     return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
   }

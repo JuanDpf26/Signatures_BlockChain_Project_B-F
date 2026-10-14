@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'server_wake.dart';
 import 'auth_service.dart';
 import '../config/app_config.dart';
 
@@ -11,6 +12,7 @@ class ProfileService {
   static String get baseUrl => '${AppConfig.apiUrl}/api/profile';
 
   static Future<Map<String, String>> _headers() async {
+    await ServerWake.ready();
     final token = await AuthService.getToken();
     return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
   }

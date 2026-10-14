@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import 'server_wake.dart';
 import 'auth_service.dart';
 
 /// Cliente del asistente "Sign IA" (POST /api/agent/chat)
@@ -14,6 +15,7 @@ class AgentService {
     String? documentTitle,
   }) async {
     try {
+      await ServerWake.ready();
       final token = await AuthService.getToken();
       final res = await http
           .post(

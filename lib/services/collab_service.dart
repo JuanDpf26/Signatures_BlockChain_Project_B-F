@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import 'server_wake.dart';
 import 'auth_service.dart';
 
 /// Bandeja de entrada (/api/inbox) y equipos (/api/teams)
@@ -8,6 +9,7 @@ class CollabService {
   static String get _base => AppConfig.apiUrl;
 
   static Future<Map<String, String>> _headers() async {
+    await ServerWake.ready();
     final token = await AuthService.getToken();
     return {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'};
   }

@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/js_bridge.dart';
+import 'server_wake.dart';
 import '../config/app_config.dart';
 
 class AuthService {
@@ -72,6 +73,7 @@ class AuthService {
     required String captchaToken,
   }) async {
     try {
+      await ServerWake.ready();
       final res = await http
           .post(
             Uri.parse('$baseUrl/register'),
@@ -101,6 +103,7 @@ class AuthService {
   // ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      await ServerWake.ready();
       final res = await http
           .post(
             Uri.parse('$baseUrl/login'),
@@ -147,6 +150,7 @@ class AuthService {
             "document.getElementById('google-btn-container').style.cssText='position:fixed;top:-9999px;left:-9999px;'"
           ]);
 
+          await ServerWake.ready();
           final res = await http.post(
             Uri.parse('$baseUrl/google'),
             headers: {'Content-Type': 'application/json'},
@@ -171,6 +175,7 @@ class AuthService {
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
       if (idToken == null) return {'error': 'Google no entregó el token de identidad. Revisa la configuración del cliente OAuth.'};
+      await ServerWake.ready();
       final res = await http.post(
         Uri.parse('$baseUrl/google'),
         headers: {'Content-Type': 'application/json'},
@@ -200,6 +205,7 @@ class AuthService {
   // ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     try {
+      await ServerWake.ready();
       final res = await http
           .post(
             Uri.parse('$baseUrl/forgot-password'),
@@ -222,6 +228,7 @@ class AuthService {
   // ────────────────────────────────────────────────
   static Future<Map<String, dynamic>> resetPassword(String token, String newPassword) async {
     try {
+      await ServerWake.ready();
       final res = await http
           .post(
             Uri.parse('$baseUrl/reset-password'),
