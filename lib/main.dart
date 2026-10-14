@@ -115,7 +115,7 @@ class MyApp extends StatelessWidget {
           case '/':
             // En la app móvil, pantalla de carga (despierta el servidor y revisa la sesión)
             return MaterialPageRoute(
-              builder: (_) => kIsWeb ? const WelcomeScreen() : const SplashScreen(),
+              builder: (_) => const SplashScreen(),
               settings: settings,
             );
           case '/welcome':
