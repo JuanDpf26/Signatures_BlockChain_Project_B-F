@@ -50,6 +50,36 @@ class CollabService {
         body: jsonEncode({'archived': archived}),
       ));
 
+  static Future<Map<String, dynamic>> markRead(String id, {bool read = true}) => _send((h) => http.post(
+        Uri.parse('$_base/api/inbox/$id/read'),
+        headers: h,
+        body: jsonEncode({'read': read}),
+      ));
+
+  static Future<Map<String, dynamic>> flag(String id, {bool flagged = true}) => _send((h) => http.post(
+        Uri.parse('$_base/api/inbox/$id/flag'),
+        headers: h,
+        body: jsonEncode({'flagged': flagged}),
+      ));
+
+  static Future<Map<String, dynamic>> deleteMessage(String id, {bool deleted = true}) => _send((h) => http.post(
+        Uri.parse('$_base/api/inbox/$id/delete'),
+        headers: h,
+        body: jsonEncode({'deleted': deleted}),
+      ));
+
+  static Future<Map<String, dynamic>> reply(String id, String message) => _send((h) => http.post(
+        Uri.parse('$_base/api/inbox/$id/reply'),
+        headers: h,
+        body: jsonEncode({'message': message}),
+      ));
+
+  static Future<Map<String, dynamic>> forward(String id, List<String> recipients, String message) => _send((h) => http.post(
+        Uri.parse('$_base/api/inbox/$id/forward'),
+        headers: h,
+        body: jsonEncode({'recipients': recipients, 'message': message}),
+      ));
+
   // ── Equipos ──────────────────────────────────────────────
   static Future<Map<String, dynamic>> teams() => _send((h) => http.get(Uri.parse('$_base/api/teams'), headers: h));
 

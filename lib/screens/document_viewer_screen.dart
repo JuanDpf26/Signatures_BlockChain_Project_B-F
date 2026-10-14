@@ -1,16 +1,11 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdfx/pdfx.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
 import '../widgets/sign_ia_assistant.dart';
-import '../viewers/pdf_viewer_web.dart' if (dart.library.io) '../viewers/pdf_viewer_stub.dart';
+import '../viewers/doc_frame.dart';
 
 /// Visor de documentos.
 /// - Computador (> 1000 px): documento a la izquierda y panel de información a la derecha.
@@ -34,15 +29,9 @@ class DocumentViewerScreen extends StatefulWidget {
 }
 
 class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
-  PdfControllerPinch? _pdfController;
-  bool _isLoading = true;
-  bool _hasError = false;
-  String _errorMsg = '';
-  double _downloadProgress = 0;
-  int _currentPage = 1;
-  int _totalPages = 0;
   bool _showPanel = true;
-  final FocusNode _focusNode = FocusNode();
+  /// 0 = visor propio (pdf.js) / Office para Word, 1 = visor de Google
+  int _engine = 0;
 
   late final DocView _d = DocView.fromMeta({
     ...widget.metadata,
@@ -52,67 +41,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
 
   bool get _isPdf => widget.extension.toLowerCase() == 'pdf';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadDocument();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _focusNode.requestFocus());
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    _pdfController?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadDocument() async {
-    // Web usa el visor del navegador (iframe) — no hay que descargar nada
-    if (kIsWeb || !_isPdf) {
-      setState(() => _isLoading = false);
-      return;
-    }
-    // Móvil / escritorio con pdfx
-    try {
-      setState(() {
-        _isLoading = true;
-        _hasError = false;
-        _downloadProgress = 0;
-      });
-      final file = await _downloadFile(widget.fileUrl);
-      final doc = await PdfDocument.openFile(file.path);
-      _pdfController = PdfControllerPinch(document: Future.value(doc));
-      setState(() {
-        _totalPages = doc.pagesCount;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _hasError = true;
-        _errorMsg = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<File> _downloadFile(String url) async {
-    final dio = Dio();
-    final dir = await getTemporaryDirectory();
-    final filePath = '${dir.path}/doc_${url.hashCode}.pdf';
-    final file = File(filePath);
-    if (await file.exists()) return file;
-    await dio.download(url, filePath, onReceiveProgress: (r, t) {
-      if (t > 0 && mounted) setState(() => _downloadProgress = r / t);
-    });
-    return file;
-  }
-
-  void _prevPage() {
-    if (_currentPage > 1) _pdfController?.previousPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut);
-  }
-
-  void _nextPage() {
-    if (_currentPage < _totalPages) _pdfController?.nextPage(duration: const Duration(milliseconds: 250), curve: Curves.easeInOut);
+  String get _frameUrl {
+    if (_engine == 1) return AppConfig.visorGoogle(widget.fileUrl);
+    return _isPdf ? AppConfig.visorPdf(widget.fileUrl) : AppConfig.visorOffice(widget.fileUrl);
   }
 
   Future<void> _openExternal() async {
@@ -180,7 +111,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         child: Column(children: [
           _TopBar(
             d: _d,
-            pagesLabel: _totalPages > 0 ? 'Página $_currentPage de $_totalPages' : null,
+            pagesLabel: null,
             wide: wide,
             panelOpen: _showPanel,
             onBack: () => Navigator.pop(context),
@@ -205,183 +136,69 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
           ),
         ]),
       ),
-      bottomNavigationBar: !kIsWeb && _isPdf && !_isLoading && !_hasError && _totalPages > 0 ? _buildBottomBar() : null,
     );
   }
 
   Widget _buildViewer() {
-    if (_isLoading) {
-      return Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          SizedBox(
-            width: 56,
-            height: 56,
-            child: CircularProgressIndicator(
-              value: _downloadProgress > 0 ? _downloadProgress : null,
-              color: AppTheme.primary,
-              strokeWidth: 3,
-              backgroundColor: AppTheme.border,
-            ),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            _downloadProgress > 0 ? 'Descargando… ${(_downloadProgress * 100).toStringAsFixed(0)}%' : 'Preparando documento…',
-            style: const TextStyle(color: AppTheme.hint, fontSize: 13),
-          ),
-        ]),
-      );
-    }
-
-    if (_hasError) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: BSCard(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(color: BSColors.danger.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-                  child: const Icon(Icons.error_outline_rounded, color: BSColors.danger, size: 30),
-                ),
-                const SizedBox(height: 14),
-                const Text('No se pudo cargar el documento', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                Text(_errorMsg, textAlign: TextAlign.center, maxLines: 4, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
-                const SizedBox(height: 18),
-                Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
-                  BSOutlineButton(label: 'Reintentar', icon: Icons.refresh_rounded, onPressed: _loadDocument),
-                  BSPrimaryButton(label: 'Abrir externamente', icon: Icons.open_in_new_rounded, onPressed: _openExternal),
-                ]),
-              ]),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Web — visor del navegador / Google
-    if (kIsWeb && _isPdf) return PdfViewerWeb(fileUrl: widget.fileUrl);
-
-    // Word
-    if (!_isPdf) {
-      return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: BSCard(
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Container(
-                  width: 76,
-                  height: 76,
-                  decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                  child: const Icon(Icons.article_rounded, color: AppTheme.primary, size: 38),
-                ),
-                const SizedBox(height: 16),
-                Text(_d.title, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 6),
-                Text('${widget.extension.toUpperCase()} · ${_d.sizeLabel}${_d.pages != null ? ' · ${_d.pages} págs' : ''}',
-                    style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
-                const SizedBox(height: 18),
-                const BSInfoBanner(
-                  title: 'Vista previa no disponible para Word',
-                  text: 'Ábrelo con Word u otra aplicación de tu dispositivo. Sus metadatos y el análisis con IA están en el panel de información.',
-                  icon: Icons.info_outline_rounded,
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: BSPrimaryButton(label: 'Abrir / descargar', icon: Icons.download_rounded, onPressed: _openExternal),
-                ),
-              ]),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Móvil / escritorio — pdfx con teclado
-    return Focus(
-      focusNode: _focusNode,
-      autofocus: true,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent) {
-          final k = event.logicalKey;
-          if (k == LogicalKeyboardKey.arrowDown || k == LogicalKeyboardKey.pageDown || k == LogicalKeyboardKey.space) {
-            _nextPage();
-            return KeyEventResult.handled;
-          }
-          if (k == LogicalKeyboardKey.arrowUp || k == LogicalKeyboardKey.pageUp) {
-            _prevPage();
-            return KeyEventResult.handled;
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Container(
-        color: const Color(0xFFE5E7EB),
-        child: PdfViewPinch(
-          controller: _pdfController!,
-          onPageChanged: (page) => setState(() => _currentPage = page),
-          scrollDirection: Axis.vertical,
-          padding: 10,
-          builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-            options: const DefaultBuilderOptions(),
-            documentLoaderBuilder: (_) => const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-            pageLoaderBuilder: (_) => const Center(child: CircularProgressIndicator(color: AppTheme.primary, strokeWidth: 2)),
-            errorBuilder: (_, e) => Center(child: Text(e.toString(), style: const TextStyle(color: BSColors.danger))),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppTheme.border))),
+    final labels = _isPdf ? const ['Visor', 'Google'] : const ['Office', 'Google'];
+    final hint = _engine == 1
+        ? 'Visor de Google: puede tardar unos segundos'
+        : (_isPdf ? 'Pellizca o usa + y − para hacer zoom' : 'Vista de Word con el visor de Microsoft Office');
+    return Column(children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
         child: Row(children: [
-          _NavBtn(icon: Icons.chevron_left_rounded, onTap: _currentPage > 1 ? _prevPage : null),
-          const SizedBox(width: 8),
+          _Segment(options: labels, selected: _engine, onChanged: (i) => setState(() => _engine = i)),
+          const SizedBox(width: 12),
           Expanded(
-            child: SliderTheme(
-              data: SliderThemeData(
-                activeTrackColor: AppTheme.primary,
-                inactiveTrackColor: AppTheme.border,
-                thumbColor: AppTheme.primary,
-                overlayColor: AppTheme.primary.withOpacity(0.1),
-                trackHeight: 3,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
-              ),
-              child: Slider(
-                value: _currentPage.clamp(1, _totalPages < 2 ? 2 : _totalPages).toDouble(),
-                min: 1,
-                max: (_totalPages < 2 ? 2 : _totalPages).toDouble(),
-                onChanged: _totalPages < 2
-                    ? null
-                    : (v) {
-                        final p = v.round();
-                        _pdfController?.jumpToPage(p);
-                        setState(() => _currentPage = p);
-                      },
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          _NavBtn(icon: Icons.chevron_right_rounded, onTap: _currentPage < _totalPages ? _nextPage : null),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-            child: Text('$_currentPage / $_totalPages', style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            child: Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
           ),
         ]),
       ),
+      Expanded(
+        child: Container(
+          color: const Color(0xFFE5E7EB),
+          child: DocFrame(key: ValueKey(_frameUrl), url: _frameUrl),
+        ),
+      ),
+    ]);
+  }
+}
+
+class _Segment extends StatelessWidget {
+  final List<String> options;
+  final int selected;
+  final ValueChanged<int> onChanged;
+  const _Segment({required this.options, required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        for (var i = 0; i < options.length; i++)
+          InkWell(
+            onTap: () => onChanged(i),
+            borderRadius: BorderRadius.circular(6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: i == selected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+                boxShadow: i == selected ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))] : null,
+              ),
+              child: Text(options[i],
+                  style: TextStyle(
+                    color: i == selected ? AppTheme.primary : AppTheme.hint,
+                    fontSize: 12,
+                    fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                  )),
+            ),
+          ),
+      ]),
     );
   }
 }
@@ -451,31 +268,6 @@ class _TopBar extends StatelessWidget {
           IconButton(tooltip: 'Información', onPressed: onInfo, icon: const Icon(Icons.info_outline_rounded, color: AppTheme.primary)),
         ],
       ]),
-    );
-  }
-}
-
-class _NavBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onTap;
-  const _NavBtn({required this.icon, this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final on = onTap != null;
-    return Material(
-      color: on ? AppTheme.primary.withOpacity(0.08) : BSColors.page,
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), border: Border.all(color: on ? AppTheme.primary.withOpacity(0.25) : AppTheme.border)),
-          child: Icon(icon, color: on ? AppTheme.primary : AppTheme.hint, size: 22),
-        ),
-      ),
     );
   }
 }
