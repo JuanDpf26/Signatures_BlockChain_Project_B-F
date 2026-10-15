@@ -22,7 +22,8 @@ jobs:
         run: |
           set -o pipefail
           flutter build web --release 2>&1 | tee build.log || {
-            grep -E "error|Error|ERROR" build.log | tail -40 | while IFS= read -r l; do echo "::error::${l}"; done
+            # Los dos puntos se cambian por " | " para que GitHub no los tome como ruta
+            grep -E "^lib/.*Error|error:" build.log | head -60 | sed 's/:/ | /g' | while IFS= read -r l; do echo "::error::${l}"; done
             exit 1
           }
           cd build/web && zip -qr ../../web-preview.zip .
