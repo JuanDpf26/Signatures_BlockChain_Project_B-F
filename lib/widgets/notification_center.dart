@@ -418,7 +418,7 @@ class _RowState extends State<_Row> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: Container(
@@ -474,7 +474,7 @@ class _RowState extends State<_Row> {
             ),
           ]),
         ),
-      ),
+      )),
     );
     // En el celular: deslizar para archivar
     if (desktop || widget.onArchive == null) return row;

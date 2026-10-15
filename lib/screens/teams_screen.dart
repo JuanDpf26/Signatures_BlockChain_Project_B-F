@@ -191,7 +191,7 @@ class _TeamCardState extends State<_TeamCard> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -258,7 +258,7 @@ class _TeamCardState extends State<_TeamCard> {
             ),
           ]),
         ),
-      ),
+      )),
     );
   }
 }
@@ -527,7 +527,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
         Expanded(
           child: Text(_editing ? 'Editar equipo' : 'Nuevo equipo', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w900)),
         ),
-        IconButton(onPressed: _saving ? null : () => Navigator.of(context).pop(), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
+        IconButton(tooltip: 'Cerrar', onPressed: _saving ? null : () => Navigator.of(context).pop(), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
       ]),
       if (!_editing)
         Text('Agrupa a las personas con las que trabajas para enviarles documentos y pedir revisiones a todas a la vez.',

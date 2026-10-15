@@ -623,7 +623,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
                       prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
                       suffixIcon: _searchCtrl.text.isNotEmpty
-                          ? IconButton(icon: Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _reload(); })
+                          ? IconButton(tooltip: 'Borrar búsqueda', icon: Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _reload(); })
                           : null,
                       filled: true,
                       fillColor: AppTheme.card,
@@ -1061,7 +1061,7 @@ class _StatusTabState extends State<_StatusTab> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -1085,7 +1085,7 @@ class _StatusTabState extends State<_StatusTab> {
             ),
           ]),
         ),
-      ),
+      )),
     );
   }
 }

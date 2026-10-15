@@ -376,7 +376,7 @@ class _FolderTileState extends State<_FolderTile> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
@@ -401,7 +401,7 @@ class _FolderTileState extends State<_FolderTile> {
               Text('${widget.count}', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
           ]),
         ),
-      ),
+      )),
     );
   }
 }
@@ -572,6 +572,7 @@ class _ListPane extends StatelessWidget {
               Tooltip(
                 message: onlyUnread ? 'Mostrar todos' : 'Solo no leídos',
                 child: IconButton(
+                  tooltip: onlyUnread ? 'Mostrar todos' : 'Solo sin leer',
                   onPressed: () => onOnlyUnread(!onlyUnread),
                   icon: Icon(onlyUnread ? Icons.filter_alt_rounded : Icons.filter_alt_outlined,
                       color: onlyUnread ? AppTheme.primary : AppTheme.hint, size: 20),
@@ -809,7 +810,7 @@ class _MessageRowState extends State<_MessageRow> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         onLongPress: desktop || widget.sent ? null : () => _menu(context),
         child: AnimatedContainer(
@@ -875,7 +876,7 @@ class _MessageRowState extends State<_MessageRow> {
             ),
           ]),
         ),
-      ),
+      )),
     );
   }
 
@@ -1253,7 +1254,7 @@ class _ReadingState extends State<_Reading> {
 
   Widget _backBar(BuildContext context) => Align(
         alignment: Alignment.centerLeft,
-        child: IconButton(onPressed: widget.onClosed, icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
+        child: IconButton(tooltip: 'Volver', onPressed: widget.onClosed, icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
       );
 
   /// Solicitud de revisión: lo primero que se ve, con las dos respuestas a mano
@@ -1526,7 +1527,7 @@ class _ComposeDialogState extends State<_ComposeDialog> {
               Icon(widget.forward ? Icons.forward_rounded : Icons.reply_rounded, color: AppTheme.primary),
               const SizedBox(width: 10),
               Expanded(child: Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800))),
-              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
+              IconButton(tooltip: 'Cerrar', onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
             ]),
             const SizedBox(height: 10),
             if (widget.forward) ...[
@@ -1703,7 +1704,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
                   Text('Elige el documento que quieres compartir o enviar a revisión.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
                 ]),
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
+              IconButton(tooltip: 'Cerrar', onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
             ]),
           ),
           Padding(

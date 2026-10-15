@@ -184,6 +184,7 @@ class _SendPanelState extends State<_SendPanel> {
             ]),
           ),
           IconButton(
+            tooltip: 'Cerrar',
             onPressed: _sending ? null : () => Navigator.of(context).pop(false),
             icon: const Icon(Icons.close_rounded, color: Colors.white),
           ),

@@ -863,7 +863,7 @@ class _BSPressableState extends State<BSPressable> {
       ),
     );
     if (widget.onTap != null) {
-      child = GestureDetector(behavior: HitTestBehavior.opaque, onTap: widget.onTap, child: child);
+      child = BSFocusable(onTap: widget.onTap, radius: 10, child: GestureDetector(behavior: HitTestBehavior.opaque, onTap: widget.onTap, child: child));
     }
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
@@ -928,6 +928,51 @@ class _BSEntranceState extends State<BSEntrance> with SingleTickerProviderStateM
         child: Transform.translate(offset: Offset(0, widget.offsetY * (1 - _a.value)), child: child),
       ),
       child: widget.child,
+    );
+  }
+}
+
+// ── Accesibilidad: elementos tocables que también se usan con teclado ──
+/// Hace enfocable con Tab cualquier tarjeta o fila tocable, la activa con
+/// Enter/Espacio y dibuja un borde azul solo cuando se navega con teclado.
+class BSFocusable extends StatefulWidget {
+  final VoidCallback? onTap;
+  final Widget child;
+  final double radius;
+  final String? label;
+  const BSFocusable({super.key, required this.onTap, required this.child, this.radius = 12, this.label});
+
+  @override
+  State<BSFocusable> createState() => _BSFocusableState();
+}
+
+class _BSFocusableState extends State<BSFocusable> {
+  bool _focus = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.onTap == null) return widget.child;
+    return FocusableActionDetector(
+      mouseCursor: MouseCursor.defer,
+      onShowFocusHighlight: (v) => setState(() => _focus = v),
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
+          widget.onTap?.call();
+          return null;
+        }),
+      },
+      child: Semantics(
+        button: true,
+        label: widget.label,
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.radius),
+            border: _focus ? Border.all(color: AppTheme.primary, width: 2) : null,
+          ),
+          child: widget.child,
+        ),
+      ),
     );
   }
 }

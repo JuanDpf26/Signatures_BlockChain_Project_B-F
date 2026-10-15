@@ -1615,9 +1615,71 @@ class DocLifecycleCard extends StatelessWidget {
           _Gate.pending => BSColors.neutral,
         };
 
+    Widget dot(int i, {double size = 34}) => TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.6, end: 1),
+          duration: Duration(milliseconds: 350 + i * 90),
+          curve: Curves.easeOutBack,
+          builder: (_, v, child) => Transform.scale(scale: v, child: child),
+          child: Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: steps[i].$2 == _Gate.pending ? AppTheme.card : colorOf(steps[i].$2),
+              border: Border.all(color: steps[i].$2 == _Gate.pending ? AppTheme.border : colorOf(steps[i].$2), width: 2),
+            ),
+            child: switch (steps[i].$2) {
+              _Gate.done => const Icon(Icons.check_rounded, color: Colors.white, size: 16),
+              _Gate.error => const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+              _ => Text('${i + 1}',
+                  style: TextStyle(
+                      color: steps[i].$2 == _Gate.current ? Colors.white : AppTheme.hint,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12)),
+            },
+          ),
+        );
+
+    // En pantallas angostas el recorrido va de arriba hacia abajo
+    Widget vertical() => Column(children: [
+          for (var i = 0; i < steps.length; i++)
+            IntrinsicHeight(
+              child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                SizedBox(
+                  width: 30,
+                  child: Column(children: [
+                    dot(i, size: 30),
+                    if (i < steps.length - 1)
+                      Expanded(
+                        child: Container(
+                          width: 3,
+                          margin: const EdgeInsets.symmetric(vertical: 2),
+                          color: steps[i].$2 == _Gate.done && steps[i + 1].$2 != _Gate.pending ? AppTheme.primary : AppTheme.border,
+                        ),
+                      ),
+                  ]),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 5, bottom: i < steps.length - 1 ? 16 : 0),
+                    child: Row(children: [
+                      Expanded(child: Text(steps[i].$1, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700))),
+                      Text(steps[i].$3, style: TextStyle(color: colorOf(steps[i].$2), fontSize: 12, fontWeight: FontWeight.w700)),
+                    ]),
+                  ),
+                ),
+              ]),
+            ),
+        ]);
+
     return BSCard(
       title: 'Ciclo de vida del documento',
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      child: Semantics(
+        label: 'Ciclo de vida: ' + [for (final st in steps) '${st.$1}, ${st.$3}'].join('; '),
+        child: LayoutBuilder(
+          builder: (_, c) => c.maxWidth < 520 ? ExcludeSemantics(child: vertical()) : ExcludeSemantics(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         for (var i = 0; i < steps.length; i++)
           Expanded(
             child: Column(children: [
@@ -1684,7 +1746,9 @@ class DocLifecycleCard extends StatelessWidget {
               ),
             ]),
           ),
-      ]),
+      ])),
+        ),
+      ),
     );
   }
 }

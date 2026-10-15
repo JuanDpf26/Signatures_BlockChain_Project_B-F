@@ -145,7 +145,7 @@ class AppTheme {
       hoverColor: primary.withOpacity(0.045),
       splashColor: primary.withOpacity(0.10),
       highlightColor: primary.withOpacity(0.05),
-      focusColor: primary.withOpacity(0.10),
+      focusColor: primary.withOpacity(0.18),
       pageTransitionsTheme: const PageTransitionsTheme(builders: {
         TargetPlatform.android: ZoomPageTransitionsBuilder(),
         TargetPlatform.iOS: ZoomPageTransitionsBuilder(),

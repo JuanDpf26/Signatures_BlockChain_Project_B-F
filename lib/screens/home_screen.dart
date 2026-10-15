@@ -647,7 +647,7 @@ class _NavItemState extends State<_NavItem> {
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         onTapDown: (_) => setState(() => _down = true),
         onTapUp: (_) => setState(() => _down = false),
@@ -668,7 +668,7 @@ class _NavItemState extends State<_NavItem> {
             child: content,
           ),
         ),
-      ),
+      )),
     );
 
     return Padding(
@@ -817,7 +817,55 @@ class _MobileShell extends StatelessWidget {
   });
 
   // Orden de la barra inferior → índice de sección
-  static const _order = [0, 1, 5, 2, 3];
+  static const _order = [0, 1, 5, 2]; // el quinto botón es "Más"
+
+  /// Hoja con el resto de secciones: así Equipos y Auditoría no quedan escondidos en el avatar
+  void _showMore(BuildContext context) {
+    Widget item(BuildContext ctx, IconData icon, String title, String sub, VoidCallback onTap, {Color? color, bool selected = false}) => ListTile(
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: (color ?? AppTheme.primary).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color ?? AppTheme.primary, size: 22),
+          ),
+          title: Text(title, style: TextStyle(color: color ?? AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+          subtitle: sub.isEmpty ? null : Text(sub, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+          trailing: selected ? Icon(Icons.check_rounded, color: AppTheme.primary) : null,
+          selected: selected,
+          selectedTileColor: AppTheme.primary.withOpacity(0.06),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          onTap: () {
+            Navigator.of(ctx).pop();
+            onTap();
+          },
+        );
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Text('Más opciones', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
+            ),
+            item(ctx, Icons.groups_rounded, 'Equipos', 'Comparte documentos con tu grupo', () => onNavTap(6), selected: selectedIndex == 6),
+            item(ctx, Icons.receipt_long_rounded, 'Auditoría', 'Historial de acciones de tu cuenta', () => onNavTap(4), selected: selectedIndex == 4),
+            item(ctx, Icons.manage_accounts_rounded, 'Configuración de la cuenta', 'Perfil, seguridad y firma', () => onNavTap(3), selected: selectedIndex == 3),
+            item(ctx, Icons.accessibility_new_rounded, 'Apariencia y accesibilidad', 'Tema, tamaño de letra y movimiento', () => showAccessibilityMenu(context)),
+            Divider(height: 16, color: AppTheme.border),
+            item(ctx, Icons.logout_rounded, 'Cerrar sesión', '', onLogout, color: BSColors.danger),
+          ]),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -885,9 +933,9 @@ class _MobileShell extends StatelessWidget {
         child: NavigationBar(
           backgroundColor: AppTheme.card,
           surfaceTintColor: Colors.transparent,
-          // Tablero · Docs · Bandeja · Verificar · Perfil (Equipos y Auditoría están en el menú del avatar)
+          // Tablero · Docs · Bandeja · Verificar · Más (Equipos, Auditoría, Configuración…)
           selectedIndex: _order.contains(selectedIndex) ? _order.indexOf(selectedIndex) : 4,
-          onDestinationSelected: (i) => onNavTap(_order[i]),
+          onDestinationSelected: (i) => i < _order.length ? onNavTap(_order[i]) : _showMore(context),
           indicatorColor: BSColors.selected,
           destinations: [
             NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
@@ -898,7 +946,7 @@ class _MobileShell extends StatelessWidget {
               label: 'Bandeja',
             ),
             NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
-            NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
+            NavigationDestination(icon: const Icon(Icons.menu_rounded), selectedIcon: Icon(Icons.menu_open_rounded, color: AppTheme.primary), label: 'Más', tooltip: 'Más opciones'),
           ],
         ),
       ),
@@ -1462,7 +1510,7 @@ class _TodoItemState extends State<_TodoItem> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: AnimatedContainer(
@@ -1500,7 +1548,7 @@ class _TodoItemState extends State<_TodoItem> {
               Icon(Icons.chevron_right_rounded, color: AppTheme.hint),
           ]),
         ),
-      ),
+      )),
     );
   }
 }
@@ -1731,7 +1779,7 @@ class _CountTileState extends State<_CountTile> {
       cursor: widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -1762,7 +1810,7 @@ class _CountTileState extends State<_CountTile> {
             ),
           ]),
         ),
-      ),
+      )),
     );
   }
 }
@@ -2039,7 +2087,7 @@ class _RecentRowState extends State<_RecentRow> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
+      child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 160),
@@ -2093,7 +2141,7 @@ class _RecentRowState extends State<_RecentRow> {
             ),
           ]),
         ),
-      ),
+      )),
     );
   }
 }

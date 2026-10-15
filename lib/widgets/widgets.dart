@@ -100,6 +100,7 @@ class _BSTextFieldState extends State<BSTextField> {
             : null,
         suffixIcon: widget.obscureText
             ? IconButton(
+                tooltip: _obscure ? 'Mostrar contraseña' : 'Ocultar contraseña',
                 icon: Icon(
                   _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                   color: hintColor,

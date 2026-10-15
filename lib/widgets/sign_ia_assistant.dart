@@ -154,7 +154,7 @@ class _SignIaFabState extends State<SignIaFab> {
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hover = true),
           onExit: (_) => setState(() => _hover = false),
-          child: GestureDetector(
+          child: BSFocusable(onTap: widget.onTap, radius: 28, child: GestureDetector(
             onTap: widget.onTap,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
@@ -174,7 +174,7 @@ class _SignIaFabState extends State<SignIaFab> {
                 ],
               ]),
             ),
-          ),
+          )),
         ),
       ),
     );
