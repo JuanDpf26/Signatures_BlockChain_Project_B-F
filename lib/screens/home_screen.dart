@@ -1140,14 +1140,16 @@ class _DashboardContent extends StatelessWidget {
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             BSEntrance(child: hero),
             gap,
+            if (isWide) ...[
+              BSEntrance(delay: const Duration(milliseconds: 60), child: kpis),
+              gap,
+            ],
             if (isWide)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(
                   flex: 13,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     BSEntrance(delay: const Duration(milliseconds: 80), child: todo),
-                    gap,
-                    BSEntrance(delay: const Duration(milliseconds: 140), child: kpis),
                     gap,
                     BSEntrance(delay: const Duration(milliseconds: 200), child: activity7),
                     gap,
@@ -1255,10 +1257,10 @@ class _HeroCard extends StatelessWidget {
 
     final first = bsPrimerNombre(userName);
     final steps = [
-      ('Subidos', total, Icons.upload_file_rounded, null as String?),
-      ('Analizados con IA', n('analyzed'), Icons.auto_awesome_rounded, null),
-      ('Firmados en blockchain', firmados, Icons.draw_rounded, 'signed'),
-      ('Verificados', n('verified'), Icons.verified_rounded, 'verified'),
+      ('Subidos', total, Icons.upload_file_rounded, null as String?, 'Subidos'),
+      ('Analizados con IA', n('analyzed'), Icons.auto_awesome_rounded, null, 'Con IA'),
+      ('Firmados en blockchain', firmados, Icons.draw_rounded, 'signed', 'Firmados'),
+      ('Verificados', n('verified'), Icons.verified_rounded, 'verified', 'Verificados'),
     ];
 
     final ring = SizedBox(
@@ -1339,7 +1341,7 @@ class _HeroCard extends StatelessWidget {
                       width: w,
                       child: _HeroStep(
                         n: i + 1,
-                        label: steps[i].$1,
+                        label: cols == 4 ? steps[i].$1 : steps[i].$5,
                         value: loading ? null : steps[i].$2,
                         icon: steps[i].$3,
                         onTap: () => onOpenDocs(steps[i].$4),
@@ -1492,7 +1494,7 @@ class _TodoCard extends StatelessWidget {
       items.add(_TodoItem(
         icon: Icons.more_horiz_rounded,
         color: BSColors.neutral,
-        title: 'Y ${pendingCount - 3} documentos más por firmar',
+        title: pendingCount - 3 == 1 ? 'Y 1 documento más por firmar' : 'Y ${pendingCount - 3} documentos más por firmar',
         subtitle: 'Míralos todos en Documentos',
         action: 'Ver',
         onTap: () => onOpenDocs('pending'),
@@ -1592,8 +1594,8 @@ class _TodoItemState extends State<_TodoItem> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800, height: 1.25)),
                 const SizedBox(height: 2),
                 Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
               ]),

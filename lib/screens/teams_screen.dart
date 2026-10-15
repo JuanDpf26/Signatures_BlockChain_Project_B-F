@@ -700,7 +700,14 @@ class _MemberChipRow extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
       decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
       child: Row(children: [
-        BSAvatar(name: owner ? null : name, radius: 15),
+        owner
+            ? Container(
+                width: 30,
+                height: 30,
+                decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+                child: const Icon(Icons.person_rounded, color: Colors.white, size: 18),
+              )
+            : BSAvatar(name: name, radius: 15),
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
