@@ -98,7 +98,8 @@ class _BrandPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppTheme.primary,
+      // Azul institucional; en modo oscuro, azul noche
+      color: AppTheme.isDark ? const Color(0xFF13203A) : AppTheme.primary,
       child: Stack(fit: StackFit.expand, children: [
         // Círculos decorativos (como en el mockup institucional)
         Positioned(top: -90, right: -40, child: _Bubble(size: 320, opacity: 0.06)),

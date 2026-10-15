@@ -110,24 +110,24 @@ class _BSTextFieldState extends State<BSTextField> {
             : null,
         filled: light ? true : null,
         fillColor: light ? GoogleAuthTheme.surfaceAlt : null,
-        labelStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
-        hintStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
+        labelStyle: light ? TextStyle(color: GoogleAuthTheme.textSecondary) : null,
+        hintStyle: light ? TextStyle(color: GoogleAuthTheme.textSecondary) : null,
         border: light
             ? OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+                borderSide: BorderSide(color: GoogleAuthTheme.border),
               )
             : null,
         enabledBorder: light
             ? OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+                borderSide: BorderSide(color: GoogleAuthTheme.border),
               )
             : null,
         focusedBorder: light
             ? OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.borderFocus, width: 2),
+                borderSide: BorderSide(color: GoogleAuthTheme.borderFocus, width: 2),
               )
             : null,
         errorBorder: light

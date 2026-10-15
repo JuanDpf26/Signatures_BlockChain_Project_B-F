@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Marca DocBlockSign: el cubo verificado y el nombre en tres tonos
 /// (Doc · Block · Sign). Se usa en la barra lateral, el acceso y la carga.
@@ -38,8 +39,8 @@ class BrandWordmark extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Text.rich(
         TextSpan(children: [
-          TextSpan(text: 'Doc', style: TextStyle(color: onDark ? Colors.white : _ink)),
-          TextSpan(text: 'Block', style: TextStyle(color: onDark ? const Color(0xFFCFE0FF) : _blue)),
+          TextSpan(text: 'Doc', style: TextStyle(color: onDark || AppTheme.isDark ? Colors.white : _ink)),
+          TextSpan(text: 'Block', style: TextStyle(color: onDark ? const Color(0xFFCFE0FF) : (AppTheme.isDark ? const Color(0xFF6EA2FF) : _blue))),
           TextSpan(text: 'Sign', style: TextStyle(color: onDark ? const Color(0xFF8DB6FF) : _light)),
         ]),
         style: style,

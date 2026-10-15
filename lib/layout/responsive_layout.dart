@@ -42,7 +42,7 @@ class ResponsiveLayout extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               gradient: light
-                  ? const LinearGradient(
+                  ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [GoogleAuthTheme.surfaceAlt, Color(0xFFEDF2FB)],
@@ -53,7 +53,7 @@ class ResponsiveLayout extends StatelessWidget {
                       colors: [Color(0xFF0F172A), Color(0xFF1B2B48)],
                     ),
               border: light
-                  ? const Border(
+                  ? Border(
                       right: BorderSide(color: GoogleAuthTheme.border, width: 1),
                     )
                   : null,

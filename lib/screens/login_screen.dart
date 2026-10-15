@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: InkWell(
                 onTap: () => Navigator.pushNamed(context, '/forgot'),
                 borderRadius: BorderRadius.circular(6),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: Text('¿Olvidaste tu contraseña?',
                       style: TextStyle(color: GoogleAuthTheme.primary, fontWeight: FontWeight.w700, fontSize: 13.5)),
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: OutlinedButton(
                 onPressed: _isGoogleLoading ? null : _loginWithGoogle,
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: GoogleAuthTheme.border, width: 1),
+                  side: BorderSide(color: GoogleAuthTheme.border, width: 1),
                   foregroundColor: GoogleAuthTheme.text,
                   minimumSize: const Size(0, 52),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

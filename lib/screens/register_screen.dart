@@ -246,7 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 26),
             BSAuthButton(label: 'Crear cuenta', loading: _isLoading, onPressed: _register),
             const SizedBox(height: 14),
-            const Center(
+            Center(
               child: Text(
                 'Te enviaremos un correo para verificar tu cuenta.',
                 style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5),
@@ -315,7 +315,7 @@ class _CaptchaWidget extends StatelessWidget {
                       child: const Icon(Icons.check_rounded, color: Colors.white, size: 20),
                     )
                   : checking
-                      ? const SizedBox(
+                      ? SizedBox(
                           key: ValueKey('wait'),
                           width: 30,
                           height: 30,
@@ -359,7 +359,7 @@ class _CaptchaWidget extends StatelessWidget {
                       : checking
                           ? 'Resuelve el reto que aparece en pantalla'
                           : 'Toca para confirmar que eres una persona',
-                  style: const TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12),
+                  style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12),
                 ),
               ]),
             ),
@@ -373,7 +373,7 @@ class _CaptchaWidget extends StatelessWidget {
                 size: 26,
               ),
               const SizedBox(height: 3),
-              const Text('reCAPTCHA',
+              Text('reCAPTCHA',
                   style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
               const Text('Privacidad · Términos',
                   style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 8.5)),
@@ -396,7 +396,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         color: GoogleAuthTheme.textSecondary,
         fontSize: 11,
         fontWeight: FontWeight.w700,
