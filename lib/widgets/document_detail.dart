@@ -231,13 +231,15 @@ class DocumentDetailPanel extends StatefulWidget {
 }
 
 class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTickerProviderStateMixin {
+  // Pestañas: 0 Resumen · 1 Firma y registro · 2 Análisis IA · 3 Archivo · 4 Editar
+  static const tabCount = 5;
   late final TabController _tabs;
   late DocView d;
 
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this, initialIndex: widget.initialTab.clamp(0, 3));
+    _tabs = TabController(length: tabCount, vsync: this, initialIndex: widget.initialTab.clamp(0, tabCount - 1));
     d = DocView(widget.doc);
   }
 
@@ -254,10 +256,93 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
     super.dispose();
   }
 
+  void _more(String v) {
+    switch (v) {
+      case 'edit':
+        _tabs.animateTo(4);
+        break;
+      case 'replace':
+        widget.onReplaceFile?.call();
+        break;
+      case 'hash':
+        if (d.hash != null) copyToClipboard(context, d.hash!, 'Huella');
+        break;
+      case 'delete':
+        widget.onDelete();
+        break;
+    }
+  }
+
+  /// Menú "Más": acciones poco frecuentes o delicadas
+  Widget _moreMenu({required Widget child}) => PopupMenuButton<String>(
+        tooltip: 'Más acciones',
+        color: Colors.white,
+        position: PopupMenuPosition.under,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        onSelected: _more,
+        itemBuilder: (_) => [
+          const PopupMenuItem(value: 'edit', child: _MoreItem(Icons.edit_outlined, 'Editar datos', 'Nombre, categoría, etiquetas…')),
+          if (widget.onReplaceFile != null && d.canReplaceFile)
+            const PopupMenuItem(value: 'replace', child: _MoreItem(Icons.upload_file_rounded, 'Subir nueva versión', 'Reemplaza el archivo antes de firmar')),
+          if (d.hash != null) const PopupMenuItem(value: 'hash', child: _MoreItem(Icons.fingerprint_rounded, 'Copiar huella', 'Huella SHA-256 del archivo')),
+          const PopupMenuDivider(),
+          const PopupMenuItem(value: 'delete', child: _MoreItem(Icons.delete_outline_rounded, 'Eliminar', 'No se puede deshacer', danger: true)),
+        ],
+        child: child,
+      );
+
   @override
   Widget build(BuildContext context) {
     final narrow = MediaQuery.of(context).size.width < 600;
+    final wide = MediaQuery.of(context).size.width > 900;
     final pad = narrow ? 16.0 : 24.0;
+
+    // Acción principal según el estado: firmar si está pendiente; si no, enviar
+    final view = BSPrimaryButton(label: 'Ver documento', icon: Icons.visibility_outlined, onPressed: widget.onOpen);
+    final main = d.canSign
+        ? BSPrimaryButton(
+            label: widget.isSigning ? 'Firmando…' : 'Firmar',
+            icon: Icons.draw_rounded,
+            loading: widget.isSigning,
+            color: BSColors.success,
+            onPressed: widget.onSign,
+          )
+        : (widget.onSend != null ? BSPrimaryButton(label: 'Enviar', icon: Icons.send_rounded, color: AppTheme.featureCyan, onPressed: widget.onSend) : null);
+
+    final Widget actions;
+    if (narrow) {
+      // Celular: dos botones grandes del mismo ancho y debajo accesos con ícono y texto
+      actions = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Expanded(child: view),
+          if (main != null) ...[const SizedBox(width: 10), Expanded(child: main)],
+        ]),
+        const SizedBox(height: 10),
+        Row(children: [
+          if (d.canSign && widget.onSend != null)
+            Expanded(child: _ActionTile(icon: Icons.send_outlined, label: 'Enviar', onTap: widget.onSend!)),
+          Expanded(child: _ActionTile(icon: Icons.auto_awesome_rounded, label: 'Analizar IA', onTap: widget.onReanalyze)),
+          Expanded(child: _ActionTile(icon: Icons.edit_outlined, label: 'Editar', onTap: () => _tabs.animateTo(4))),
+          Expanded(child: _moreMenu(child: const _ActionTile(icon: Icons.more_horiz_rounded, label: 'Más'))),
+        ]),
+      ]);
+    } else {
+      actions = Row(children: [
+        view,
+        if (main != null) ...[const SizedBox(width: 8), main],
+        const SizedBox(width: 8),
+        Container(width: 1, height: 28, color: AppTheme.border),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Wrap(spacing: 4, runSpacing: 4, children: [
+            if (d.canSign && widget.onSend != null) _GhostButton(icon: Icons.send_outlined, label: 'Enviar', onTap: widget.onSend!),
+            _GhostButton(icon: Icons.auto_awesome_rounded, label: 'Analizar con IA', onTap: widget.onReanalyze),
+            _GhostButton(icon: Icons.edit_outlined, label: 'Editar', onTap: () => _tabs.animateTo(4)),
+          ]),
+        ),
+        _moreMenu(child: const _GhostButton(icon: Icons.more_horiz_rounded, label: 'Más')),
+      ]);
+    }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       // Encabezado
@@ -276,11 +361,17 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: AppTheme.text, fontSize: narrow ? 17 : 20, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
+              const SizedBox(height: 4),
+              Text(
+                [d.category, d.ext.toUpperCase(), d.sizeLabel, if (d.pages != null) '${d.pages} pág.'].join(' · '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppTheme.hint, fontSize: 12.5),
+              ),
               const SizedBox(height: 8),
               Wrap(spacing: 6, runSpacing: 6, children: [
                 BSPill.docStatus(d.status),
-                BSPill(label: d.ext.toUpperCase(), color: d.isPdf ? BSColors.danger : AppTheme.primary, dot: false),
-                BSPill(label: d.category, color: BSColors.neutral, dot: false),
+                if (d.confidentiality != null) BSPill(label: d.confidentiality!, color: confidentialityColor(d.confidentiality), dot: false),
                 if (d.analyzed) const BSPill(label: 'Analizado con IA', color: AppTheme.primary),
               ]),
             ]),
@@ -294,24 +385,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
       ),
 
       // Acciones
-      Padding(
-        padding: EdgeInsets.fromLTRB(pad, 16, pad, 4),
-        child: Wrap(spacing: 8, runSpacing: 8, children: [
-          BSPrimaryButton(label: 'Ver documento', icon: Icons.visibility_outlined, onPressed: widget.onOpen),
-          if (d.canSign)
-            BSPrimaryButton(
-              label: widget.isSigning ? 'Firmando…' : 'Firmar',
-              icon: Icons.draw_rounded,
-              loading: widget.isSigning,
-              color: BSColors.success,
-              onPressed: widget.onSign,
-            ),
-          if (widget.onSend != null)
-            BSOutlineButton(label: 'Enviar', icon: Icons.send_outlined, onPressed: widget.onSend),
-          BSOutlineButton(label: 'Analizar con IA', icon: Icons.auto_awesome_rounded, onPressed: widget.onReanalyze),
-          BSOutlineButton(label: 'Eliminar', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: widget.onDelete),
-        ]),
-      ),
+      Padding(padding: EdgeInsets.fromLTRB(pad, 16, pad, 6), child: actions),
 
       // Pestañas
       Container(
@@ -320,18 +394,21 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         child: TabBar(
           controller: _tabs,
           isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicatorColor: AppTheme.primary,
           indicatorWeight: 3,
           labelColor: AppTheme.primary,
           unselectedLabelColor: AppTheme.hint,
           dividerColor: Colors.transparent,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 12),
           labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13.5),
           tabs: const [
-            Tab(text: 'Resumen'),
-            Tab(text: 'Análisis IA'),
-            Tab(text: 'Metadatos'),
-            Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.edit_outlined, size: 16), SizedBox(width: 6), Text('Editar')])),
+            _TabLabel(Icons.dashboard_outlined, 'Resumen'),
+            _TabLabel(Icons.verified_user_outlined, 'Firma y registro'),
+            _TabLabel(Icons.auto_awesome_outlined, 'Análisis IA'),
+            _TabLabel(Icons.description_outlined, 'Archivo'),
+            _TabLabel(Icons.edit_outlined, 'Editar'),
           ],
         ),
       ),
@@ -341,24 +418,44 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         child: Container(
           color: BSColors.page,
           child: TabBarView(controller: _tabs, children: [
+            // Resumen: qué sigue, en qué va y lo esencial
             _scroll(pad, [
+              _NextStepCard(
+                d: d,
+                isSigning: widget.isSigning,
+                onSign: widget.onSign,
+                onSend: widget.onSend,
+                onReanalyze: widget.onReanalyze,
+                onOpenRecord: () => _tabs.animateTo(1),
+              ),
+              const SizedBox(height: 12),
               DocLifecycleCard(d: d),
               const SizedBox(height: 12),
-              if (!narrow && MediaQuery.of(context).size.width > 900)
+              if (wide)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(child: DocFichaCard(d: d)),
                   const SizedBox(width: 12),
-                  SizedBox(width: 330, child: DocIntegrityCard(d: d)),
+                  Expanded(child: DocAiCard(d: d, compact: true, onReanalyze: widget.onReanalyze, onMore: () => _tabs.animateTo(2))),
                 ])
               else ...[
                 DocFichaCard(d: d),
                 const SizedBox(height: 12),
+                DocAiCard(d: d, compact: true, onReanalyze: widget.onReanalyze, onMore: () => _tabs.animateTo(2)),
+              ],
+            ]),
+            // Firma y registro en blockchain + controles de integridad
+            _scroll(pad, [
+              if (wide)
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(child: DocSecurityCard(d: d)),
+                  const SizedBox(width: 12),
+                  SizedBox(width: 330, child: DocIntegrityCard(d: d)),
+                ])
+              else ...[
+                DocSecurityCard(d: d),
+                const SizedBox(height: 12),
                 DocIntegrityCard(d: d),
               ],
-              const SizedBox(height: 12),
-              DocAiCard(d: d, compact: true, onReanalyze: widget.onReanalyze, onMore: () => _tabs.animateTo(1)),
-              const SizedBox(height: 12),
-              DocSecurityCard(d: d),
             ]),
             _scroll(pad, [DocAiCard(d: d, onReanalyze: widget.onReanalyze)]),
             _scroll(pad, [DocMetadataCards(d: d)]),
@@ -380,6 +477,137 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         padding: EdgeInsets.fromLTRB(pad, 16, pad, 24),
         children: children,
       );
+}
+
+class _TabLabel extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _TabLabel(this.icon, this.text);
+  @override
+  Widget build(BuildContext context) => Tab(
+        height: 44,
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16), const SizedBox(width: 6), Text(text)]),
+      );
+}
+
+/// Botón secundario sin borde (escritorio)
+class _GhostButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  const _GhostButton({required this.icon, required this.label, this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final body = Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 17, color: AppTheme.primary),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600)),
+      ]),
+    );
+    // Sin onTap lo maneja el menú que lo envuelve
+    if (onTap == null) return body;
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(8), hoverColor: BSColors.selected, child: body);
+  }
+}
+
+/// Acceso con ícono arriba y texto abajo (celular)
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  const _ActionTile({required this.icon, required this.label, this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final body = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, size: 20, color: AppTheme.primary),
+        ),
+        const SizedBox(height: 5),
+        Text(label, maxLines: 1, style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
+      ]),
+    );
+    if (onTap == null) return body;
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: body);
+  }
+}
+
+class _MoreItem extends StatelessWidget {
+  final IconData icon;
+  final String title, subtitle;
+  final bool danger;
+  const _MoreItem(this.icon, this.title, this.subtitle, {this.danger = false});
+  @override
+  Widget build(BuildContext context) {
+    final c = danger ? BSColors.danger : AppTheme.text;
+    return Row(children: [
+      Icon(icon, size: 19, color: danger ? BSColors.danger : AppTheme.primary),
+      const SizedBox(width: 12),
+      Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+        Text(title, style: TextStyle(color: c, fontSize: 13.5, fontWeight: FontWeight.w700)),
+        Text(subtitle, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+      ]),
+    ]);
+  }
+}
+
+/// "Siguiente paso": dice qué hacer con el documento según su estado
+class _NextStepCard extends StatelessWidget {
+  final DocView d;
+  final bool isSigning;
+  final VoidCallback onSign, onReanalyze, onOpenRecord;
+  final VoidCallback? onSend;
+  const _NextStepCard({required this.d, required this.isSigning, required this.onSign, required this.onReanalyze, required this.onOpenRecord, this.onSend});
+
+  @override
+  Widget build(BuildContext context) {
+    final (IconData icon, Color color, String title, String text, String? action, VoidCallback? onTap) = switch (true) {
+      _ when d.revoked => (Icons.gpp_bad_rounded, BSColors.danger, 'La firma fue revocada', 'El registro sigue en la blockchain, pero ya no es válido.', 'Ver registro', onOpenRecord),
+      _ when d.inChain => (Icons.hourglass_top_rounded, BSColors.warning, 'Registrándose en blockchain', 'La red está confirmando la firma; no tienes que hacer nada.', 'Ver registro', onOpenRecord),
+      _ when !d.analyzed && d.aiError != null => (Icons.error_outline_rounded, BSColors.danger, 'El análisis con IA falló', 'Vuelve a intentarlo para obtener resumen, categoría y etiquetas.', 'Reintentar', onReanalyze),
+      _ when !d.analyzed => (Icons.auto_awesome_rounded, AppTheme.primary, 'Siguiente paso: analizar con IA', 'La IA propone descripción, categoría, etiquetas y confidencialidad.', 'Analizar', onReanalyze),
+      _ when d.canSign => (Icons.draw_rounded, BSColors.success, 'Siguiente paso: firmar', 'Tu firma y la huella del archivo quedarán registradas en Ethereum.', isSigning ? 'Firmando…' : 'Firmar ahora', isSigning ? null : onSign),
+      _ => (Icons.verified_rounded, BSColors.success, 'Documento firmado y registrado', 'Ya puedes enviarlo o pedir que lo revisen; cualquiera con cuenta puede verificarlo.', onSend != null ? 'Enviar' : 'Ver registro', onSend ?? onOpenRecord),
+    };
+    final narrow = MediaQuery.of(context).size.width < 600;
+    final button = action == null
+        ? null
+        : BSPrimaryButton(label: action, icon: Icons.arrow_forward_rounded, color: color, onPressed: onTap);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Row(children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
+            ]),
+          ),
+          if (!narrow && button != null) ...[const SizedBox(width: 12), button],
+        ]),
+        if (narrow && button != null) ...[const SizedBox(height: 12), button],
+      ]),
+    );
+  }
 }
 
 // ─────────────────────────────────────────
@@ -564,7 +792,7 @@ class DocSecurityCard extends StatelessWidget {
         icon: Icons.verified_rounded,
         color: BSColors.success,
         title: 'Registrado en blockchain',
-        subtitle: 'Cualquier persona puede comprobar que este archivo no ha cambiado desde que se firmó.',
+        subtitle: 'Cualquier usuario de DocBlockSign puede comprobar que este archivo no ha cambiado desde que se firmó.',
         trailing: MediaQuery.of(context).size.width < 600 ? null : const BSPill(label: 'Vigente', color: BSColors.success),
       );
     } else if (d.inChain) {
@@ -708,8 +936,6 @@ class DocMetadataCards extends StatelessWidget {
         const SizedBox(height: 12),
         BSInfoBanner(title: 'No se pudo leer el contenido', text: s('extraction_error'), color: BSColors.warning, icon: Icons.warning_amber_rounded),
       ],
-      const SizedBox(height: 12),
-      DocSecurityCard(d: d),
     ]);
   }
 }

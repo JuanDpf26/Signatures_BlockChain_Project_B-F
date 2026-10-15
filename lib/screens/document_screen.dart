@@ -554,8 +554,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         info: info,
         isSigning: _signingDocId == docId,
         onSign: () => _sign(docId, info.title),
+        onOpen: () => _openViewer(doc),
         onDetail: () => _showDetail(doc),
-        onEdit: () => _showDetail(doc, tab: 3),
+        onEdit: () => _showDetail(doc, tab: 4),
         onSend: () => _sendByEmail(doc),
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
@@ -577,8 +578,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     info: info,
                     isSigning: _signingDocId == docId,
                     onSign: () => _sign(docId, info.title),
+                    onOpen: () => _openViewer(doc),
                     onDetail: () => _showDetail(doc),
-                    onEdit: () => _showDetail(doc, tab: 3),
+                    onEdit: () => _showDetail(doc, tab: 4),
                     onSend: () => _sendByEmail(doc),
                     onReanalyze: () => _reanalyze(docId),
                     onDelete: () => _delete(docId, info.title),
@@ -586,6 +588,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   ),
                   isSigning: _signingDocId == docId,
                   onTap: () => _showDetail(doc),
+                  onOpen: () => _openViewer(doc),
                   onSign: () => _sign(docId, info.title),
                   onSend: () => _sendByEmail(doc),
                 ),
@@ -762,7 +765,7 @@ class _TableHeader extends StatelessWidget {
         Expanded(flex: 2, child: Text('TAMAÑO', style: s)),
         Expanded(flex: 2, child: Text('FECHA', style: s)),
         Expanded(flex: 2, child: Text('ESTADO', style: s)),
-        SizedBox(width: 168, child: Text('ACCIONES', style: s)),
+        SizedBox(width: 236, child: Text('ACCIONES', style: s)),
       ]),
     );
   }
@@ -814,7 +817,7 @@ class _DocRow extends StatelessWidget {
           Expanded(flex: 2, child: Text(info.sizeStr, style: cell)),
           Expanded(flex: 2, child: Text(info.dateStr, style: cell)),
           Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(info.status))),
-          SizedBox(width: 168, child: Align(alignment: Alignment.centerLeft, child: actions)),
+          SizedBox(width: 236, child: Align(alignment: Alignment.centerLeft, child: actions)),
         ]),
       ),
     );
@@ -828,8 +831,8 @@ class _DocTile extends StatelessWidget {
   final _DocInfo info;
   final Widget menu;
   final bool isSigning;
-  final VoidCallback onTap, onSign, onSend;
-  const _DocTile({required this.info, required this.menu, required this.isSigning, required this.onTap, required this.onSign, required this.onSend});
+  final VoidCallback onTap, onSign, onSend, onOpen;
+  const _DocTile({required this.info, required this.menu, required this.isSigning, required this.onTap, required this.onSign, required this.onSend, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
@@ -851,17 +854,30 @@ class _DocTile extends StatelessWidget {
                 : const Icon(Icons.draw_rounded, size: 16),
             label: const Text('Firmar', style: TextStyle(fontWeight: FontWeight.w800)),
           )
-        : OutlinedButton.icon(
+        : ElevatedButton.icon(
             onPressed: onSend,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppTheme.primary,
-              side: const BorderSide(color: AppTheme.border),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.featureCyan,
+              foregroundColor: Colors.white,
+              elevation: 0,
               minimumSize: const Size(0, 42),
               shape: btnShape,
             ),
-            icon: const Icon(Icons.send_outlined, size: 16),
-            label: const Text('Enviar', style: TextStyle(fontWeight: FontWeight.w700)),
+            icon: const Icon(Icons.send_rounded, size: 16),
+            label: const Text('Enviar', style: TextStyle(fontWeight: FontWeight.w800)),
           );
+    Widget outline(IconData icon, String label, VoidCallback onPressed) => OutlinedButton.icon(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.primary,
+            side: const BorderSide(color: AppTheme.border),
+            minimumSize: const Size(0, 42),
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            shape: btnShape,
+          ),
+          icon: Icon(icon, size: 16),
+          label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+        );
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -896,21 +912,12 @@ class _DocTile extends StatelessWidget {
                     style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
               ],
               const SizedBox(height: 12),
+              // Ver el archivo · Ver la ficha · Acción principal
               Row(children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: onTap,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primary,
-                      side: const BorderSide(color: AppTheme.border),
-                      minimumSize: const Size(0, 42),
-                      shape: btnShape,
-                    ),
-                    icon: const Icon(Icons.visibility_outlined, size: 16),
-                    label: const Text('Ver detalle', style: TextStyle(fontWeight: FontWeight.w700)),
-                  ),
-                ),
-                const SizedBox(width: 10),
+                Expanded(child: outline(Icons.visibility_outlined, 'Ver', onOpen)),
+                const SizedBox(width: 8),
+                Expanded(child: outline(Icons.info_outline_rounded, 'Detalles', onTap)),
+                const SizedBox(width: 8),
                 Expanded(child: second),
               ]),
             ]),
@@ -925,13 +932,13 @@ class _DocTile extends StatelessWidget {
 class _DocActions extends StatelessWidget {
   final _DocInfo info;
   final bool isSigning;
-  final VoidCallback onSign, onDetail, onEdit, onSend, onReanalyze, onDelete;
-  /// En la tabla de escritorio se muestran accesos rápidos (ver / enviar)
+  final VoidCallback onSign, onOpen, onDetail, onEdit, onSend, onReanalyze, onDelete;
+  /// En la tabla de escritorio se muestran accesos rápidos (ver / detalles / enviar)
   final bool quick;
   /// Solo el menú ⋯ (la tarjeta del celular tiene sus propios botones)
   final bool menuOnly;
 
-  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete, this.quick = false, this.menuOnly = false});
+  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onOpen, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete, this.quick = false, this.menuOnly = false});
 
   Widget _quick(IconData icon, String tip, VoidCallback onTap) => Padding(
         padding: const EdgeInsets.only(right: 6),
@@ -953,9 +960,10 @@ class _DocActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(mainAxisSize: MainAxisSize.min, children: [
-      if (!info.canSign && quick) ...[
-        _quick(Icons.visibility_outlined, 'Ver detalle', onDetail),
-        _quick(Icons.send_outlined, 'Enviar', onSend),
+      if (quick) ...[
+        _quick(Icons.visibility_outlined, 'Ver documento', onOpen),
+        _quick(Icons.info_outline_rounded, 'Ver detalles', onDetail),
+        if (!info.canSign) _quick(Icons.send_outlined, 'Enviar o pedir revisión', onSend),
       ],
       if (info.canSign && !menuOnly)
         SizedBox(
@@ -983,6 +991,7 @@ class _DocActions extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         icon: const Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
         onSelected: (v) {
+          if (v == 'open') onOpen();
           if (v == 'detail') onDetail();
           if (v == 'edit') onEdit();
           if (v == 'send') onSend();
@@ -990,8 +999,9 @@ class _DocActions extends StatelessWidget {
           if (v == 'delete') onDelete();
         },
         itemBuilder: (_) => const [
-          PopupMenuItem(value: 'detail', child: _MenuItem(Icons.visibility_outlined, 'Ver detalle', AppTheme.text)),
-          PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar', AppTheme.text)),
+          PopupMenuItem(value: 'open', child: _MenuItem(Icons.visibility_outlined, 'Ver documento', AppTheme.text)),
+          PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalles', AppTheme.text)),
+          PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar datos', AppTheme.text)),
           PopupMenuItem(value: 'send', child: _MenuItem(Icons.send_outlined, 'Enviar o pedir revisión', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
           PopupMenuDivider(),
