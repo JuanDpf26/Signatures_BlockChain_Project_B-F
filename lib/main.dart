@@ -15,6 +15,13 @@ import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // En el celular la sesión dura mientras la app está abierta: al cerrarla y
+  // volver a abrirla se pide iniciar sesión otra vez (en la web se conserva).
+  if (!kIsWeb) {
+    try {
+      await AuthService.deleteToken();
+    } catch (_) {}
+  }
   await AppSettings.instance.load();
   _applyPalette();
   runApp(const MyApp());

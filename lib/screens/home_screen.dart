@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/update_service.dart';
 import '../widgets/accessibility_menu.dart';
 import '../widgets/brand.dart';
 import '../services/auth_service.dart';
@@ -45,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateService.checkAndPrompt(context);
+    });
     _loadUser();
     _loadData();
   }

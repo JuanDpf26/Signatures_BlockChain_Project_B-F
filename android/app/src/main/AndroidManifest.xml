@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Internet para hablar con el backend; HTTP sin cifrar solo para pruebas locales -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Instalar las actualizaciones que descarga la propia app -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
     <application
         android:label="DocBlockSign"
         android:usesCleartextTraffic="true"

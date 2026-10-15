@@ -7,6 +7,7 @@ import '../services/document_service.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
 import 'signing_progress_dialog.dart';
+import 'send_document_dialog.dart';
 import 'sweet_alert.dart';
 
 // ─────────────────────────────────────────────────────────────
@@ -27,7 +28,8 @@ class _Msg {
   final List<Map<String, dynamic>> steps;
   final List<Map<String, dynamic>> actions;
   final List<Map<String, dynamic>> cards;
-  _Msg(this.role, this.text, {this.steps = const [], this.actions = const [], this.cards = const []});
+  final List<String> suggestions;
+  _Msg(this.role, this.text, {this.steps = const [], this.actions = const [], this.cards = const [], this.suggestions = const []});
 }
 
 class _SignIaMemory {
@@ -191,10 +193,10 @@ class _SignIaPanelState extends State<SignIaPanel> {
   ];
 
   static const _suggestions = [
-    (Icons.pending_actions_rounded, '¿Qué documentos tengo pendientes de firmar?'),
+    (Icons.pending_actions_rounded, '¿Qué tengo pendiente?'),
     (Icons.fact_check_rounded, 'Revisa mi documento más reciente antes de firmarlo'),
-    (Icons.insights_rounded, 'Dame un resumen de mi cuenta'),
-    (Icons.hub_rounded, '¿Cómo funciona la verificación en blockchain?'),
+    (Icons.inbox_rounded, '¿Qué revisiones me faltan por responder?'),
+    (Icons.groups_rounded, '¿Cómo pido a mi equipo que revise un documento?'),
   ];
 
   @override
@@ -254,7 +256,10 @@ class _SignIaPanelState extends State<SignIaPanel> {
         _msgs.add(_Msg('error', res['error'].toString()));
       } else {
         _msgs.add(_Msg('assistant', res['reply']?.toString() ?? '',
-            steps: list(res['steps']), actions: list(res['actions']), cards: list(res['cards'])));
+            steps: list(res['steps']),
+            actions: list(res['actions']),
+            cards: list(res['cards']),
+            suggestions: (res['suggestions'] is List) ? (res['suggestions'] as List).map((e) => e.toString()).toList() : const []));
       }
     });
     _toBottom();
@@ -266,6 +271,25 @@ class _SignIaPanelState extends State<SignIaPanel> {
     if (type == 'go_verify') {
       nav.pop();
       widget.onNavigate(2);
+    } else if (type == 'navigate') {
+      const sections = {'documents': 1, 'documents_pending': 1, 'verify': 2, 'profile': 3, 'audit': 4, 'inbox': 5, 'teams': 6};
+      final i = sections[a['section']];
+      if (i == null) return;
+      nav.pop();
+      widget.onNavigate(i);
+    } else if (type == 'send_document') {
+      final res = await DocumentService.getDocument(a['documentId'].toString());
+      final doc = res['document'];
+      if (!mounted) return;
+      if (doc is! Map) {
+        SweetAlert.error(context, title: 'No se pudo abrir', text: res['error']?.toString());
+        return;
+      }
+      final sent = await showSendDocumentDialog(context, Map<String, dynamic>.from(doc));
+      if (sent && mounted) {
+        setState(() => _msgs.add(_Msg('assistant', 'Listo, **${doc['title']}** quedó enviado. Puedes seguir las respuestas en la bandeja, en Enviados.')));
+        _toBottom();
+      }
     } else if (type == 'open_document') {
       final res = await DocumentService.getDocument(a['documentId'].toString());
       final doc = res['document'];
@@ -305,7 +329,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
       final signed = await showSigningProgress(context, docId: id, docTitle: title);
       if (signed && mounted) {
         SweetAlert.success(context, title: '¡Documento firmado!', text: '"$title" quedó registrado en blockchain.');
-        setState(() => _msgs.add(_Msg('assistant', '✅ Listo, **$title** quedó firmado y registrado en la blockchain.')));
+        setState(() => _msgs.add(_Msg('assistant', 'Listo, **$title** quedó firmado y registrado en la blockchain.')));
         _toBottom();
       }
     }
@@ -329,7 +353,8 @@ class _SignIaPanelState extends State<SignIaPanel> {
                   itemCount: _msgs.length + (_thinking ? 1 : 0),
                   itemBuilder: (_, i) {
                     if (i == _msgs.length) return _ThinkingBubble(text: _hints[_hint]);
-                    return _MessageView(msg: _msgs[i], onAction: _runAction);
+                    final last = i == _msgs.length - 1 && !_thinking;
+                    return _MessageView(msg: _msgs[i], onAction: _runAction, onSuggest: last ? _send : null);
                   },
                 ),
         ),
@@ -507,7 +532,9 @@ class _SuggestionTile extends StatelessWidget {
 class _MessageView extends StatelessWidget {
   final _Msg msg;
   final Future<void> Function(Map<String, dynamic>) onAction;
-  const _MessageView({required this.msg, required this.onAction});
+  /// Solo en la última respuesta: preguntas de seguimiento
+  final void Function(String)? onSuggest;
+  const _MessageView({required this.msg, required this.onAction, this.onSuggest});
 
   @override
   Widget build(BuildContext context) {
@@ -561,6 +588,26 @@ class _MessageView extends StatelessWidget {
               const SizedBox(height: 10),
               Wrap(spacing: 8, runSpacing: 8, children: [for (final a in msg.actions) _ActionChip(action: a, onTap: () => onAction(a))]),
             ],
+            if (onSuggest != null && msg.suggestions.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              for (final q in msg.suggestions)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: InkWell(
+                    onTap: () => onSuggest!(q),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.subdirectory_arrow_right_rounded, size: 15, color: AppTheme.hint),
+                        const SizedBox(width: 6),
+                        Flexible(child: Text(q, style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                      ]),
+                    ),
+                  ),
+                ),
+            ],
           ]),
         ),
       ]),
@@ -599,6 +646,8 @@ class _ActionChip extends StatelessWidget {
     final icon = switch (action['type']) {
       'sign_document' => Icons.draw_rounded,
       'go_verify' => Icons.verified_outlined,
+      'send_document' => Icons.send_outlined,
+      'navigate' => Icons.arrow_forward_rounded,
       _ => Icons.visibility_outlined,
     };
     return Material(

@@ -1,8 +1,12 @@
 import 'dart:convert';
 
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
@@ -51,47 +55,146 @@ class UpdateService {
     }
   }
 
-  /// Muestra el aviso si hay una versión nueva. Devuelve cuando el usuario decide.
+  /// Para no repetir el aviso en la misma sesión (lo pueden pedir el splash y el inicio)
+  static bool _shown = false;
+
+  /// Muestra el aviso si hay una versión nueva (una sola vez por sesión).
   static Future<void> checkAndPrompt(BuildContext context) async {
+    if (_shown) return;
     final upd = await latest();
-    if (upd == null || !context.mounted) return;
+    if (upd == null || !context.mounted || _shown) return;
     await prompt(context, upd);
   }
 
   /// Muestra el aviso para una versión ya consultada.
   static Future<void> prompt(BuildContext context, ({int build, String url}) upd) async {
+    _shown = true;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: Container(
-          width: 52,
-          height: 52,
-          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle),
-          child: Icon(Icons.system_update_rounded, color: AppTheme.primary, size: 28),
-        ),
-        title: Text('Nueva versión disponible', style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
-        content: Text(
-          'Hay una versión más reciente de DocBlockSign (compilación ${upd.build}; tienes la $currentBuild).\n\n'
-          'Se descargará el instalador; ábrelo y pulsa "Actualizar". No perderás tu sesión ni tus documentos.',
+      builder: (_) => _UpdateDialog(upd: upd),
+    );
+  }
+
+  /// Descarga el APK dentro de la app y abre el instalador de Android.
+  /// [onProgress] recibe de 0 a 1 (o null si no se conoce el tamaño).
+  static Future<String?> downloadAndInstall(String url, int build, void Function(double?) onProgress) async {
+    final client = http.Client();
+    try {
+      final res = await client.send(http.Request('GET', Uri.parse(url)));
+      if (res.statusCode != 200) return 'El servidor respondió ${res.statusCode}';
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/DocBlockSign-$build.apk');
+      final sink = file.openWrite();
+      final total = res.contentLength ?? 0;
+      var got = 0;
+      await for (final chunk in res.stream) {
+        sink.add(chunk);
+        got += chunk.length;
+        onProgress(total > 0 ? got / total : null);
+      }
+      await sink.close();
+      final r = await OpenFilex.open(file.path, type: 'application/vnd.android.package-archive');
+      if (r.type == ResultType.done) return null;
+      if (r.type == ResultType.permissionDenied) {
+        return 'Android pidió permiso para instalar. Activa "Permitir de esta fuente" para DocBlockSign y vuelve a pulsar Actualizar.';
+      }
+      return r.message;
+    } catch (e) {
+      return 'No se pudo descargar la actualización ($e)';
+    } finally {
+      client.close();
+    }
+  }
+}
+
+class _UpdateDialog extends StatefulWidget {
+  final ({int build, String url}) upd;
+  const _UpdateDialog({required this.upd});
+  @override
+  State<_UpdateDialog> createState() => _UpdateDialogState();
+}
+
+class _UpdateDialogState extends State<_UpdateDialog> {
+  bool _downloading = false;
+  double? _progress;
+  String? _error;
+
+  Future<void> _update() async {
+    setState(() {
+      _downloading = true;
+      _progress = 0;
+      _error = null;
+    });
+    final err = await UpdateService.downloadAndInstall(widget.upd.url, widget.upd.build, (p) {
+      if (mounted) setState(() => _progress = p);
+    });
+    if (!mounted) return;
+    if (err == null) {
+      // El instalador de Android quedó abierto con el botón "Actualizar"
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _downloading = false;
+        _error = err;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = _progress == null ? null : (_progress! * 100).round();
+    return AlertDialog(
+      backgroundColor: AppTheme.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      icon: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle),
+        child: Icon(Icons.system_update_rounded, color: AppTheme.primary, size: 28),
+      ),
+      title: Text(_downloading ? 'Descargando actualización…' : 'Nueva versión disponible',
+          textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
+      content: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(
+          _downloading
+              ? 'Cuando termine se abrirá el instalador: pulsa "Actualizar". Tus documentos no se pierden.'
+              : 'Hay una versión más reciente de DocBlockSign (${widget.upd.build}; tienes la ${UpdateService.currentBuild}). '
+                  'Se instala encima de la actual, sin volver a descargarla desde el navegador.',
+          textAlign: TextAlign.center,
           style: TextStyle(color: AppTheme.hint, height: 1.4),
         ),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Más tarde')),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-            onPressed: () async {
-              await launchUrl(Uri.parse(upd.url), mode: LaunchMode.externalApplication);
-              if (ctx.mounted) Navigator.of(ctx).pop();
-            },
-            icon: const Icon(Icons.download_rounded, size: 18),
-            label: const Text('Actualizar', style: TextStyle(fontWeight: FontWeight.w800)),
+        if (_downloading) ...[
+          const SizedBox(height: 18),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: _progress, minHeight: 8, color: AppTheme.primary, backgroundColor: AppTheme.border),
           ),
+          const SizedBox(height: 8),
+          Text(pct == null ? 'Descargando…' : '$pct %', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700)),
         ],
-      ),
+        if (_error != null) ...[
+          const SizedBox(height: 14),
+          Text(_error!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFFD32F2F), fontSize: 13, height: 1.4)),
+        ],
+      ]),
+      actionsAlignment: MainAxisAlignment.spaceBetween,
+      actions: _downloading
+          ? null
+          : [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Más tarde')),
+              if (_error != null)
+                TextButton(
+                  onPressed: () => launchUrl(Uri.parse(widget.upd.url), mode: LaunchMode.externalApplication),
+                  child: const Text('Descargar en el navegador'),
+                ),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                onPressed: _update,
+                icon: const Icon(Icons.system_update_alt_rounded, size: 18),
+                label: const Text('Actualizar', style: TextStyle(fontWeight: FontWeight.w800)),
+              ),
+            ],
     );
   }
 }

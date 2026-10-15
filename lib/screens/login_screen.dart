@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/update_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
@@ -25,6 +26,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // Android: avisa si hay una versión nueva para instalarla desde la app
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) UpdateService.checkAndPrompt(context);
+    });
     // Mostrar mensaje si viene de verificación de email
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uri = Uri.base;
