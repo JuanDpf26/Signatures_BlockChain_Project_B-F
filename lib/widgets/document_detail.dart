@@ -276,7 +276,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
   /// Menú "Más": acciones poco frecuentes o delicadas
   Widget _moreMenu({required Widget child}) => PopupMenuButton<String>(
         tooltip: 'Más acciones',
-        color: Colors.white,
+        color: AppTheme.card,
         position: PopupMenuPosition.under,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         onSelected: _more,

@@ -985,7 +985,7 @@ class _DocActions extends StatelessWidget {
         ),
       PopupMenuButton<String>(
         tooltip: 'Más acciones',
-        color: Colors.white,
+        color: AppTheme.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         icon: Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
         onSelected: (v) {

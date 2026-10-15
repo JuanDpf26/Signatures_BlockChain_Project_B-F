@@ -813,7 +813,7 @@ class _MessageRowState extends State<_MessageRow> {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.fromLTRB(13, 11, 12, 11),
           decoration: BoxDecoration(
-            color: widget.selected ? BSColors.selected : (flagged ? BSColors.warning.withOpacity(0.10) : (_hover ? BSColors.page : Colors.white)),
+            color: widget.selected ? BSColors.selected : (flagged ? BSColors.warning.withOpacity(0.10) : (_hover ? BSColors.page : AppTheme.card)),
             border: Border(
               left: BorderSide(color: widget.selected || unread ? AppTheme.primary : Colors.transparent, width: 3),
               bottom: BorderSide(color: AppTheme.border),

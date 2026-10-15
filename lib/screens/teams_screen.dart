@@ -569,7 +569,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
                 decoration: BoxDecoration(
                   color: parseHexColor(c),
                   shape: BoxShape.circle,
-                  border: Border.all(color: _color == c ? AppTheme.text : Colors.white, width: 2.5),
+                  border: Border.all(color: _color == c ? AppTheme.text : AppTheme.card, width: 2.5),
                   boxShadow: _color == c ? [BoxShadow(color: parseHexColor(c)!.withOpacity(0.45), blurRadius: 8)] : null,
                 ),
                 child: _color == c ? const Icon(Icons.check_rounded, color: Colors.white, size: 17) : null,
@@ -987,7 +987,7 @@ class _TeamDetailState extends State<_TeamDetail> {
               if (_canManage && m['role'] != 'owner')
                 PopupMenuButton<String>(
                   tooltip: 'Opciones',
-                  color: Colors.white,
+                  color: AppTheme.card,
                   icon: Icon(Icons.more_vert_rounded, color: AppTheme.hint, size: 20),
                   onSelected: (a) => _memberAction(m, a),
                   itemBuilder: (_) => [

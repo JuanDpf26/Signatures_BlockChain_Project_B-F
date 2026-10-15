@@ -541,7 +541,7 @@ class BSFilterDropdown extends StatelessWidget {
             value: value,
             isExpanded: true,
             isDense: true,
-            dropdownColor: Colors.white,
+            dropdownColor: AppTheme.card,
             borderRadius: BorderRadius.circular(10),
             icon: Icon(Icons.keyboard_arrow_down_rounded, color: active ? AppTheme.primary : AppTheme.hint, size: 18),
             selectedItemBuilder: (_) => options
@@ -580,7 +580,7 @@ class BSFilterDropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           isDense: true,
-          dropdownColor: Colors.white,
+          dropdownColor: AppTheme.card,
           borderRadius: BorderRadius.circular(8),
           icon: Icon(Icons.keyboard_arrow_down_rounded,
               color: active ? AppTheme.primary : AppTheme.hint, size: 18),
