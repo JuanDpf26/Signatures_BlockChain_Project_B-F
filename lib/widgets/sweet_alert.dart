@@ -240,7 +240,7 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: AppTheme.text,
-                        fontSize: 23,
+                        fontSize: 24,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                       ),
@@ -252,7 +252,7 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Color(0xFF5F6670),
-                          fontSize: 15,
+                          fontSize: 16,
                           height: 1.5,
                         ),
                       ),
@@ -319,7 +319,7 @@ class _SweetButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
       child: Text(label,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -547,7 +547,7 @@ class _ToastState extends State<_Toast> {
                           Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
                           if (widget.text != null && widget.text!.isNotEmpty) ...[
                             const SizedBox(height: 2),
-                            Text(widget.text!, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.35)),
+                            Text(widget.text!, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
                           ],
                         ]),
                       ),

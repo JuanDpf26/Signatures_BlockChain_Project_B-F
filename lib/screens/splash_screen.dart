@@ -156,19 +156,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       child: Text(
                         'El servidor se está activando; la primera vez puede tardar hasta un minuto.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 12.5, height: 1.35),
+                        style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 12, height: 1.35),
                       ),
                     ),
                   ),
                 ] else ...[
                   const Icon(Icons.cloud_off_rounded, color: Colors.white, size: 34),
                   const SizedBox(height: 10),
-                  Text(_status, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                  Text(_status, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
                   const Text(
                     'Revisa tu conexión a internet e inténtalo de nuevo.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 12.5),
+                    style: TextStyle(color: Color(0xB3FFFFFF), fontSize: 12),
                   ),
                   const SizedBox(height: 16),
                   Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
@@ -193,7 +193,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   padding: EdgeInsets.only(bottom: 14),
                   child: Text(
                     'SHA-256 · Ethereum Sepolia · IA',
-                    style: TextStyle(color: Color(0x80FFFFFF), fontSize: 11.5, letterSpacing: 0.4),
+                    style: TextStyle(color: Color(0x80FFFFFF), fontSize: 12, letterSpacing: 0.4),
                   ),
                 ),
               ],

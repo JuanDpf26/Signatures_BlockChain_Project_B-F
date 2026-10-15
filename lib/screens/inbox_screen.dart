@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import 'package:flutter/services.dart';
 import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
@@ -345,7 +346,7 @@ class _FolderRail extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text('$pending ${pending == 1 ? 'documento espera' : 'documentos esperan'} tu revisión',
-                    style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ]),
           ),
@@ -392,12 +393,12 @@ class _FolderTileState extends State<_FolderTile> {
               child: Text(widget.folder.label,
                   style: TextStyle(
                     color: sel ? AppTheme.primary : AppTheme.text,
-                    fontSize: 13.5,
+                    fontSize: 13,
                     fontWeight: sel || widget.count > 0 ? FontWeight.w800 : FontWeight.w500,
                   )),
             ),
             if (widget.count > 0)
-              Text('${widget.count}', style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w800)),
+              Text('${widget.count}', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
           ]),
         ),
       ),
@@ -457,7 +458,7 @@ class _ListPane extends StatelessWidget {
     final sent = folder == _Folder.sent;
     Widget body;
     if (loading && items.isEmpty) {
-      body = const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
+      body = const SingleChildScrollView(child: SkeletonList(rows: 7, padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6)));
     } else if (error != null) {
       body = Padding(
         padding: const EdgeInsets.all(16),
@@ -565,7 +566,7 @@ class _ListPane extends StatelessWidget {
               const SizedBox(width: 14),
               _FocusTab(label: 'Otros', selected: focus == 1, onTap: () => onFocus(1), badge: focus == 0 ? otherUnread : 0),
             ] else
-              Text(folder.label, style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+              Text(folder.label, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
             const Spacer(),
             if (!sent)
               Tooltip(
@@ -609,7 +610,7 @@ class _FolderChip extends StatelessWidget {
           Icon(folder.icon, size: 16, color: selected ? Colors.white : AppTheme.hint),
           const SizedBox(width: 6),
           Text(folder.short,
-              style: TextStyle(color: selected ? Colors.white : AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              style: TextStyle(color: selected ? Colors.white : AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
           if (count > 0) ...[
             const SizedBox(width: 6),
             Text('$count', style: TextStyle(color: selected ? Colors.white : AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
@@ -831,7 +832,7 @@ class _MessageRowState extends State<_MessageRow> {
                     child: Text(widget.sent ? 'Para: $who' : who,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: unread ? FontWeight.w800 : FontWeight.w600)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: unread ? FontWeight.w800 : FontWeight.w600)),
                   ),
                   const SizedBox(width: 8),
                   if (showActions) ...[
@@ -856,12 +857,12 @@ class _MessageRowState extends State<_MessageRow> {
                     child: Text(subject,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: unread ? AppTheme.primary : AppTheme.text, fontSize: 13.5, fontWeight: unread ? FontWeight.w700 : FontWeight.w500)),
+                        style: TextStyle(color: unread ? AppTheme.primary : AppTheme.text, fontSize: 13, fontWeight: unread ? FontWeight.w700 : FontWeight.w500)),
                   ),
                   if (it['attached'] == true) Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.attach_file_rounded, size: 15, color: AppTheme.hint)),
                 ]),
                 const SizedBox(height: 3),
-                Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 if (reviewPill != null || it['team_name'] != null) ...[
                   const SizedBox(height: 6),
                   Wrap(spacing: 6, runSpacing: 4, children: [
@@ -967,11 +968,11 @@ class _EmptyList extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 14),
-      Center(child: Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 15))),
+      Center(child: Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 16))),
       const SizedBox(height: 4),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+        child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
       ),
     ]);
   }
@@ -1144,7 +1145,7 @@ class _ReadingState extends State<_Reading> {
         ),
       ]);
     }
-    if (_data == null) return const Center(child: CircularProgressIndicator(strokeWidth: 2.4));
+    if (_data == null) return const SingleChildScrollView(child: SkeletonBlock(height: 320));
 
     final share = _share;
     final doc = Map<String, dynamic>.from((_data!['document'] as Map?) ?? {});
@@ -1211,14 +1212,14 @@ class _ReadingState extends State<_Reading> {
                     if (senderEmail.isNotEmpty) TextSpan(text: '  <$senderEmail>', style: TextStyle(color: AppTheme.hint)),
                   ]), style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 3),
-                  Text('Para: $toLine', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                  Text('Para: $toLine', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   if (narrow) ...[
                     const SizedBox(height: 3),
                     Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ],
                 ]),
               ),
-              if (!narrow) Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              if (!narrow) Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
           // Mensaje
@@ -1229,7 +1230,7 @@ class _ReadingState extends State<_Reading> {
                 : (review
                     ? '$senderName te pide revisar este documento y aprobarlo o rechazarlo.'
                     : '$senderName compartió este documento contigo para tu conocimiento.'),
-            style: TextStyle(color: AppTheme.text, fontSize: 14.5, height: 1.6),
+            style: TextStyle(color: AppTheme.text, fontSize: 14, height: 1.6),
           ),
           const SizedBox(height: 20),
           _DocumentCard(doc: doc),
@@ -1274,7 +1275,7 @@ class _ReadingState extends State<_Reading> {
     final reject = BSOutlineButton(label: 'Rechazar', icon: Icons.close_rounded, color: BSColors.danger, onPressed: _sending ? null : () => _respond(false));
     final approve = BSPrimaryButton(label: 'Aprobar', icon: Icons.check_rounded, color: BSColors.success, loading: _sending, onPressed: () => _respond(true));
     final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('Te piden aprobar este documento', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+      Text('Te piden aprobar este documento', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
       SizedBox(height: 2),
       Text('Revísalo con “Ver documento” y responde. Quien lo envió recibe tu respuesta por correo.',
           style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
@@ -1319,9 +1320,9 @@ class _ReadingState extends State<_Reading> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(pending == 0 ? 'Todos respondieron' : 'Esperando $pending de $total ${total == 1 ? 'respuesta' : 'respuestas'}',
-                style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
           ),
-          Text('$ok aprobado${ok == 1 ? '' : 's'} · $no rechazado${no == 1 ? '' : 's'}', style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+          Text('$ok aprobado${ok == 1 ? '' : 's'} · $no rechazado${no == 1 ? '' : 's'}', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
         ]),
         const SizedBox(height: 10),
         ClipRRect(
@@ -1353,12 +1354,12 @@ class _ReadingState extends State<_Reading> {
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text((r['name'] ?? r['email']).toString(), style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  Text((r['name'] ?? r['email']).toString(), style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                   Text([r['email'], if (r['team'] != null) 'equipo ${r['team']}', if (r['name'] == null) 'sin cuenta en DocBlockSign'].join(' · '),
                       style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   if ((r['response']?.toString() ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text('“${r['response']}”', style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontStyle: FontStyle.italic)),
+                    Text('“${r['response']}”', style: TextStyle(color: AppTheme.text, fontSize: 12, fontStyle: FontStyle.italic)),
                   ],
                 ]),
               ),
@@ -1524,7 +1525,7 @@ class _ComposeDialogState extends State<_ComposeDialog> {
             Row(children: [
               Icon(widget.forward ? Icons.forward_rounded : Icons.reply_rounded, color: AppTheme.primary),
               const SizedBox(width: 10),
-              Expanded(child: Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800))),
+              Expanded(child: Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800))),
               IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
             ]),
             const SizedBox(height: 10),
@@ -1543,13 +1544,13 @@ class _ComposeDialogState extends State<_ComposeDialog> {
               maxLength: 2000,
               decoration: _dec(widget.forward ? 'Mensaje (opcional)' : 'Escribe tu respuesta…'),
             ),
-            if (_err != null) Text(_err!, style: const TextStyle(color: BSColors.danger, fontSize: 12.5)),
+            if (_err != null) Text(_err!, style: const TextStyle(color: BSColors.danger, fontSize: 12)),
             const SizedBox(height: 8),
             Row(children: [
               Expanded(
                 child: Text(
                   widget.forward ? 'Se envía el enlace del documento y su huella para verificarlo.' : 'Le llega por correo y a su bandeja de DocBlockSign.',
-                  style: TextStyle(color: AppTheme.hint, fontSize: 11.5),
+                  style: TextStyle(color: AppTheme.hint, fontSize: 12),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1603,7 +1604,7 @@ class _RespondDialogState extends State<_RespondDialog> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(ok ? 'Aprobar documento' : 'Rechazar documento',
-                    style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
               ),
             ]),
             const SizedBox(height: 12),
@@ -1804,9 +1805,9 @@ class _DocumentCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(doc['title']?.toString() ?? 'Documento', maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                  style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 3),
-              Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -1859,7 +1860,7 @@ class _DocumentCard extends StatelessWidget {
                     backgroundColor: AppTheme.card,
                     surfaceTintColor: Colors.transparent,
                     foregroundColor: AppTheme.text,
-                    title: const Text('Verificar documento', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                    title: const Text('Verificar documento', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
                   ),
                   body: VerifyScreen(initialHash: hash),
                 ),

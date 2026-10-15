@@ -140,7 +140,7 @@ class _SendPanelState extends State<_SendPanel> {
 
   InputDecoration _dec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
         filled: true,
         fillColor: AppTheme.card,
         isDense: true,
@@ -178,9 +178,9 @@ class _SendPanelState extends State<_SendPanel> {
           const SizedBox(width: 14),
           const Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Enviar documento', style: TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+              Text('Enviar documento', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
               SizedBox(height: 2),
-              Text('Llega por correo y, a quien tenga cuenta, también a su bandeja de DocBlockSign', style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+              Text('Llega por correo y, a quien tenga cuenta, también a su bandeja de DocBlockSign', style: TextStyle(color: Colors.white70, fontSize: 12)),
             ]),
           ),
           IconButton(
@@ -237,7 +237,7 @@ class _SendPanelState extends State<_SendPanel> {
                   deleteIconColor: AppTheme.primary,
                   backgroundColor: BSColors.selected,
                   side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
-                  labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
                   visualDensity: VisualDensity.compact,
                 ),
               SizedBox(
@@ -257,10 +257,10 @@ class _SendPanelState extends State<_SendPanel> {
                     onTapOutside: (_) {
                       if (_toCtrl.text.trim().isNotEmpty) _commit();
                     },
-                    style: TextStyle(color: AppTheme.text, fontSize: 13.5),
+                    style: TextStyle(color: AppTheme.text, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: _to.isEmpty ? 'correo@ejemplo.com y Enter' : (_to.length < 5 ? 'Agregar otro…' : ''),
-                      hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
+                      hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -282,7 +282,7 @@ class _SendPanelState extends State<_SendPanel> {
           _label('Equipos'),
           if (_teams.isEmpty)
             Text('Aún no tienes equipos. Créalos en la sección Equipos para enviar a varias personas a la vez.',
-                style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
+                style: TextStyle(color: AppTheme.hint, fontSize: 12))
           else
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final t in _teams)
@@ -303,7 +303,7 @@ class _SendPanelState extends State<_SendPanel> {
                   labelStyle: TextStyle(
                     color: _selTeams.contains(t['id'].toString()) ? Colors.white : AppTheme.text,
                     fontWeight: FontWeight.w700,
-                    fontSize: 12.5,
+                    fontSize: 12,
                   ),
                 ),
             ]),
@@ -323,7 +323,7 @@ class _SendPanelState extends State<_SendPanel> {
             controller: _subjectCtrl,
             enabled: !_sending,
             maxLength: 150,
-            style: TextStyle(color: AppTheme.text, fontSize: 13.5),
+            style: TextStyle(color: AppTheme.text, fontSize: 13),
             decoration: _dec('Te compartieron "$_title"').copyWith(counterText: ''),
           ),
           const SizedBox(height: 16),
@@ -335,7 +335,7 @@ class _SendPanelState extends State<_SendPanel> {
             minLines: 3,
             maxLines: 6,
             maxLength: 2000,
-            style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+            style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45),
             decoration: _dec('Ej.: Te envío el contrato firmado para tu revisión.'),
           ),
           const SizedBox(height: 6),
@@ -348,7 +348,7 @@ class _SendPanelState extends State<_SendPanel> {
               onChanged: _sending ? null : (v) => setState(() => _attach = v),
               activeColor: AppTheme.primary,
               contentPadding: EdgeInsets.zero,
-              title: Text('Adjuntar el archivo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+              title: Text('Adjuntar el archivo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
               subtitle: Text(
                 _attach ? 'Va como adjunto (hasta 15 MB).' : 'Se envía un enlace de descarga en lugar del archivo.',
                 style: TextStyle(color: AppTheme.hint, fontSize: 12),
@@ -376,7 +376,7 @@ class _SendPanelState extends State<_SendPanel> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(((s['to'] as List?) ?? const []).join(', '),
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 12.5)),
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 12)),
                   ),
                   Text(_ago(s['at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
@@ -398,7 +398,7 @@ class _SendPanelState extends State<_SendPanel> {
                       if (_to.isNotEmpty) '${_to.length} correo${_to.length == 1 ? '' : 's'}',
                       if (_selTeams.isNotEmpty) '${_selTeams.length} equipo${_selTeams.length == 1 ? '' : 's'}',
                     ].join(' + '),
-              style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ),
           TextButton(onPressed: _sending ? null : () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
@@ -434,7 +434,7 @@ class _SendPanelState extends State<_SendPanel> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: TextStyle(color: sel ? c : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
-              Text(help, maxLines: 2, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+              Text(help, maxLines: 2, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
           if (sel) Icon(Icons.check_circle_rounded, color: c, size: 18),

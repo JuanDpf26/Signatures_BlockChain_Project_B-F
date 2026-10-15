@@ -366,7 +366,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
                 [d.category, d.ext.toUpperCase(), d.sizeLabel, if (d.pages != null) '${d.pages} pág.'].join(' · '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
+                style: TextStyle(color: AppTheme.hint, fontSize: 12),
               ),
               const SizedBox(height: 8),
               Wrap(spacing: 6, runSpacing: 6, children: [
@@ -400,8 +400,8 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           unselectedLabelColor: AppTheme.hint,
           dividerColor: Colors.transparent,
           labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13.5),
+          labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
           tabs: const [
             _TabLabel(Icons.dashboard_outlined, 'Resumen'),
             _TabLabel(Icons.verified_user_outlined, 'Firma y registro'),
@@ -502,7 +502,7 @@ class _GhostButton extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 17, color: AppTheme.primary),
         const SizedBox(width: 6),
-        Text(label, style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
       ]),
     );
     // Sin onTap lo maneja el menú que lo envuelve
@@ -549,8 +549,8 @@ class _MoreItem extends StatelessWidget {
       Icon(icon, size: 19, color: danger ? BSColors.danger : AppTheme.primary),
       const SizedBox(width: 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
-        Text(title, style: TextStyle(color: c, fontSize: 13.5, fontWeight: FontWeight.w700)),
-        Text(subtitle, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+        Text(title, style: TextStyle(color: c, fontSize: 13, fontWeight: FontWeight.w700)),
+        Text(subtitle, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
       ]),
     ]);
   }
@@ -596,7 +596,7 @@ class _NextStepCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+              Text(title, style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
               Text(text, style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
             ]),
@@ -643,7 +643,7 @@ class DocFichaCard extends StatelessWidget {
       title: 'Información general',
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (d.userDescription != null) ...[
-          Text(d.userDescription!, style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45)),
+          Text(d.userDescription!, style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45)),
           const SizedBox(height: 6),
         ],
         FactGrid(facts: facts),
@@ -696,10 +696,10 @@ class DocAiCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Aún no se ha analizado', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14.5)),
+              Text('Aún no se ha analizado', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
               SizedBox(height: 2),
               Text('El análisis obtiene una descripción, un resumen, la categoría, etiquetas y el nivel de confidencialidad.',
-                  style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+                  style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
             ]),
           ),
           if (onReanalyze != null) ...[
@@ -750,7 +750,7 @@ class DocAiCard extends StatelessWidget {
           Text(
             'Generado automáticamente${d.analyzedLabel != null ? ' el ${d.analyzedLabel}' : ''}${d.aiModel != null ? ' · modelo ${d.aiModel}' : ''}. '
             'Puedes corregir la categoría, las etiquetas y la confidencialidad en Editar.',
-            style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.4),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4),
           ),
         ],
       ]),
@@ -917,7 +917,7 @@ class DocMetadataCards extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-            child: SelectableText(s('text_preview')!, style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.5)),
+            child: SelectableText(s('text_preview')!, style: TextStyle(color: AppTheme.text, fontSize: 12, height: 1.5)),
           ),
         ),
       ],
@@ -1030,7 +1030,7 @@ class _EditTabState extends State<_EditTab> {
 
   InputDecoration _dec(String hint, {String? suffix}) => InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
         suffixText: suffix,
         suffixStyle: TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w700),
         filled: true,
@@ -1077,7 +1077,7 @@ class _EditTabState extends State<_EditTab> {
           minLines: 3,
           maxLines: 6,
           maxLength: 1000,
-          style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+          style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45),
           decoration: _dec(d.aiDescription ?? 'Describe para qué sirve este documento…'),
         ),
         if (d.aiDescription != null && _desc.text.trim().isEmpty)
@@ -1108,7 +1108,7 @@ class _EditTabState extends State<_EditTab> {
               selectedColor: AppTheme.primary.withOpacity(0.12),
               backgroundColor: AppTheme.card,
               side: BorderSide(color: sel ? AppTheme.primary : AppTheme.border),
-              labelStyle: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: sel ? FontWeight.w700 : FontWeight.w500, fontSize: 12.5),
+              labelStyle: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: sel ? FontWeight.w700 : FontWeight.w500, fontSize: 12),
               showCheckmark: false,
             );
           }).toList(),
@@ -1171,7 +1171,7 @@ class _EditTabState extends State<_EditTab> {
       trailing: Text('${_tags.length}/15', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (_tags.isEmpty)
-          Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
+          Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12))
         else
           Wrap(
             spacing: 6,
@@ -1183,7 +1183,7 @@ class _EditTabState extends State<_EditTab> {
                       deleteIconColor: AppTheme.primary,
                       backgroundColor: AppTheme.primary.withOpacity(0.07),
                       side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
-                      labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
                     ))
                 .toList(),
           ),
@@ -1338,9 +1338,9 @@ class _LevelOption extends StatelessWidget {
               ),
             ]),
             const SizedBox(height: 8),
-            Text(label, style: TextStyle(color: selected ? color : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
+            Text(label, style: TextStyle(color: selected ? color : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
             const SizedBox(height: 2),
-            Text(help, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
+            Text(help, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.3)),
           ]),
         ),
       ),
@@ -1372,7 +1372,7 @@ class _FileVersionCard extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(d.meta['original_name']?.toString() ?? d.title,
                   maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
               const SizedBox(height: 2),
               Text('${d.sizeLabel}${d.pages != null ? ' · ${d.pages} pág.' : ''}', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
@@ -1400,7 +1400,7 @@ class _FileVersionCard extends StatelessWidget {
           BSOutlineButton(label: 'Subir nueva versión', icon: Icons.upload_file_rounded, onPressed: onReplace),
           const SizedBox(height: 6),
           Text('Cambia la huella SHA-256 y el contenido se vuelve a analizar. Tus datos editados se conservan.',
-              style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
+              style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
         ] else
           Text(
             d.inChain ? 'La firma se está registrando: no se puede cambiar el archivo.' : 'Firmado: el archivo ya no se puede reemplazar.',
@@ -1422,15 +1422,15 @@ class _FileVersionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(6)),
-                      child: Text('v${v['version'] ?? '?'}', style: TextStyle(color: AppTheme.text, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                      child: Text('v${v['version'] ?? '?'}', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w800)),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(v['name']?.toString() ?? 'Archivo', maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
                         Text('Reemplazado ${DocView.fmtDate(v['replaced_at']?.toString()) ?? ''} · ${fmtHuella('${v['file_hash'] ?? ''}')}',
-                            maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                       ]),
                     ),
                     Icon(Icons.open_in_new_rounded, color: AppTheme.hint, size: 15),
@@ -1456,7 +1456,7 @@ class _EditHistoryCard extends StatelessWidget {
       title: 'Historial de cambios',
       child: items.isEmpty
           ? Text('Aún no se ha editado. Cada cambio queda registrado aquí y en Auditoría.',
-              style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4))
+              style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4))
           : Column(children: [
               for (var i = 0; i < items.length; i++)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1479,9 +1479,9 @@ class _EditHistoryCard extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('Cambió ${((items[i]['fields'] as List?) ?? const []).join(', ')}',
-                            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
                         Text(DocView.fmtDate(items[i]['at']?.toString()) ?? '',
-                            style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                       ]),
                     ),
                   ),
@@ -1530,7 +1530,7 @@ class _StatTile extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             const SizedBox(height: 1),
             Row(children: [
               if (dot) ...[
@@ -1668,7 +1668,7 @@ class DocLifecycleCard extends StatelessWidget {
                   child: Text(steps[i].$1,
                       textAlign: TextAlign.center,
                       maxLines: 1,
-                      style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1746,7 +1746,7 @@ class DocIntegrityCard extends StatelessWidget {
             child: Row(children: [
               Icon(look(checks[i].$2).$1, size: 18, color: look(checks[i].$2).$2),
               const SizedBox(width: 10),
-              Expanded(child: Text(checks[i].$1, style: TextStyle(color: AppTheme.text, fontSize: 13.5))),
+              Expanded(child: Text(checks[i].$1, style: TextStyle(color: AppTheme.text, fontSize: 13))),
               Text(look(checks[i].$2).$3,
                   style: TextStyle(color: look(checks[i].$2).$2, fontSize: 12, fontWeight: FontWeight.w700)),
             ]),

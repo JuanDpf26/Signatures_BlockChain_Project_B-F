@@ -281,7 +281,7 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
               Text(headTitle, style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
               Text(widget.docTitle,
-                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
           const SizedBox(width: 8),

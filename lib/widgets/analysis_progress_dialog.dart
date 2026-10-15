@@ -416,7 +416,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
             Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
             Text(_title,
-                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5)),
+                maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12)),
           ]),
         ),
         if (!done && !failed)
@@ -516,7 +516,7 @@ class _MetaRevealState extends State<_MetaReveal> {
           Expanded(
             child: Text(
               scanning ? 'Leyendo metadatos del archivo… ${math.min(_shown, fields.length)}/${fields.length}' : '$found de ${fields.length} metadatos encontrados',
-              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 11.5, fontWeight: FontWeight.w700, fontFamily: 'monospace'),
+              style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'monospace'),
             ),
           ),
         ]),
@@ -538,7 +538,7 @@ class _MetaRevealState extends State<_MetaReveal> {
                   child: Text(fields[i].$2,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11.5, fontFamily: 'monospace')),
+                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 12, fontFamily: 'monospace')),
                 ),
                 Expanded(
                   child: Text(fields[i].$3 ?? '—',
@@ -546,7 +546,7 @@ class _MetaRevealState extends State<_MetaReveal> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: fields[i].$3 != null ? Colors.white : const Color(0xFF475569),
-                        fontSize: 11.5,
+                        fontSize: 12,
                         fontWeight: fields[i].$3 != null ? FontWeight.w600 : FontWeight.w400,
                         fontFamily: 'monospace',
                       )),

@@ -152,7 +152,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
           _Segment(options: labels, selected: _engine, onChanged: (i) => setState(() => _engine = i)),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+            child: Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
           ),
         ]),
       ),
@@ -248,7 +248,7 @@ class _TopBar extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
             Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
             Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
           ]),

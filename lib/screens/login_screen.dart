@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                   child: Text('¿Olvidaste tu contraseña?',
-                      style: TextStyle(color: GoogleAuthTheme.primary, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                      style: TextStyle(color: GoogleAuthTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
                 ),
               ),
             ),
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Image.asset('assets/images/google_logo.png', width: 20, height: 20),
                           const SizedBox(width: 10),
-                          const Text('Continuar con Google', style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w600)),
+                          const Text('Continuar con Google', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                         ],
                       ),
               ),

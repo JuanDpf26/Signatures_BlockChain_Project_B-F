@@ -398,7 +398,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              const Text('Sign IA', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+              const Text('Sign IA', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
             ]),
             Text(
               widget.documentTitle != null ? 'Hablando sobre: ${widget.documentTitle}' : 'Tu asistente de documentos y firmas',
@@ -458,7 +458,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
         SizedBox(width: 6),
         Flexible(
           child: Text('Solo ve tus documentos. Nunca firma ni borra sin tu confirmación.',
-              textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+              textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
         ),
       ]),
     ]);
@@ -533,7 +533,7 @@ class _SuggestionTile extends StatelessWidget {
             child: Row(children: [
               Icon(icon, size: 18, color: _iaA),
               const SizedBox(width: 12),
-              Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600))),
+              Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600))),
               Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.hint),
             ]),
           ),
@@ -616,7 +616,7 @@ class _MessageView extends StatelessWidget {
                       child: Row(mainAxisSize: MainAxisSize.min, children: [
                         Icon(Icons.subdirectory_arrow_right_rounded, size: 15, color: AppTheme.hint),
                         const SizedBox(width: 6),
-                        Flexible(child: Text(q, style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600))),
+                        Flexible(child: Text(q, style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600))),
                       ]),
                     ),
                   ),
@@ -681,7 +681,7 @@ class _ActionChip extends StatelessWidget {
               child: Text(action['label']?.toString() ?? '',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: sign ? Colors.white : _iaB, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: sign ? Colors.white : _iaB, fontSize: 12, fontWeight: FontWeight.w700)),
             ),
           ]),
         ),
@@ -820,13 +820,13 @@ class _ReviewCard extends StatelessWidget {
               Row(children: [
                 Icon(icon, size: 14, color: AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(title, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                Text(title, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
               ]),
               const SizedBox(height: 4),
               for (final it in items)
                 Padding(
                   padding: const EdgeInsets.only(top: 3, left: 20),
-                  child: Text('• $it', style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
+                  child: Text('• $it', style: TextStyle(color: AppTheme.text, fontSize: 12, height: 1.35)),
                 ),
             ]),
           );
@@ -888,7 +888,7 @@ class _ReviewCard extends StatelessWidget {
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Icon(Icons.warning_amber_rounded, size: 15, color: riskColor(a['level']?.toString())),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(a['text']?.toString() ?? '', style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35))),
+                    Expanded(child: Text(a['text']?.toString() ?? '', style: TextStyle(color: AppTheme.text, fontSize: 12, height: 1.35))),
                   ]),
                 ),
             ],
@@ -907,7 +907,7 @@ class _ReviewCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(data['recommendation'].toString(),
-                        style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.35)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600, height: 1.35)),
                   ),
                 ]),
               ),

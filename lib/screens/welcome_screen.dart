@@ -66,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               icon: const Icon(Icons.person_add_outlined, size: 18),
-              label: const Text('Crear cuenta', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              label: const Text('Crear cuenta', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(height: 28),
@@ -82,7 +82,7 @@ class WelcomeScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Center(
               child: Text('Universidad Manuela Beltrán · IS25133 · 2026',
-                  style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                  style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ),
           ],
         ],
@@ -133,7 +133,7 @@ class _Feature extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
-          Text(desc, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+          Text(desc, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
         ]),
       ),
     ]);

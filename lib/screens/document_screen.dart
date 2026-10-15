@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/document_service.dart';
@@ -711,10 +712,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Widget _buildList(bool isTable) {
     if (_isLoading && _docs.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 56),
-        child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-      );
+      return const SkeletonList(rows: 6);
     }
     if (_docs.isEmpty) {
       return Padding(
@@ -905,7 +903,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final to = from == 0 ? 0 : from + _docs.length - 1;
     final label = Text(
       _pages > 1 ? '$from–$to de $_total' : 'Mostrando $_total ${_total == 1 ? 'documento' : 'documentos'}',
-      style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
+      style: TextStyle(color: AppTheme.hint, fontSize: 12),
     );
     Widget nav(IconData icon, String tip, int target, bool enabled) => IconButton(
           tooltip: tip,
@@ -960,7 +958,7 @@ class _DropOverlay extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             Icon(Icons.upload_file_rounded, size: 40, color: AppTheme.primary),
             const SizedBox(height: 10),
-            Text('Suelta el archivo para subirlo', style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w700)),
+            Text('Suelta el archivo para subirlo', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text('PDF o Word, hasta 20 MB', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           ]),
@@ -1075,7 +1073,7 @@ class _StatusTabState extends State<_StatusTab> {
             boxShadow: sel ? [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))] : null,
           ),
           child: Row(mainAxisSize: widget.fill ? MainAxisSize.max : MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-            Text(widget.label, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+            Text(widget.label, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
             const SizedBox(width: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 2),
@@ -1083,7 +1081,7 @@ class _StatusTabState extends State<_StatusTab> {
                 color: sel ? Colors.white.withOpacity(0.2) : widget.color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Text('${widget.count}', style: TextStyle(color: sel ? Colors.white : widget.color, fontSize: 12.5, fontWeight: FontWeight.w800)),
+              child: Text('${widget.count}', style: TextStyle(color: sel ? Colors.white : widget.color, fontSize: 12, fontWeight: FontWeight.w800)),
             ),
           ]),
         ),
@@ -1219,7 +1217,7 @@ class _DocRow extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(info.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 3),
                   info.aiDesc != null
                       ? Text(info.aiDesc!, maxLines: 1, overflow: TextOverflow.ellipsis,
@@ -1233,7 +1231,7 @@ class _DocRow extends StatelessWidget {
               ),
             ]),
           ),
-          Expanded(flex: 2, child: Text(info.category, style: TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(flex: 2, child: Text(info.category, style: TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
           Expanded(flex: 2, child: Text(info.sizeStr, style: cell)),
           Expanded(flex: 2, child: Text(info.dateStr, style: cell)),
           Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(info.status))),
@@ -1324,7 +1322,7 @@ class _DocTile extends StatelessWidget {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(info.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800, height: 1.25)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800, height: 1.25)),
                 const SizedBox(height: 4),
                 Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: AppTheme.hint, fontSize: 12)),
@@ -1344,7 +1342,7 @@ class _DocTile extends StatelessWidget {
               if (info.aiDesc != null) ...[
                 const SizedBox(height: 10),
                 Text(info.aiDesc!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
               ],
               const SizedBox(height: 12),
               // Ver el archivo · Ver la ficha · Acción principal
@@ -1502,10 +1500,10 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
               height: 22,
               alignment: Alignment.center,
               decoration: BoxDecoration(color: BSColors.selected, shape: BoxShape.circle),
-              child: Text('$n', style: TextStyle(color: AppTheme.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
+              child: Text('$n', style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.4))),
+            Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4))),
           ]),
         );
 
@@ -1531,7 +1529,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Confirmar firma', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w800)),
+                    Text('Confirmar firma', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
                     SizedBox(height: 2),
                     Text('Revisa los datos antes de firmar', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
                   ]),
@@ -1562,9 +1560,9 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(widget.docTitle, maxLines: 2, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 3),
-                        Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                        Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                         if (hash != null) ...[
                           const SizedBox(height: 4),
                           Row(children: [
@@ -1584,7 +1582,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
 
                 // Firma
                 Row(children: [
-                  Text('Tu firma', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                  Text('Tu firma', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
                   const Spacer(),
                   if (hasSig) const BSPill(label: 'Registrada en tu perfil', color: BSColors.success),
                 ]),
@@ -1632,7 +1630,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 const SizedBox(height: 16),
 
                 // Qué va a pasar
-                Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 step(1, 'Tu firma une la huella del archivo con tu identidad y la hora exacta.'),
                 step(2, 'La firma se registra en la blockchain de Ethereum; verás cada paso en vivo.'),

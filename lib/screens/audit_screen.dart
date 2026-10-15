@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import 'package:flutter/services.dart';
 import '../services/audit_service.dart';
 import '../theme/app_theme.dart';
@@ -181,7 +182,7 @@ class _AuditScreenState extends State<AuditScreen> {
   }
 
   Widget _body(bool table) {
-    if (_loading) return const SizedBox(height: 200, child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+    if (_loading) return const SkeletonList(rows: 6, leading: false);
     if (_error != null) {
       return BSInfoBanner(title: 'No se pudo cargar', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded);
     }
@@ -228,7 +229,7 @@ class _AuditScreenState extends State<AuditScreen> {
       Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 4),
         child: Text('Mostrando ${_events.length} eventos · toca uno para ver el detalle',
-            style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12)),
       ),
     ]);
   }
@@ -263,7 +264,7 @@ class _AuditScreenState extends State<AuditScreen> {
     final mono = TextStyle(color: AppTheme.hint, fontSize: 13, fontFamily: 'monospace');
     final action = e['action']?.toString() ?? '';
     return Row(children: [
-      Expanded(flex: 3, child: Text(_fmt(e['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 13.5))),
+      Expanded(flex: 3, child: Text(_fmt(e['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 13))),
       Expanded(
         flex: 5,
         child: Row(children: [
@@ -300,7 +301,7 @@ class _AuditScreenState extends State<AuditScreen> {
           Text(e['description']?.toString() ?? action,
               maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
-          Text('${_fmt(e['created_at']?.toString())} · ${e['ip'] ?? '—'}', style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+          Text('${_fmt(e['created_at']?.toString())} · ${e['ip'] ?? '—'}', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
         ]),
       ),
       const SizedBox(width: 8),
@@ -335,7 +336,7 @@ class _AuditScreenState extends State<AuditScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(e['description']?.toString() ?? 'Evento',
-                      style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
                 ),
                 _pill(e),
               ]),
@@ -416,7 +417,7 @@ class _ExportDialogState extends State<_ExportDialog> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(help, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              Text(help, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
           if (sel) Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
@@ -440,7 +441,7 @@ class _ExportDialogState extends State<_ExportDialog> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
+            Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
             Text(
               widget.filters.isEmpty ? 'Incluye todas las acciones y resultados.' : 'Con los filtros actuales: ${widget.filters.join(' · ')}.',
@@ -463,7 +464,7 @@ class _ExportDialogState extends State<_ExportDialog> {
                   selectedColor: AppTheme.primary.withOpacity(0.12),
                   backgroundColor: AppTheme.card,
                   side: BorderSide(color: _period == e.key ? AppTheme.primary : AppTheme.border),
-                  labelStyle: TextStyle(color: _period == e.key ? AppTheme.primary : AppTheme.text, fontWeight: _period == e.key ? FontWeight.w700 : FontWeight.w500, fontSize: 12.5),
+                  labelStyle: TextStyle(color: _period == e.key ? AppTheme.primary : AppTheme.text, fontWeight: _period == e.key ? FontWeight.w700 : FontWeight.w500, fontSize: 12),
                 ),
             ]),
             const SizedBox(height: 16),

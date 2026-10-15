@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'skeleton.dart';
 import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
@@ -233,13 +234,13 @@ class _NotificationPanelState extends State<_NotificationPanel> {
             margin: const EdgeInsets.only(right: 18),
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _tab == i ? AppTheme.primary : Colors.transparent, width: 2))),
             child: Text(label,
-                style: TextStyle(color: _tab == i ? AppTheme.text : AppTheme.hint, fontSize: 14.5, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w500)),
+                style: TextStyle(color: _tab == i ? AppTheme.text : AppTheme.hint, fontSize: 14, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w500)),
           ),
         );
 
     Widget body;
     if (_loading && _items.isEmpty) {
-      body = Center(child: CircularProgressIndicator(strokeWidth: 2.4, color: AppTheme.primary));
+      body = const SingleChildScrollView(child: SkeletonList(rows: 5, trailing: false, padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4)));
     } else if (_error != null) {
       body = Padding(padding: const EdgeInsets.all(20), child: Text(_error!, style: TextStyle(color: AppTheme.hint)));
     } else {
@@ -444,7 +445,7 @@ class _RowState extends State<_Row> {
             Expanded(
               child: Text.rich(
                 TextSpan(children: _spans(n['text']?.toString() ?? '', unread)),
-                style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+                style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45),
               ),
             ),
             const SizedBox(width: 10),
@@ -467,7 +468,7 @@ class _RowState extends State<_Row> {
                     : Text(widget.trailingText ?? _when(n['date']?.toString()),
                         style: TextStyle(
                             color: widget.trailingText != null ? AppTheme.primary : AppTheme.hint,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: widget.trailingText != null ? FontWeight.w700 : FontWeight.w500)),
               ),
             ),
@@ -507,7 +508,7 @@ class _Empty extends StatelessWidget {
             Icon(archive ? Icons.archive_outlined : Icons.notifications_none_rounded, size: 34, color: AppTheme.hint),
             const SizedBox(height: 10),
             Text(archive ? 'No hay notificaciones archivadas' : 'Estás al día',
-                style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+                style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 4),
             Text(archive ? 'Lo que archives aparecerá aquí.' : 'Aquí verás revisiones, respuestas, firmas y avisos de tus equipos.',
                 textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 13)),

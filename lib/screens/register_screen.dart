@@ -249,7 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Center(
               child: Text(
                 'Te enviaremos un correo para verificar tu cuenta.',
-                style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5),
+                style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12),
               ),
             ),
             const SizedBox(height: 22),
@@ -349,7 +349,7 @@ class _CaptchaWidget extends StatelessWidget {
                   style: TextStyle(
                     color: verified ? _green : GoogleAuthTheme.text,
                     fontWeight: FontWeight.w700,
-                    fontSize: 14.5,
+                    fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 2),

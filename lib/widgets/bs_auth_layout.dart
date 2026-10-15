@@ -63,7 +63,7 @@ class BSAuthLayout extends StatelessWidget {
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 8),
-                Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 14.5, height: 1.5)),
+                Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.5)),
               ],
               const SizedBox(height: 28),
               child,
@@ -126,7 +126,7 @@ class _BrandPanel extends StatelessWidget {
                     constraints: const BoxConstraints(maxWidth: 440),
                     child: Text(
                       'Sube, analiza, firma y verifica tus documentos con validez y trazabilidad en un solo lugar.',
-                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 17, height: 1.55),
+                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 18, height: 1.55),
                     ),
                   ),
                 ),
@@ -143,7 +143,7 @@ class _BrandPanel extends StatelessWidget {
                 const SizedBox(height: 28),
                 Text(
                   'Universidad Manuela Beltrán · IS25133 · 2026',
-                  style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12.5),
+                  style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
                 ),
               ],
             ),
@@ -167,7 +167,7 @@ class _EnvPill extends StatelessWidget {
         Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFD99A00), shape: BoxShape.circle)),
         const SizedBox(width: 8),
         Text('Red: Sepolia Testnet · datos de prueba',
-            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -198,7 +198,7 @@ class _Feature extends StatelessWidget {
         child: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
       ),
       const SizedBox(width: 14),
-      Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w500))),
+      Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500))),
     ]);
   }
 }
@@ -239,7 +239,7 @@ class _BackLink extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.arrow_back_rounded, color: AppTheme.hint, size: 18),
           SizedBox(width: 6),
-          Text('Volver', style: TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w600)),
+          Text('Volver', style: TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w600)),
         ]),
       ),
     );
@@ -276,7 +276,7 @@ class BSAuthButton extends StatelessWidget {
         ),
         child: loading
             ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-            : Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            : Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
       ),
     );

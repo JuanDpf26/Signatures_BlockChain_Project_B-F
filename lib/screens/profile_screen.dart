@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/rendering.dart';
@@ -77,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final pad = isWeb ? 28.0 : 16.0;
 
     if (_isLoading) {
-      return Container(color: BSColors.page, child: Center(child: CircularProgressIndicator(color: AppTheme.primary)));
+      return Container(color: BSColors.page, child: const SingleChildScrollView(padding: EdgeInsets.all(24), child: Column(children: [SkeletonBlock(height: 140), SizedBox(height: 16), SkeletonBlock(height: 180)])));
     }
 
     return Container(
@@ -218,7 +219,7 @@ class _SettingsCard extends StatelessWidget {
     final narrow = MediaQuery.of(context).size.width < 600;
     final border = danger ? BSColors.danger.withOpacity(0.45) : AppTheme.border;
     final head = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w800)),
+      Text(title, style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
       if (description != null) ...[
         const SizedBox(height: 8),
         Text(description!, style: TextStyle(color: AppTheme.text.withOpacity(0.8), fontSize: 14, height: 1.5)),
@@ -279,7 +280,7 @@ class _SaveButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           elevation: 0,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
         ),
         child: loading
             ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
@@ -451,7 +452,7 @@ class _InfoTabState extends State<_InfoTab> {
     final readOnly = Row(children: [
       Icon(Icons.lock_outline_rounded, size: 15, color: AppTheme.hint),
       const SizedBox(width: 6),
-      Text('Solo lectura', style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+      Text('Solo lectura', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
     ]);
 
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -479,7 +480,7 @@ class _InfoTabState extends State<_InfoTab> {
         title: 'Correo electrónico',
         description: 'Con este correo inicias sesión y recibes los avisos de DocBlockSign.',
         child: Wrap(spacing: 10, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
-          Text(u['email']?.toString() ?? '—', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w600)),
+          Text(u['email']?.toString() ?? '—', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w600)),
           verified ? const BSPill(label: 'Verificado', color: BSColors.success) : const BSPill(label: 'Sin verificar', color: BSColors.warning),
           if (isGoogle) BSPill(label: 'Cuenta Google', color: AppTheme.primary, dot: false),
         ]),
@@ -489,7 +490,7 @@ class _InfoTabState extends State<_InfoTab> {
       _SettingsCard(
         title: 'Número de documento',
         description: 'Tu cédula queda asociada a cada firma que haces.',
-        child: Text(u['document_id']?.toString() ?? 'No registrado', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w600)),
+        child: Text(u['document_id']?.toString() ?? 'No registrado', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w600)),
         footer: 'Por seguridad no se puede modificar.',
         action: readOnly,
       ),
@@ -505,9 +506,9 @@ class _InfoTabState extends State<_InfoTab> {
             ('Espacio usado', '${'${stats['total_size_mb'] ?? 0}'.replaceAll('.', ',')} MB'),
           ])
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               const SizedBox(height: 3),
-              Text(value, style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
+              Text(value, style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700)),
             ]),
         ]),
       ),
@@ -567,14 +568,14 @@ class _SecurityTabState extends State<_SecurityTab> {
         ],
       ]),
       const SizedBox(height: 8),
-      Text(label, style: TextStyle(color: p.isEmpty ? AppTheme.hint : color, fontSize: 12.5, fontWeight: FontWeight.w700)),
+      Text(label, style: TextStyle(color: p.isEmpty ? AppTheme.hint : color, fontSize: 12, fontWeight: FontWeight.w700)),
       const SizedBox(height: 6),
       Wrap(spacing: 16, runSpacing: 6, children: [
         for (final r in reqs)
           Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(r.$2 ? Icons.check_rounded : Icons.close_rounded, size: 15, color: r.$2 ? BSColors.success : AppTheme.hint),
             const SizedBox(width: 5),
-            Text(r.$1, style: TextStyle(color: r.$2 ? AppTheme.text : AppTheme.hint, fontSize: 12.5)),
+            Text(r.$1, style: TextStyle(color: r.$2 ? AppTheme.text : AppTheme.hint, fontSize: 12)),
           ]),
       ]),
     ]);
@@ -981,7 +982,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Container(width: 56, height: 56, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle), child: Icon(Icons.upload_file_rounded, color: AppTheme.primary, size: 28)),
                     const SizedBox(height: 12),
-                    Text('Sube tu firma como imagen', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+                    Text('Sube tu firma como imagen', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 16)),
                     const SizedBox(height: 6),
                     Text('Formatos: PNG, JPG\nFondo transparente recomendado (PNG)', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.5)),
                     const SizedBox(height: 18),
@@ -1149,9 +1150,9 @@ class _KeysCardState extends State<_KeysCard> {
                           pem.split('\n').where((l) => l.trim().isNotEmpty).take(3).join('\n'),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 11.5, fontFamily: 'monospace', height: 1.45),
+                          style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 12, fontFamily: 'monospace', height: 1.45),
                         ),
-                        secondChild: SelectableText(pem, style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 11.5, fontFamily: 'monospace', height: 1.45)),
+                        secondChild: SelectableText(pem, style: const TextStyle(color: Color(0xFFB8C7EA), fontSize: 12, fontFamily: 'monospace', height: 1.45)),
                       ),
                       Align(
                         alignment: Alignment.centerLeft,

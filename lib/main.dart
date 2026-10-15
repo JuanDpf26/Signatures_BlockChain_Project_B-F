@@ -115,7 +115,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                           SizedBox(width: 10),
                           Flexible(
                             child: Text('Activando el servidor… la primera carga puede tardar un poco',
-                                style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600, decoration: TextDecoration.none)),
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600, decoration: TextDecoration.none)),
                           ),
                         ]),
                       ),

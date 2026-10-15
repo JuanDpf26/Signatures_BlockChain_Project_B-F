@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import '../services/update_service.dart';
 import '../widgets/accessibility_menu.dart';
 import '../widgets/notification_center.dart';
@@ -385,10 +386,10 @@ class _Sidebar extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const BrandWordmark(fontSize: 22, onDark: true),
+                        const BrandWordmark(fontSize: 24, onDark: true),
                         Text('Firma digital con blockchain',
                             maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11.5, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
                       ]),
                     ),
                   ],
@@ -430,36 +431,6 @@ class _Sidebar extends StatelessWidget {
                 ]),
               ),
 
-              // ── Ambiente / red ──
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: c ? 16 : 16),
-                child: Tooltip(
-                  message: c ? 'Red: Sepolia Testnet · Datos de prueba' : '',
-                  child: Container(
-                    width: double.infinity,
-                    padding: EdgeInsets.symmetric(horizontal: c ? 0 : 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.14)),
-                    ),
-                    child: c
-                        ? const Center(child: _PulseDot())
-                        : Row(children: [
-                            const _PulseDot(),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                const Text('Sepolia Testnet', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
-                                Text('Red de pruebas · v1.0', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11.5)),
-                              ]),
-                            ),
-                            Icon(Icons.hub_outlined, color: Colors.white.withOpacity(0.55), size: 18),
-                          ]),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 10),
               // ── Usuario con cerrar sesión ──
               _UserCard(user: user, collapsed: c, onProfile: () => onNavTap(3), onLogout: onLogout),
@@ -485,7 +456,7 @@ class _Sidebar extends StatelessWidget {
                           ),
                           if (!c) ...[
                             const SizedBox(width: 10),
-                            Text('Contraer menú', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            Text('Contraer menú', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12, fontWeight: FontWeight.w600)),
                           ],
                         ]),
                       ),
@@ -565,10 +536,10 @@ class _UserCard extends StatelessWidget {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(user.name.isEmpty ? 'Mi cuenta' : user.name,
                         maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
                     if (user.email.isNotEmpty)
                       Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                          style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ]),
                 ),
               ),
@@ -654,7 +625,7 @@ class _NavItemState extends State<_NavItem> {
             ),
             const SizedBox(width: 14),
             Expanded(
-              child: Text(widget.label, style: TextStyle(color: fg, fontSize: 15, fontWeight: sel ? FontWeight.w800 : FontWeight.w600)),
+              child: Text(widget.label, style: TextStyle(color: fg, fontSize: 16, fontWeight: sel ? FontWeight.w800 : FontWeight.w600)),
             ),
             if (widget.badge > 0)
               Tooltip(
@@ -666,7 +637,7 @@ class _NavItemState extends State<_NavItem> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('${widget.badge}',
-                      style: TextStyle(color: sel ? (widget.badgeColor == BSColors.warning ? BSColors.warning : AppTheme.primary) : Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: sel ? (widget.badgeColor == BSColors.warning ? BSColors.warning : AppTheme.primary) : Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
                 ),
               ),
           ]);
@@ -702,43 +673,6 @@ class _NavItemState extends State<_NavItem> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: c ? 12 : 14, vertical: 3),
       child: c ? Tooltip(message: widget.label, preferBelow: false, waitDuration: const Duration(milliseconds: 500), child: item) : item,
-    );
-  }
-}
-
-/// Punto verde que "late" (red en línea)
-class _PulseDot extends StatefulWidget {
-  const _PulseDot();
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))..repeat();
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const green = BSColors.success;
-    return SizedBox(
-      width: 18,
-      height: 18,
-      child: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (_, __) => Stack(alignment: Alignment.center, children: [
-          Container(
-            width: 8 + 10 * _ctrl.value,
-            height: 8 + 10 * _ctrl.value,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: green.withOpacity(0.4 * (1 - _ctrl.value))),
-          ),
-          Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: green)),
-        ]),
-      ),
     );
   }
 }
@@ -797,7 +731,7 @@ class _TopBarState extends State<_TopBar> {
                 onSubmitted: (v) {
                   widget.onSearch(v.trim());
                 },
-                style: const TextStyle(fontSize: 14.5),
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Buscar documento, categoría o descripción…',
                   prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 22),
@@ -843,7 +777,7 @@ class _TopBarState extends State<_TopBar> {
                     child: BSLiveClock(
                       builder: (context, now) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(user.name.isEmpty ? 'Mi cuenta' : user.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                         Text('${bsSaludo(now)} · ${bsHora(now)}', maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                       ]),
@@ -904,9 +838,9 @@ class _MobileShell extends StatelessWidget {
                   builder: (context, now) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(first.isEmpty ? bsSaludo(now) : '${bsSaludo(now)}, $first',
                         maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.text, fontSize: 15.5, fontWeight: FontWeight.w800)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
                     Text('${bsFechaLarga(now)} · ${bsHora(now)}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                        style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ]),
                 ),
               ),
@@ -1341,7 +1275,7 @@ class _HeroButton extends StatelessWidget {
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(icon, color: Colors.white, size: 17),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
           ]),
         ),
       );
@@ -1386,7 +1320,7 @@ class _HeroStep extends StatelessWidget {
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, height: 1.1)),
                 ),
                 Text('$n. $label', maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11.5, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, fontWeight: FontWeight.w600)),
               ]),
             ),
           ]),
@@ -1489,7 +1423,7 @@ class _TodoCard extends StatelessWidget {
                     const SizedBox(width: 14),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('¡Todo al día!', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                        Text('¡Todo al día!', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
                         SizedBox(height: 2),
                         Text('No tienes firmas, revisiones ni mensajes pendientes.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
                       ]),
@@ -1547,7 +1481,7 @@ class _TodoItemState extends State<_TodoItem> {
                 Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800, height: 1.25)),
                 const SizedBox(height: 2),
-                Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
             const SizedBox(width: 10),
@@ -1693,7 +1627,7 @@ class _WeekChartCard extends StatelessWidget {
                       Expanded(
                         child: Text(e.$1, textAlign: TextAlign.center,
                             maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
                       ),
                   ]),
                 ]),
@@ -1765,7 +1699,7 @@ class _StatusMixCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text('${n('pages')} páginas · ${'${stats['total_size_mb'] ?? 0}'.replaceAll('.', ',')} MB · ${n('pdfs')} PDF / ${n('words')} Word',
-                          style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                          style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                     ),
                   ]),
                 ]),
@@ -1822,7 +1756,7 @@ class _CountTileState extends State<_CountTile> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(widget.icon, size: 13, color: c),
                 const SizedBox(width: 4),
-                Text(widget.label, maxLines: 1, style: TextStyle(color: c, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                Text(widget.label, maxLines: 1, style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w700)),
               ]),
             ),
           ]),
@@ -1864,7 +1798,7 @@ class _ConfidentialityCard extends StatelessWidget {
                         SizedBox(
                           width: 110,
                           child: Text(items[i].$1, maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                              style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                         ),
                         Expanded(
                           child: ClipRRect(
@@ -1887,7 +1821,7 @@ class _ConfidentialityCard extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           child: Text('${items[i].$2}', textAlign: TextAlign.right,
-                              style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                              style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
                         ),
                       ]),
                     ),
@@ -1930,7 +1864,7 @@ String _visibleStatusOf(Map<String, dynamic> d) {
   return status;
 }
 
-Widget _loadingBox([double h = 200]) => SizedBox(height: h, child: const Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+Widget _loadingBox([double h = 200]) => SkeletonBlock(height: h);
 
 Widget _emptyBox(String text, [double h = 200]) => SizedBox(
       height: h,
@@ -1982,7 +1916,7 @@ class _VBarState extends State<_VBar> {
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = false),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('${widget.value}', style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w800)),
+          Text('${widget.value}', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w800)),
           const SizedBox(height: 5),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: h),
@@ -2024,7 +1958,7 @@ class _RecentTableCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 26),
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
+            Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Text('Sube tu primer PDF o Word desde la sección Documentos.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             const SizedBox(height: 14),
@@ -2096,7 +2030,7 @@ class _RecentRowState extends State<_RecentRow> {
         Icon(Icons.event_outlined, size: 15, color: AppTheme.primary),
         const SizedBox(width: 6),
         Text('$date · ${two(created.hour)}:${two(created.minute)}',
-            style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
 
@@ -2121,11 +2055,11 @@ class _RecentRowState extends State<_RecentRow> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(d['title']?.toString() ?? 'Sin nombre',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: _hover ? AppTheme.primary : AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                    style: TextStyle(color: _hover ? AppTheme.primary : AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
                 Text(sub,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
             const SizedBox(width: 10),
@@ -2232,7 +2166,7 @@ class _ActivityCard extends StatelessWidget {
                           const SizedBox(width: 14),
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(top[i].$2, style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                              Text(top[i].$2, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                               const SizedBox(height: 3),
                               Text('${top[i].$3} · ${ago(top[i].$1)}',
                                   maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 13)),

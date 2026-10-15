@@ -107,7 +107,7 @@ class HuellaField extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 2),
             Tooltip(
               message: value,
@@ -115,11 +115,11 @@ class HuellaField extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600, fontFamily: 'monospace', letterSpacing: 0.2)),
+                      color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'monospace', letterSpacing: 0.2)),
             ),
             if (help != null) ...[
               const SizedBox(height: 2),
-              Text(help!, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
+              Text(help!, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.3)),
             ],
           ]),
         ),
@@ -192,13 +192,13 @@ class _FactCell extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(f.label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+            Text(f.label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 3),
             f.valueWidget ??
                 Text(f.value ?? '—',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.3)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600, height: 1.3)),
           ]),
         ),
       ]),
@@ -258,7 +258,7 @@ class _TechDetailsState extends State<TechDetails> {
                       style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                 ),
                 Text(_open ? 'Ocultar' : 'Mostrar',
-                    style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w700)),
                 AnimatedRotation(
                   turns: _open ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
@@ -282,7 +282,7 @@ class _TechDetailsState extends State<TechDetails> {
                     if (widget.note != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8, right: 8),
-                        child: Text(widget.note!, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
+                        child: Text(widget.note!, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
                       ),
                   ]),
                 ),
@@ -315,7 +315,7 @@ class _TechRowView extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: AppTheme.text,
-                  fontSize: 12.5,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   fontFamily: r.mono ? 'monospace' : null,
                 )),
@@ -376,10 +376,10 @@ class StatusSeal extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(color: color, fontSize: 14.5, fontWeight: FontWeight.w800)),
+            Text(title, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
-              Text(subtitle!, style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
+              Text(subtitle!, style: TextStyle(color: AppTheme.text, fontSize: 12, height: 1.35)),
             ],
           ]),
         ),

@@ -167,7 +167,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Tu contraseña debe tener:',
-                  style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               _Rule(ok: p.length >= 8, text: 'Mínimo 8 caracteres'),
               _Rule(ok: RegExp(r'[A-Z]').hasMatch(p), text: 'Una letra mayúscula'),
@@ -210,7 +210,7 @@ class _Rule extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Text(text,
-              style: TextStyle(color: ok ? BSColors.success : AppTheme.hint, fontSize: 12.5, fontWeight: ok ? FontWeight.w600 : FontWeight.w400)),
+              style: TextStyle(color: ok ? BSColors.success : AppTheme.hint, fontSize: 12, fontWeight: ok ? FontWeight.w600 : FontWeight.w400)),
         ),
       ]),
     );

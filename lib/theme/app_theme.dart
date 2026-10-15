@@ -222,7 +222,7 @@ class AppTheme {
           side: BorderSide(color: border, width: 1),
           minimumSize: const Size(double.infinity, 56),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ).copyWith(overlayColor: overlay(primary)),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -264,4 +264,19 @@ class AppTheme {
       ),
     );
   }
+}
+
+/// Escala tipográfica de la app. Todo texto usa uno de estos tamaños
+/// (los menores a 11 solo en insignias numéricas).
+class TextSizes {
+  TextSizes._();
+  static const double caption = 11; // etiquetas en mayúscula, notas mínimas
+  static const double small = 12; // texto secundario, fechas, ayudas
+  static const double body = 13; // texto de tablas y formularios
+  static const double bodyLg = 14; // texto principal y botones
+  static const double subtitle = 16; // títulos de fila y de tarjeta
+  static const double section = 18; // títulos de sección y diálogos
+  static const double heading = 20;
+  static const double title = 24; // título de pantalla en celular
+  static const double display = 28; // título de pantalla en computador
 }

@@ -86,7 +86,7 @@ class _StepRow extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(step.detail!,
                     style: TextStyle(
-                        color: step.state == ChainStepState.error ? BSColors.danger : AppTheme.hint, fontSize: 12.5, height: 1.35)),
+                        color: step.state == ChainStepState.error ? BSColors.danger : AppTheme.hint, fontSize: 12, height: 1.35)),
               ],
               if (step.extra.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -177,7 +177,7 @@ class ChainValueRow extends StatelessWidget {
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(children: [
-        Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(width: 10),
         Expanded(
           child: Text(shown,

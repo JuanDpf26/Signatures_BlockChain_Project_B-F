@@ -91,7 +91,7 @@ class _BSTextFieldState extends State<BSTextField> {
       textCapitalization: widget.textCapitalization,
       validator: widget.validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      style: TextStyle(color: textColor, fontSize: 15),
+      style: TextStyle(color: textColor, fontSize: 16),
       decoration: InputDecoration(
         labelText: widget.label,
         hintText: widget.hint,
@@ -272,7 +272,7 @@ class FeatureCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+              Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 16)),
               Text(description, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             ],
           ),

@@ -233,8 +233,6 @@ class _VerifyScreenState extends State<VerifyScreen> {
     ]);
 
     final side = Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      _NetworkCard(info: _network, loading: _loadingNetwork, onRefresh: _loadNetwork),
-      const SizedBox(height: 16),
       const _HowItWorksCard(),
       const SizedBox(height: 16),
       const BSInfoBanner(
@@ -242,6 +240,8 @@ class _VerifyScreenState extends State<VerifyScreen> {
         text: 'Quien recibe un documento por correo inicia sesión en DocBlockSign y lo verifica con este mismo flujo.',
         icon: Icons.lock_outline_rounded,
       ),
+      const SizedBox(height: 16),
+      _NetworkCard(info: _network, loading: _loadingNetwork, onRefresh: _loadNetwork),
     ]);
 
     return Container(
@@ -321,13 +321,13 @@ class _VerifyScreenState extends State<VerifyScreen> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
             picked ? '${_fmtSize(_fileSize ?? 0)} · toca para elegir otro' : 'PDF, Word o cualquier archivo firmado con DocBlockSign',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12),
           ),
           const SizedBox(height: 14),
           BSPrimaryButton(
@@ -516,7 +516,7 @@ class _VerdictCard extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: TextStyle(color: color, fontSize: 19, fontWeight: FontWeight.w900)),
+                Text(title, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
                 Text(result['message']?.toString() ?? '', style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4)),
                 if (fileName != null) ...[
@@ -566,7 +566,7 @@ class _NetworkCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ok = info?['connected'] == true;
     return BSCard(
-      title: 'Red blockchain',
+      title: 'Estado del registro',
       trailing: IconButton(
         tooltip: 'Actualizar',
         onPressed: loading ? null : onRefresh,
@@ -578,7 +578,7 @@ class _NetworkCard extends StatelessWidget {
           ? const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
           : !ok
               ? BSInfoBanner(
-                  title: 'Sin conexión con Sepolia',
+                  title: 'Registro sin conexión',
                   text: info?['error']?.toString() ?? 'Revisa que el backend esté corriendo.',
                   color: BSColors.danger,
                   icon: Icons.cloud_off_rounded,
@@ -588,12 +588,12 @@ class _NetworkCard extends StatelessWidget {
                     Container(width: 9, height: 9, decoration: const BoxDecoration(color: BSColors.success, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text('Conectado a Ethereum · Sepolia',
-                          style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                      child: Text('Registro en línea',
+                          style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                     ),
                   ]),
                   const SizedBox(height: 4),
-                  Text('Red de prueba pública: los registros son reales y verificables, sin costo económico.',
+                  Text('Las firmas se guardan en Ethereum (red de pruebas Sepolia), donde cualquiera puede comprobarlas.',
                       style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
                   const SizedBox(height: 12),
                   Row(children: [
@@ -631,12 +631,12 @@ class _Stat extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+              style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
         ]),
       ),
     );

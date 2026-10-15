@@ -40,14 +40,17 @@ class BSPageHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width > 720;
 
+    // En celular el encabezado es compacto: sin ruta (la barra inferior ya dice dónde estás)
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          breadcrumb.join(' / '),
-          style: TextStyle(color: AppTheme.hint, fontSize: 13.5),
-        ),
-        const SizedBox(height: 6),
+        if (isWide) ...[
+          Text(
+            breadcrumb.join(' / '),
+            style: TextStyle(color: AppTheme.hint, fontSize: TextSizes.body),
+          ),
+          const SizedBox(height: 4),
+        ],
         Wrap(
           spacing: 10,
           runSpacing: 6,
@@ -57,9 +60,9 @@ class BSPageHeader extends StatelessWidget {
               title,
               style: TextStyle(
                 color: AppTheme.text,
-                fontSize: isWide ? 32 : 24,
+                fontSize: isWide ? TextSizes.display : TextSizes.title,
                 fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
+                letterSpacing: -0.4,
               ),
             ),
             ...badges,
@@ -67,7 +70,10 @@ class BSPageHeader extends StatelessWidget {
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
-          Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+          Text(subtitle!,
+              maxLines: isWide ? 2 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: AppTheme.hint, fontSize: isWide ? TextSizes.body : TextSizes.small, height: 1.35)),
         ],
       ],
     );
@@ -87,7 +93,7 @@ class BSPageHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               titleBlock,
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               // En celular los botones se reparten el ancho por igual
               Row(children: [
                 for (var i = 0; i < actions.length; i++) ...[
@@ -206,7 +212,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
   Widget build(BuildContext context) {
     final c = widget.color;
     final number = int.tryParse(widget.value);
-    final valueStyle = TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w800, height: 1.1);
+    final valueStyle = TextStyle(color: AppTheme.text, fontSize: 28, fontWeight: FontWeight.w800, height: 1.1);
     final narrow = MediaQuery.of(context).size.width < 600;
     Widget valueText(String t) => FittedBox(
           fit: BoxFit.scaleDown,
@@ -271,7 +277,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
               Text(widget.caption!,
                   maxLines: narrow ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.3)),
+                  style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w600, height: 1.3)),
             ],
           ]),
         ),
@@ -363,7 +369,7 @@ class BSPill extends StatelessWidget {
             const SizedBox(width: 6),
           ],
           Text(label,
-              style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
         ],
       ),
     );

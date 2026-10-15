@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../widgets/skeleton.dart';
 import '../services/collab_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
@@ -105,7 +106,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
     Widget body;
     if (_loading) {
-      body = const SizedBox(height: 240, child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+      body = const SkeletonList(rows: 4);
     } else if (_error != null) {
       body = BSInfoBanner(title: 'No se pudieron cargar los equipos', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded);
     } else if (_teams.isEmpty) {
@@ -249,7 +250,7 @@ class _TeamCardState extends State<_TeamCard> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text('$members ${members == 1 ? 'miembro' : 'miembros'} · $shares ${shares == 1 ? 'envío' : 'envíos'}',
-                        style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                        style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
                   ),
                   Icon(Icons.arrow_forward_rounded, size: 18, color: _hover ? color : AppTheme.hint),
                 ]),
@@ -283,9 +284,9 @@ class _NewTeamCard extends StatelessWidget {
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.group_add_rounded, color: AppTheme.primary, size: 30),
             SizedBox(height: 8),
-            Text('Crear equipo', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 15)),
+            Text('Crear equipo', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 16)),
             SizedBox(height: 2),
-            Text('Área, proyecto, comité…', style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+            Text('Área, proyecto, comité…', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
           ]),
         ),
       ),
@@ -311,8 +312,8 @@ class _EmptyTeams extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(t, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
-                Text(d, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                Text(t, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
+                Text(d, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
           ]),
@@ -327,7 +328,7 @@ class _EmptyTeams extends StatelessWidget {
           child: Icon(Icons.groups_rounded, color: AppTheme.primary, size: 34),
         ),
         const SizedBox(height: 14),
-        Text('Aún no perteneces a ningún equipo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 17)),
+        Text('Aún no perteneces a ningún equipo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 18)),
         const SizedBox(height: 4),
         Text('Crea uno o pide que te agreguen al de tu área.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
         const SizedBox(height: 18),
@@ -463,7 +464,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
   InputDecoration _dec(String hint, {Widget? prefix, String? error}) => InputDecoration(
         hintText: hint,
         errorText: error,
-        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
         prefixIcon: prefix,
         filled: true,
         fillColor: AppTheme.card,
@@ -504,17 +505,17 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
           height: 48,
           alignment: Alignment.center,
           decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(13)),
-          child: Text(bsIniciales(name), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 17)),
+          child: Text(bsIniciales(name), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 18)),
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 3),
             Text(
               _editing ? 'Editando el equipo' : '${_members.length + 1} ${_members.isEmpty ? 'miembro (tú)' : 'miembros contándote a ti'}',
-              style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ]),
         ),
@@ -524,7 +525,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
     final form = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Row(children: [
         Expanded(
-          child: Text(_editing ? 'Editar equipo' : 'Nuevo equipo', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
+          child: Text(_editing ? 'Editar equipo' : 'Nuevo equipo', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w900)),
         ),
         IconButton(onPressed: _saving ? null : () => Navigator.of(context).pop(), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
       ]),
@@ -610,7 +611,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
                 ListTile(
                   dense: true,
                   leading: BSAvatar(name: (u['name'] ?? u['email'])?.toString(), radius: 15),
-                  title: Text((u['name'] ?? u['email']).toString(), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  title: Text((u['name'] ?? u['email']).toString(), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                   subtitle: Text(u['email'].toString(), style: const TextStyle(fontSize: 12)),
                   trailing: Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
                   onTap: () => _addPerson(u),
@@ -711,7 +712,7 @@ class _MemberChipRow extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
             Text(email, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
           ]),
         ),
@@ -878,7 +879,7 @@ class _TeamDetailState extends State<_TeamDetail> {
     if (_error != null) {
       return Padding(padding: const EdgeInsets.all(20), child: BSInfoBanner(title: 'No se pudo abrir el equipo', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded));
     }
-    if (_team == null) return const SizedBox(height: 300, child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+    if (_team == null) return const SkeletonList(rows: 4);
     final color = parseHexColor(_team!['color']?.toString()) ?? AppTheme.primary;
     final narrow = MediaQuery.of(context).size.width < 600;
     final pad = narrow ? 16.0 : 24.0;
@@ -895,7 +896,7 @@ class _TeamDetailState extends State<_TeamDetail> {
           height: 52,
           decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(14)),
           alignment: Alignment.center,
-          child: Text(bsIniciales(_team!['name']?.toString()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 19)),
+          child: Text(bsIniciales(_team!['name']?.toString()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -934,7 +935,7 @@ class _TeamDetailState extends State<_TeamDetail> {
                   onChanged: _onType,
                   onSubmitted: (_) => _add(),
                   keyboardType: TextInputType.emailAddress,
-                  style: TextStyle(color: AppTheme.text, fontSize: 13.5),
+                  style: TextStyle(color: AppTheme.text, fontSize: 13),
                   decoration: InputDecoration(
                     hintText: 'Correo de la persona (debe tener cuenta)',
                     hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
@@ -961,7 +962,7 @@ class _TeamDetailState extends State<_TeamDetail> {
                   ListTile(
                     dense: true,
                     leading: BSAvatar(name: u['name']?.toString(), radius: 15),
-                    title: Text(u['name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                    title: Text(u['name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                     subtitle: Text(u['email']?.toString() ?? '', style: const TextStyle(fontSize: 12)),
                     trailing: Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
                     onTap: () => _add(u['email']?.toString()),
@@ -1028,7 +1029,7 @@ class _TeamDetailState extends State<_TeamDetail> {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(d['title']?.toString() ?? 'Documento', maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                            style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
                         Text('${d['sender_name'] ?? d['sender_email'] ?? ''} · ${inboxAgo(d['created_at']?.toString())}',
                             style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                       ]),

@@ -104,7 +104,7 @@ class AccessibilityPanel extends StatelessWidget {
                       onChanged: (v) => s.update(textScale: double.parse(v.toStringAsFixed(2))),
                     ),
                   ),
-                  Text('A', style: TextStyle(color: AppTheme.hint, fontSize: 22, fontWeight: FontWeight.w700)),
+                  Text('A', style: TextStyle(color: AppTheme.hint, fontSize: 24, fontWeight: FontWeight.w700)),
                 ]),
                 Text('Así se verá el texto (${(s.textScale * 100).round()} %).',
                     style: TextStyle(color: AppTheme.text, fontSize: 14)),
@@ -165,7 +165,7 @@ class _Label extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(bottom: 10),
-        child: Text(text.toUpperCase(), style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
+        child: Text(text.toUpperCase(), style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.7)),
       );
 }
 
@@ -247,7 +247,7 @@ class _Toggle extends StatelessWidget {
         activeColor: AppTheme.primary,
         secondary: Icon(icon, color: AppTheme.hint),
         title: Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
-        subtitle: Text(subtitle, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+        subtitle: Text(subtitle, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
       );
 }
 
