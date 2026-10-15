@@ -14,6 +14,7 @@ import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
 import '../widgets/proof_ui.dart';
 import '../widgets/send_document_dialog.dart';
+import '../widgets/sign_ia_assistant.dart' show SignIaFab;
 import '../theme/app_theme.dart';
 import 'document_viewer_screen.dart';
 import '../utils/file_drop.dart';
@@ -89,6 +90,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   void dispose() {
     _stopDrop?.call();
+    SignIaFab.visible.value = true;
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -207,7 +209,10 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   List<Map<String, dynamic>> get _selectedDocs =>
       _docs.where((d) => _selected.contains(d['id']?.toString())).toList();
 
-  void _toggle(String id) => setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id));
+  void _toggle(String id) {
+    setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id));
+    SignIaFab.visible.value = _selected.isEmpty;
+  }
 
   void _toggleAll() => setState(() {
         if (_selected.length == _docs.length) {
@@ -251,6 +256,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     setState(() { _bulkBusy = false; _selected.clear(); });
+    SignIaFab.visible.value = true;
     await _load();
     if (!mounted) return;
     final sent = n - errors.length;
@@ -285,6 +291,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     }
     if (!mounted) return;
     setState(() { _bulkBusy = false; _selected.clear(); });
+    SignIaFab.visible.value = true;
     await _load();
     if (!mounted) return;
     if (failed == 0) {
@@ -568,7 +575,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onRefresh: _load,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(pad, 20, pad, 28),
+          padding: EdgeInsets.fromLTRB(pad, 20, pad, (!isTable && _selected.isNotEmpty) ? 96 : 28),
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -696,6 +703,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       ),
       )),
       if (_dragging) const Positioned.fill(child: IgnorePointer(child: _DropOverlay())),
+      // Celular: las acciones de la selección quedan fijas abajo, siempre visibles
+      if (!isTable && _selected.isNotEmpty)
+        Positioned(left: 12, right: 12, bottom: 12, child: SafeArea(top: false, child: _toolbar(false, floating: true))),
     ]);
   }
 
@@ -788,21 +798,28 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   /// Barra superior de la lista: total y orden, o las acciones de la selección
-  Widget _toolbar(bool isTable) {
+  Widget _toolbar(bool isTable, {bool floating = false}) {
     final n = _selected.length;
-    if (n > 0) {
+    if (n > 0 && (isTable || floating)) {
       final toSign = _selectedDocs.where((d) => _DocInfo.from(d).status == 'pending').length;
       final narrow = MediaQuery.of(context).size.width < 600;
       return Container(
-        padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
-        decoration: BoxDecoration(
-          color: AppTheme.primary.withOpacity(AppTheme.isDark ? 0.18 : 0.07),
-          border: Border(bottom: BorderSide(color: AppTheme.border)),
-        ),
+        padding: const EdgeInsets.fromLTRB(4, 8, 10, 8),
+        decoration: floating
+            ? BoxDecoration(
+                color: AppTheme.card,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.border),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 20, offset: const Offset(0, 6))],
+              )
+            : BoxDecoration(
+                color: AppTheme.primary.withOpacity(AppTheme.isDark ? 0.18 : 0.07),
+                border: Border(bottom: BorderSide(color: AppTheme.border)),
+              ),
         child: Row(children: [
           IconButton(
             tooltip: 'Cancelar selección',
-            onPressed: _bulkBusy ? null : () => setState(_selected.clear),
+            onPressed: _bulkBusy ? null : () { setState(_selected.clear); SignIaFab.visible.value = true; },
             icon: Icon(Icons.close_rounded, color: AppTheme.text, size: 20),
           ),
           Expanded(
@@ -1315,7 +1332,7 @@ class _DocTile extends StatelessWidget {
             ),
             if (!selecting) menu else const SizedBox(width: 10),
           ]),
-          if (!selecting) Padding(
+          Padding(
             padding: const EdgeInsets.only(right: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 10),
