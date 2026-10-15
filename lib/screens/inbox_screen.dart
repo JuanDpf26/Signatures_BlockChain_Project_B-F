@@ -1283,7 +1283,7 @@ class _ReadingState extends State<_Reading> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: BSColors.warning.withOpacity(0.35)),
       ),
-      child: narrow
+      child: LayoutBuilder(builder: (context, c) => narrow || c.maxWidth < 620
           ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               text,
               const SizedBox(height: 12),
@@ -1297,7 +1297,7 @@ class _ReadingState extends State<_Reading> {
               reject,
               const SizedBox(width: 8),
               approve,
-            ]),
+            ])),
     );
   }
 
