@@ -390,8 +390,8 @@ class _RowState extends State<_Row> {
     if (t == null) return '';
     final d = DateTime.now().difference(t);
     if (d.inMinutes < 1) return 'ahora';
-    if (d.inMinutes < 60) return 'hace ${d.inMinutes} min';
-    if (d.inHours < 24) return 'hace ${d.inHours} h';
+    if (d.inMinutes < 60) return '${d.inMinutes} min';
+    if (d.inHours < 24) return '${d.inHours} h';
     if (d.inDays == 1) return 'ayer';
     const m = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sept', 'oct', 'nov', 'dic'];
     return '${t.day} ${m[t.month - 1]}';
@@ -401,7 +401,7 @@ class _RowState extends State<_Row> {
     final parts = text.split('**');
     return [
       for (var i = 0; i < parts.length; i++)
-        TextSpan(text: parts[i], style: TextStyle(fontWeight: i.isOdd ? FontWeight.w800 : (unread ? FontWeight.w600 : FontWeight.w400))),
+        TextSpan(text: parts[i], style: TextStyle(fontWeight: i.isOdd ? FontWeight.w700 : FontWeight.w400, color: i.isOdd ? AppTheme.text : AppTheme.text.withOpacity(0.85))),
     ];
   }
 
