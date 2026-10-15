@@ -19,11 +19,13 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: Compilar web
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -o pipefail
           flutter build web --release 2>&1 | tee build.log || {
-            # Los dos puntos se cambian por " | " para que GitHub no los tome como ruta
-            grep -E "^lib/.*Error|error:" build.log | head -60 | sed 's/:/ | /g' | while IFS= read -r l; do echo "::error::${l}"; done
+            # Registro completo como archivo del release, para leerlo sin abrir Actions
+            gh release upload web-preview build.log --clobber || true
             exit 1
           }
           cd build/web && zip -qr ../../web-preview.zip .
