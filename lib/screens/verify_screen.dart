@@ -407,7 +407,7 @@ class _ModeSwitch extends StatelessWidget {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              color: sel ? Colors.white : Colors.transparent,
+              color: sel ? AppTheme.card : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               boxShadow: sel ? [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 6, offset: const Offset(0, 1))] : null,
             ),

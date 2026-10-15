@@ -532,7 +532,7 @@ class BSFilterDropdown extends StatelessWidget {
         height: 48,
         padding: const EdgeInsets.only(left: 12, right: 8),
         decoration: BoxDecoration(
-          color: active ? AppTheme.primary.withOpacity(0.06) : Colors.white,
+          color: active ? AppTheme.primary.withOpacity(0.06) : AppTheme.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: active ? AppTheme.primary.withOpacity(0.45) : AppTheme.border),
         ),
@@ -572,7 +572,7 @@ class BSFilterDropdown extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: active ? AppTheme.primary.withOpacity(0.06) : Colors.white,
+        color: active ? AppTheme.primary.withOpacity(0.06) : AppTheme.card,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: active ? AppTheme.primary.withOpacity(0.45) : AppTheme.border),
       ),

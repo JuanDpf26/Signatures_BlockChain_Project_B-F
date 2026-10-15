@@ -673,7 +673,7 @@ class _StatusTabState extends State<_StatusTab> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: sel ? AppTheme.primary : Colors.white,
+            color: sel ? AppTheme.primary : AppTheme.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: sel ? AppTheme.primary : (_hover ? AppTheme.primary.withOpacity(0.35) : AppTheme.border)),
             boxShadow: sel ? [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))] : null,

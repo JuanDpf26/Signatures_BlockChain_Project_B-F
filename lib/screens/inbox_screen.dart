@@ -599,7 +599,7 @@ class _FolderChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.primary : Colors.white,
+          color: selected ? AppTheme.primary : AppTheme.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: selected ? AppTheme.primary : AppTheme.border),
         ),

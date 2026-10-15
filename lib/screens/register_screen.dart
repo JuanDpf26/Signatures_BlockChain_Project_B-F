@@ -286,7 +286,7 @@ class _CaptchaWidget extends StatelessWidget {
             : GoogleAuthTheme.border;
 
     return Material(
-      color: verified ? _green.withOpacity(0.05) : Colors.white,
+      color: verified ? _green.withOpacity(0.05) : AppTheme.card,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,

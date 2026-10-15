@@ -186,7 +186,7 @@ class _Segment extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: i == selected ? Colors.white : Colors.transparent,
+                color: i == selected ? AppTheme.card : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
                 boxShadow: i == selected ? [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 4, offset: const Offset(0, 1))] : null,
               ),

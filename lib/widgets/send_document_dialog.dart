@@ -424,7 +424,7 @@ class _SendPanelState extends State<_SendPanel> {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: sel ? c.withOpacity(0.08) : Colors.white,
+          color: sel ? c.withOpacity(0.08) : AppTheme.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: sel ? c : AppTheme.border, width: sel ? 1.6 : 1),
         ),

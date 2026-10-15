@@ -355,7 +355,8 @@ class _Sidebar extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.primary, AppTheme.primaryDark],
+          // En modo oscuro, azul noche para no encandilar
+          colors: AppTheme.isDark ? const [Color(0xFF13203A), Color(0xFF0D1117)] : [AppTheme.primary, AppTheme.primaryDark],
         ),
       ),
       child: ClipRect(
@@ -681,7 +682,7 @@ class _NavItemState extends State<_NavItem> {
             height: c ? 64 : 48,
             padding: EdgeInsets.symmetric(horizontal: c ? 4 : 16),
             decoration: BoxDecoration(
-              color: sel ? Colors.white : (_hover ? Colors.white.withOpacity(0.1) : Colors.transparent),
+              color: sel ? AppTheme.card : (_hover ? Colors.white.withOpacity(0.1) : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
               boxShadow: sel ? [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 14, offset: const Offset(0, 6))] : null,
             ),
@@ -2164,7 +2165,7 @@ class _RecentRowState extends State<_RecentRow> {
           duration: const Duration(milliseconds: 160),
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _hover ? BSColors.page : Colors.white,
+            color: _hover ? BSColors.page : AppTheme.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: _hover ? AppTheme.primary.withOpacity(0.25) : AppTheme.border),
           ),

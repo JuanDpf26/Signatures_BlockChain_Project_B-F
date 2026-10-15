@@ -548,7 +548,7 @@ class _MessageView extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: isError ? BSColors.danger.withOpacity(0.06) : Colors.white,
+                color: isError ? BSColors.danger.withOpacity(0.06) : AppTheme.card,
                 border: Border.all(color: isError ? BSColors.danger.withOpacity(0.25) : AppTheme.border),
                 borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(4), topRight: Radius.circular(16), bottomLeft: Radius.circular(16), bottomRight: Radius.circular(16)),
@@ -602,7 +602,7 @@ class _ActionChip extends StatelessWidget {
       _ => Icons.visibility_outlined,
     };
     return Material(
-      color: sign ? _iaB : Colors.white,
+      color: sign ? _iaB : AppTheme.card,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         onTap: onTap,

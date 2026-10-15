@@ -1228,7 +1228,7 @@ class _EditTabState extends State<_EditTab> {
     final saveBar = Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
-        color: _dirty ? BSColors.selected : Colors.white,
+        color: _dirty ? BSColors.selected : AppTheme.card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: _dirty ? AppTheme.primary.withOpacity(0.35) : AppTheme.border),
       ),
@@ -1466,7 +1466,7 @@ class _EditHistoryCard extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: i == 0 ? AppTheme.primary : Colors.white,
+                        color: i == 0 ? AppTheme.primary : AppTheme.card,
                         shape: BoxShape.circle,
                         border: Border.all(color: AppTheme.primary, width: 2),
                       ),
@@ -1639,7 +1639,7 @@ class DocLifecycleCard extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: steps[i].$2 == _Gate.pending ? Colors.white : colorOf(steps[i].$2),
+                      color: steps[i].$2 == _Gate.pending ? AppTheme.card : colorOf(steps[i].$2),
                       border: Border.all(color: steps[i].$2 == _Gate.pending ? AppTheme.border : colorOf(steps[i].$2), width: 2),
                     ),
                     child: switch (steps[i].$2) {

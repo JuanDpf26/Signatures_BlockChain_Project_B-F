@@ -400,7 +400,7 @@ class _ExportDialogState extends State<_ExportDialog> {
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: sel ? AppTheme.primary.withOpacity(0.07) : Colors.white,
+          color: sel ? AppTheme.primary.withOpacity(0.07) : AppTheme.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: sel ? AppTheme.primary : AppTheme.border, width: sel ? 1.6 : 1),
         ),
