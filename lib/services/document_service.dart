@@ -36,12 +36,12 @@ class DocumentService {
   }
 
   static Future<Map<String, dynamic>> getDocuments({
-    String? search, String? category, String? status, String? ext, String? dateFrom, int page = 1,
+    String? search, String? category, String? status, String? ext, String? dateFrom, int page = 1, String sort = 'recent', int limit = 20,
   }) async {
     try {
       final headers = await _authHeaders();
       final params = <String, String>{
-        'page': page.toString(), 'limit': '20',
+        'page': page.toString(), 'limit': limit.toString(), 'sort': sort,
         if (search != null && search.isNotEmpty) 'search': search,
         if (category != null && category.isNotEmpty) 'category': category,
         if (status != null && status.isNotEmpty) 'status': status,

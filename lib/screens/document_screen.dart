@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../widgets/proof_ui.dart';
 import '../widgets/send_document_dialog.dart';
 import '../theme/app_theme.dart';
 import 'document_viewer_screen.dart';
+import '../utils/file_drop.dart';
 
 //Juandiego son of ragnar//
 class DocumentsScreen extends StatefulWidget {
@@ -33,6 +35,24 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   bool _isLoading = true;
   bool _isUploading = false;
   String? _signingDocId;
+
+  // Paginación, orden y selección múltiple
+  int _page = 1;
+  int _pages = 1;
+  int _total = 0;
+  String _sort = 'recent';
+  static const _sorts = {
+    'recent': 'Más recientes',
+    'oldest': 'Más antiguos',
+    'name': 'Nombre (A–Z)',
+    'name_desc': 'Nombre (Z–A)',
+  };
+  final Set<String> _selected = {};
+  bool _bulkBusy = false;
+
+  // Arrastrar y soltar (web)
+  bool _dragging = false;
+  void Function()? _stopDrop;
 
   String? _selCategory;
   String? _selStatus;
@@ -60,10 +80,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (widget.initialSearch != null) _searchCtrl.text = widget.initialSearch!;
     if (widget.initialStatus != null) _selStatus = widget.initialStatus;
     _load();
+    _stopDrop = listenFileDrop(
+      onHover: (v) { if (mounted && v != _dragging) setState(() => _dragging = v); },
+      onDrop: (f) { if (mounted && !_isUploading) _uploadBytes(f.bytes, f.name); },
+    );
   }
 
   @override
   void dispose() {
+    _stopDrop?.call();
     _searchCtrl.dispose();
     super.dispose();
   }
@@ -80,17 +105,47 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         status: (_selStatus == 'Todos' || _selStatus == null) ? null : _selStatus,
         ext: (_selExt == 'Todos' || _selExt == null) ? null : _selExt,
         dateFrom: _dateFrom,
+        page: _page,
+        sort: _sort,
       );
       if (!mounted) return;
       if (res.containsKey('documents')) {
-        setState(() => _docs = List<Map<String, dynamic>>.from(res['documents']));
+        final pg = (res['pagination'] as Map?) ?? {};
+        final docs = List<Map<String, dynamic>>.from(res['documents']);
+        setState(() {
+          _docs = docs;
+          _total = int.tryParse('${pg['total'] ?? docs.length}') ?? docs.length;
+          final pages = int.tryParse('${pg['pages'] ?? 1}') ?? 1;
+          _pages = pages < 1 ? 1 : pages;
+          // Solo se conservan seleccionados los que siguen en pantalla
+          _selected.retainWhere((id) => docs.any((d) => d['id']?.toString() == id));
+        });
+        // Si la página quedó vacía (por ejemplo, tras eliminar), vuelve a la anterior
+        if (docs.isEmpty && _page > 1) {
+          _page = (_page - 1 < _pages) ? _page - 1 : _pages;
+          return _load();
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  /// Al cambiar filtros u orden se vuelve a la primera página
+  void _reload() {
+    _page = 1;
+    _selected.clear();
+    _load();
+  }
+
+  void _goPage(int p) {
+    if (p < 1 || p > _pages || p == _page) return;
+    setState(() { _page = p; _selected.clear(); });
+    _load();
+  }
+
   void _clearFilters() {
+    _page = 1;
     setState(() {
       _selCategory = null;
       _selStatus = null;
@@ -110,23 +165,132 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         if (mounted) await SweetAlert.error(context, title: 'No se pudo leer el archivo', text: 'Intenta seleccionarlo de nuevo.');
         return;
       }
-      final mimeType = file.extension == 'pdf' ? 'application/pdf' : file.extension == 'doc' ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      await _uploadBytes(file.bytes!, file.name);
+    } catch (e) {
+      if (mounted) await SweetAlert.error(context, title: 'Error al subir', text: '$e');
+    }
+  }
+
+  Future<void> _uploadBytes(Uint8List bytes, String name) async {
+    final ext = name.contains('.') ? name.split('.').last.toLowerCase() : '';
+    if (!['pdf', 'doc', 'docx'].contains(ext)) {
+      showToast(context, title: 'Solo PDF o Word', text: '"$name" no es un archivo que se pueda firmar.', type: SweetAlertType.warning);
+      return;
+    }
+    if (bytes.length > 20 * 1024 * 1024) {
+      showToast(context, title: 'Archivo muy grande', text: 'El límite es 20 MB.', type: SweetAlertType.warning);
+      return;
+    }
+    try {
+      final mimeType = ext == 'pdf' ? 'application/pdf' : ext == 'doc' ? 'application/msword' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
       setState(() => _isUploading = true);
       // Muestra el proceso completo: subida → huella → texto → IA → resultado
-      final r = await showAnalysisProgress(context, bytes: file.bytes!, fileName: file.name, mimeType: mimeType);
+      final r = await showAnalysisProgress(context, bytes: bytes, fileName: name, mimeType: mimeType);
       if (!mounted) return;
       setState(() => _isUploading = false);
+      _page = 1;
       await _load();
       if (!mounted) return;
       if (r.ok) {
         SweetAlert.success(context, title: 'Análisis guardado', autoClose: const Duration(milliseconds: 1600));
       } else if (r.background && r.docId != null) {
-        _watchAnalysis(r.docId!, title: file.name);
+        _watchAnalysis(r.docId!, title: name);
       }
     } catch (e) {
       if (mounted) await SweetAlert.error(context, title: 'Error al subir', text: '$e');
     } finally {
       if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  // ── Acciones sobre varios documentos ──
+  List<Map<String, dynamic>> get _selectedDocs =>
+      _docs.where((d) => _selected.contains(d['id']?.toString())).toList();
+
+  void _toggle(String id) => setState(() => _selected.contains(id) ? _selected.remove(id) : _selected.add(id));
+
+  void _toggleAll() => setState(() {
+        if (_selected.length == _docs.length) {
+          _selected.clear();
+        } else {
+          _selected..clear()..addAll(_docs.map((d) => d['id'].toString()));
+        }
+      });
+
+  Future<void> _bulkSign() async {
+    final toSign = _selectedDocs.where((d) => _DocInfo.from(d).status == 'pending').toList();
+    if (toSign.isEmpty) return;
+    final sig = await ProfileService.getSignature();
+    if (!mounted) return;
+    if (!sig.containsKey('signature')) {
+      await SweetAlert.warning(context, title: 'Primero crea tu firma', text: 'Ve a Configuración → Firma manuscrita y dibújala una vez.');
+      return;
+    }
+    final n = toSign.length;
+    final ok = await SweetAlert.confirm(
+      context,
+      title: 'Firmar $n ${n == 1 ? 'documento' : 'documentos'}',
+      text: 'Cada uno se registra en la blockchain con tu firma. Puede tardar unos segundos por documento.',
+      confirmText: 'Firmar',
+    );
+    if (!ok || !mounted) return;
+    final errors = <String>[];
+    var done = 0;
+    final progress = ValueNotifier<int>(0);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _BulkProgress(total: n, done: progress, verb: 'Firmando'),
+    );
+    setState(() => _bulkBusy = true);
+    for (final d in toSign) {
+      final r = await DocumentService.signDocument(d['id'].toString());
+      if (r.containsKey('error')) errors.add('${_DocInfo.from(d).title}: ${r['error']}');
+      progress.value = ++done;
+    }
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    setState(() { _bulkBusy = false; _selected.clear(); });
+    await _load();
+    if (!mounted) return;
+    final sent = n - errors.length;
+    if (errors.isEmpty) {
+      showToast(context, title: '$sent ${sent == 1 ? 'documento enviado' : 'documentos enviados'} a firmar',
+          text: 'Verás la confirmación de la blockchain en cada uno.');
+    } else {
+      await SweetAlert.error(context,
+          title: sent == 0 ? 'No se pudo firmar' : 'Se firmaron $sent de $n',
+          text: errors.take(4).join('\n'));
+    }
+  }
+
+  Future<void> _bulkDelete() async {
+    final list = _selectedDocs;
+    final n = list.length;
+    if (n == 0) return;
+    final ok = await SweetAlert.confirm(
+      context,
+      type: SweetAlertType.warning,
+      danger: true,
+      title: 'Eliminar $n ${n == 1 ? 'documento' : 'documentos'}',
+      text: 'Esta acción no se puede deshacer. Los registros que ya están en blockchain se conservan allá.',
+      confirmText: 'Sí, eliminar',
+    );
+    if (!ok || !mounted) return;
+    setState(() => _bulkBusy = true);
+    var failed = 0;
+    for (final d in list) {
+      final r = await DocumentService.deleteDocument(d['id'].toString());
+      if (r.containsKey('error')) failed++;
+    }
+    if (!mounted) return;
+    setState(() { _bulkBusy = false; _selected.clear(); });
+    await _load();
+    if (!mounted) return;
+    if (failed == 0) {
+      showToast(context, title: n == 1 ? 'Documento eliminado' : '$n documentos eliminados');
+    } else {
+      await SweetAlert.error(context, title: 'No se pudieron eliminar $failed', text: 'Inténtalo de nuevo en un momento.');
     }
   }
 
@@ -396,7 +560,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     final isTable = width > 980;
     final pad = isWeb ? 28.0 : 16.0;
 
-    return Container(
+    return Stack(children: [
+      Positioned.fill(child: Container(
       color: BSColors.page,
       child: RefreshIndicator(
         color: AppTheme.primary,
@@ -411,7 +576,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             BSPageHeader(
               breadcrumb: const ['Inicio', 'Documentos'],
               title: 'Documentos',
-              subtitle: 'Sube tus archivos, revisa su análisis y fírmalos con registro en blockchain.',
+              subtitle: fileDropSupported && isWeb
+                  ? 'Sube tus archivos (o arrástralos a esta pantalla), revisa su análisis y fírmalos con registro en blockchain.'
+                  : 'Sube tus archivos, revisa su análisis y fírmalos con registro en blockchain.',
               actions: [
                 BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _isLoading ? null : _load),
                 BSPrimaryButton(
@@ -428,7 +595,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             _StatusTabs(
               stats: _stats,
               selected: _selStatus,
-              onSelect: (v) { setState(() => _selStatus = v); _load(); },
+              onSelect: (v) { setState(() => _selStatus = v); _reload(); },
             ),
             const SizedBox(height: 16),
 
@@ -440,15 +607,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   height: 48,
                   child: TextField(
                     controller: _searchCtrl,
-                    onSubmitted: (_) => _load(),
-                    onChanged: (v) { setState(() {}); if (v.isEmpty) _load(); },
+                    onSubmitted: (_) => _reload(),
+                    onChanged: (v) { setState(() {}); if (v.isEmpty) _reload(); },
                     style: TextStyle(color: AppTheme.text, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Buscar por nombre, autor, etiqueta o descripción…',
                       hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
                       prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
                       suffixIcon: _searchCtrl.text.isNotEmpty
-                          ? IconButton(icon: Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _load(); })
+                          ? IconButton(icon: Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _reload(); })
                           : null,
                       filled: true,
                       fillColor: AppTheme.card,
@@ -465,7 +632,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   value: _selCategory ?? 'Todos',
                   options: _categories,
                   display: (s) => s == 'Todos' ? 'Todas' : s,
-                  onChanged: (v) { setState(() => _selCategory = v == 'Todos' ? null : v); _load(); },
+                  onChanged: (v) { setState(() => _selCategory = v == 'Todos' ? null : v); _reload(); },
                 );
                 final type = BSFilterDropdown(
                   stacked: true,
@@ -473,7 +640,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   value: _selExt ?? 'Todos',
                   options: _exts,
                   display: (s) => s == 'Todos' ? (width > 980 ? 'PDF y Word' : 'Todos') : s.toUpperCase(),
-                  onChanged: (v) { setState(() => _selExt = v == 'Todos' ? null : v); _load(); },
+                  onChanged: (v) { setState(() => _selExt = v == 'Todos' ? null : v); _reload(); },
                 );
                 final date = BSFilterDropdown(
                   stacked: true,
@@ -481,7 +648,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                   value: _selDate == 'Todo' ? 'Todos' : _selDate,
                   options: ['Todos', ..._dates.skip(1)],
                   display: (s) => s == 'Todos' ? 'Todo' : s,
-                  onChanged: (v) { setState(() => _selDate = v == 'Todos' ? 'Todo' : v); _load(); },
+                  onChanged: (v) { setState(() => _selDate = v == 'Todos' ? 'Todo' : v); _reload(); },
                 );
                 final clear = TextButton(
                   onPressed: _hasFilters ? _clearFilters : null,
@@ -527,13 +694,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           ),
         ),
       ),
-    );
+      )),
+      if (_dragging) const Positioned.fill(child: IgnorePointer(child: _DropOverlay())),
+    ]);
   }
 
   Widget _buildList(bool isTable) {
-    if (_isLoading) {
+    if (_isLoading && _docs.isEmpty) {
       return Padding(
-        padding: EdgeInsets.symmetric(vertical: 56),
+        padding: const EdgeInsets.symmetric(vertical: 56),
         child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
     }
@@ -544,12 +713,14 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       );
     }
 
-    final rows = <Widget>[];
-    if (isTable) rows.add(const _TableHeader());
+    final rows = <Widget>[_toolbar(isTable)];
+    if (isTable) rows.add(_TableHeader(allSelected: _selected.length == _docs.length, someSelected: _selected.isNotEmpty, onToggleAll: _toggleAll));
+    final selecting = _selected.isNotEmpty;
     for (var i = 0; i < _docs.length; i++) {
       final doc = _docs[i];
       final docId = doc['id']?.toString() ?? '';
       final info = _DocInfo.from(doc);
+      final isSel = _selected.contains(docId);
       final actions = _DocActions(
         info: info,
         isSigning: _signingDocId == docId,
@@ -570,42 +741,250 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         // Material transparente: así el resaltado al pasar el mouse se ve sobre la tarjeta blanca
         child: Material(
           type: MaterialType.transparency,
-          child: isTable
-              ? _DocRow(info: info, actions: actions, onTap: () => _showDetail(doc))
-              : _DocTile(
-                  info: info,
-                  menu: _DocActions(
+          child: Container(
+            color: isSel ? AppTheme.primary.withOpacity(AppTheme.isDark ? 0.16 : 0.06) : null,
+            child: isTable
+                ? _DocRow(
                     info: info,
+                    actions: actions,
+                    selected: isSel,
+                    onSelect: () => _toggle(docId),
+                    onTap: () => selecting ? _toggle(docId) : _showDetail(doc),
+                  )
+                : _DocTile(
+                    info: info,
+                    menu: _DocActions(
+                      info: info,
+                      isSigning: _signingDocId == docId,
+                      onSign: () => _sign(docId, info.title),
+                      onOpen: () => _openViewer(doc),
+                      onDetail: () => _showDetail(doc),
+                      onEdit: () => _showDetail(doc, tab: 4),
+                      onSend: () => _sendByEmail(doc),
+                      onReanalyze: () => _reanalyze(docId),
+                      onDelete: () => _delete(docId, info.title),
+                      menuOnly: true,
+                    ),
                     isSigning: _signingDocId == docId,
-                    onSign: () => _sign(docId, info.title),
+                    selected: isSel,
+                    selecting: selecting,
+                    onLongPress: () => _toggle(docId),
+                    onTap: () => selecting ? _toggle(docId) : _showDetail(doc),
                     onOpen: () => _openViewer(doc),
-                    onDetail: () => _showDetail(doc),
-                    onEdit: () => _showDetail(doc, tab: 4),
+                    onSign: () => _sign(docId, info.title),
                     onSend: () => _sendByEmail(doc),
-                    onReanalyze: () => _reanalyze(docId),
-                    onDelete: () => _delete(docId, info.title),
-                    menuOnly: true,
                   ),
-                  isSigning: _signingDocId == docId,
-                  onTap: () => _showDetail(doc),
-                  onOpen: () => _openViewer(doc),
-                  onSign: () => _sign(docId, info.title),
-                  onSend: () => _sendByEmail(doc),
-                ),
+          ),
         ),
       ));
       if (i < _docs.length - 1) rows.add(Divider(height: 1, color: AppTheme.border));
     }
-    rows.add(Container(
+    rows.add(_pager());
+    return Stack(children: [
+      Column(children: rows),
+      if (_isLoading)
+        Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(minHeight: 2, color: AppTheme.primary, backgroundColor: Colors.transparent)),
+    ]);
+  }
+
+  /// Barra superior de la lista: total y orden, o las acciones de la selección
+  Widget _toolbar(bool isTable) {
+    final n = _selected.length;
+    if (n > 0) {
+      final toSign = _selectedDocs.where((d) => _DocInfo.from(d).status == 'pending').length;
+      final narrow = MediaQuery.of(context).size.width < 600;
+      return Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withOpacity(AppTheme.isDark ? 0.18 : 0.07),
+          border: Border(bottom: BorderSide(color: AppTheme.border)),
+        ),
+        child: Row(children: [
+          IconButton(
+            tooltip: 'Cancelar selección',
+            onPressed: _bulkBusy ? null : () => setState(_selected.clear),
+            icon: Icon(Icons.close_rounded, color: AppTheme.text, size: 20),
+          ),
+          Expanded(
+            child: Text('$n ${n == 1 ? 'seleccionado' : 'seleccionados'}',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+          ),
+          if (!isTable)
+            TextButton(
+              onPressed: _bulkBusy ? null : _toggleAll,
+              child: Text(_selected.length == _docs.length ? 'Ninguno' : 'Todos'),
+            ),
+          if (toSign > 0) ...[
+            const SizedBox(width: 6),
+            FilledButton.icon(
+              onPressed: _bulkBusy ? null : _bulkSign,
+              style: FilledButton.styleFrom(backgroundColor: BSColors.success, minimumSize: const Size(0, 38), padding: const EdgeInsets.symmetric(horizontal: 12)),
+              icon: const Icon(Icons.draw_rounded, size: 16),
+              label: Text(narrow ? 'Firmar ($toSign)' : 'Firmar $toSign'),
+            ),
+          ],
+          const SizedBox(width: 6),
+          OutlinedButton.icon(
+            onPressed: _bulkBusy ? null : _bulkDelete,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: BSColors.danger,
+              side: BorderSide(color: BSColors.danger.withOpacity(0.5)),
+              minimumSize: const Size(0, 38),
+              padding: EdgeInsets.symmetric(horizontal: narrow ? 10 : 12),
+            ),
+            icon: const Icon(Icons.delete_outline_rounded, size: 16),
+            label: Text(narrow ? '' : 'Eliminar'),
+          ),
+        ]),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 8, 10, 8),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+      child: Row(children: [
+        Expanded(
+          child: Text('$_total ${_total == 1 ? 'documento' : 'documentos'}',
+              style: TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w600)),
+        ),
+        PopupMenuButton<String>(
+          tooltip: 'Ordenar',
+          color: AppTheme.card,
+          initialValue: _sort,
+          onSelected: (v) {
+            if (v == _sort) return;
+            setState(() => _sort = v);
+            _reload();
+          },
+          itemBuilder: (_) => [
+            for (final e in _sorts.entries)
+              PopupMenuItem(
+                value: e.key,
+                child: Row(children: [
+                  SizedBox(width: 22, child: e.key == _sort ? Icon(Icons.check_rounded, size: 18, color: AppTheme.primary) : null),
+                  const SizedBox(width: 6),
+                  Text(e.value, style: TextStyle(color: AppTheme.text, fontSize: 14)),
+                ]),
+              ),
+          ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.sort_rounded, size: 18, color: AppTheme.primary),
+              const SizedBox(width: 6),
+              Text(_sorts[_sort]!, style: TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w700)),
+              Icon(Icons.arrow_drop_down_rounded, color: AppTheme.primary),
+            ]),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  /// Pie con "1–20 de 45" y botones de página
+  Widget _pager() {
+    const per = 20;
+    final from = _total == 0 ? 0 : (_page - 1) * per + 1;
+    final to = from == 0 ? 0 : from + _docs.length - 1;
+    final label = Text(
+      _pages > 1 ? '$from–$to de $_total' : 'Mostrando $_total ${_total == 1 ? 'documento' : 'documentos'}',
+      style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
+    );
+    Widget nav(IconData icon, String tip, int target, bool enabled) => IconButton(
+          tooltip: tip,
+          onPressed: enabled && !_isLoading ? () => _goPage(target) : null,
+          icon: Icon(icon, size: 20),
+          color: AppTheme.primary,
+          disabledColor: AppTheme.hint.withOpacity(0.4),
+          visualDensity: VisualDensity.compact,
+        );
+    return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
+      padding: EdgeInsets.fromLTRB(20, _pages > 1 ? 6 : 14, 10, _pages > 1 ? 6 : 16),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
-      child: Text(
-        'Mostrando ${_docs.length} ${_docs.length == 1 ? 'documento' : 'documentos'}',
-        style: TextStyle(color: AppTheme.hint, fontSize: 12),
+      child: _pages <= 1
+          ? label
+          : Row(children: [
+              Expanded(child: label),
+              nav(Icons.first_page_rounded, 'Primera página', 1, _page > 1),
+              nav(Icons.chevron_left_rounded, 'Anterior', _page - 1, _page > 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                child: Text('Página $_page de $_pages', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
+              ),
+              nav(Icons.chevron_right_rounded, 'Siguiente', _page + 1, _page < _pages),
+              nav(Icons.last_page_rounded, 'Última página', _pages, _page < _pages),
+            ]),
+    );
+  }
+}
+
+/// Velo que aparece al arrastrar un archivo sobre la pantalla
+class _DropOverlay extends StatelessWidget {
+  const _DropOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primary, width: 2),
       ),
-    ));
-    return Column(children: rows);
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+          decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, 8))],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.upload_file_rounded, size: 40, color: AppTheme.primary),
+            const SizedBox(height: 10),
+            Text('Suelta el archivo para subirlo', style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text('PDF o Word, hasta 20 MB', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Progreso de una acción sobre varios documentos
+class _BulkProgress extends StatelessWidget {
+  final int total;
+  final ValueNotifier<int> done;
+  final String verb;
+  const _BulkProgress({required this.total, required this.done, required this.verb});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: AppTheme.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+          child: ValueListenableBuilder<int>(
+            valueListenable: done,
+            builder: (_, d, __) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('$verb ${d < total ? d + 1 : total} de $total…', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              Text('No cierres esta ventana.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(value: total == 0 ? null : d / total, minHeight: 6, color: AppTheme.primary, backgroundColor: AppTheme.border),
+              ),
+            ]),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -712,8 +1091,14 @@ class _DocInfo {
     final created = doc['created_at'] != null ? DateTime.parse(doc['created_at']).toLocal() : DateTime.now();
     String two(int n) => n.toString().padLeft(2, '0');
     final pages = int.tryParse('${meta['pages'] ?? ''}');
+    final ext = meta['extension']?.toString() ?? 'pdf';
+    var title = doc['title']?.toString() ?? 'Sin nombre';
+    // La extensión ya se ve en el ícono: el nombre se muestra sin ".pdf" / ".docx"
+    if (title.toLowerCase().endsWith('.$ext') && title.length > ext.length + 1) {
+      title = title.substring(0, title.length - ext.length - 1);
+    }
     return _DocInfo(
-      title: doc['title']?.toString() ?? 'Sin nombre',
+      title: title,
       ext: meta['extension']?.toString() ?? 'pdf',
       status: _visibleStatus(doc['status']?.toString() ?? 'pending', meta),
       category: docCategoryOf(meta),
@@ -751,15 +1136,27 @@ Widget _typeBox(_DocInfo info) => BSInitialBox(
 
 // ── Encabezado de tabla (web) ──────────────────────────────────────────────
 class _TableHeader extends StatelessWidget {
-  const _TableHeader();
+  final bool allSelected, someSelected;
+  final VoidCallback onToggleAll;
+  const _TableHeader({required this.allSelected, required this.someSelected, required this.onToggleAll});
 
   @override
   Widget build(BuildContext context) {
     final s = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Container(
-      padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
+      padding: const EdgeInsets.fromLTRB(10, 10, 22, 10),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: Row(children: [
+        SizedBox(
+          width: 44,
+          child: Checkbox(
+            value: allSelected ? true : (someSelected ? null : false),
+            tristate: true,
+            onChanged: (_) => onToggleAll(),
+            activeColor: AppTheme.primary,
+            side: BorderSide(color: AppTheme.hint),
+          ),
+        ),
         Expanded(flex: 5, child: Text('DOCUMENTO', style: s)),
         Expanded(flex: 2, child: Text('CATEGORÍA', style: s)),
         Expanded(flex: 2, child: Text('TAMAÑO', style: s)),
@@ -775,8 +1172,9 @@ class _TableHeader extends StatelessWidget {
 class _DocRow extends StatelessWidget {
   final _DocInfo info;
   final Widget actions;
-  final VoidCallback onTap;
-  const _DocRow({required this.info, required this.actions, required this.onTap});
+  final VoidCallback onTap, onSelect;
+  final bool selected;
+  const _DocRow({required this.info, required this.actions, required this.onTap, required this.onSelect, this.selected = false});
 
   @override
   Widget build(BuildContext context) {
@@ -785,8 +1183,17 @@ class _DocRow extends StatelessWidget {
       onTap: onTap,
       hoverColor: BSColors.selected.withOpacity(0.7),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        padding: const EdgeInsets.fromLTRB(10, 14, 22, 14),
         child: Row(children: [
+          SizedBox(
+            width: 44,
+            child: Checkbox(
+              value: selected,
+              onChanged: (_) => onSelect(),
+              activeColor: AppTheme.primary,
+              side: BorderSide(color: AppTheme.hint),
+            ),
+          ),
           Expanded(
             flex: 5,
             child: Row(children: [
@@ -826,9 +1233,9 @@ class _DocRow extends StatelessWidget {
 class _DocTile extends StatelessWidget {
   final _DocInfo info;
   final Widget menu;
-  final bool isSigning;
-  final VoidCallback onTap, onSign, onSend, onOpen;
-  const _DocTile({required this.info, required this.menu, required this.isSigning, required this.onTap, required this.onSign, required this.onSend, required this.onOpen});
+  final bool isSigning, selected, selecting;
+  final VoidCallback onTap, onSign, onSend, onOpen, onLongPress;
+  const _DocTile({required this.info, required this.menu, required this.isSigning, required this.onTap, required this.onSign, required this.onSend, required this.onOpen, required this.onLongPress, this.selected = false, this.selecting = false});
 
   @override
   Widget build(BuildContext context) {
@@ -878,11 +1285,24 @@ class _DocTile extends StatelessWidget {
         );
     return InkWell(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 4, 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _typeBox(info),
+            // En modo selección el ícono del tipo se vuelve una casilla
+            selecting
+                ? Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: selected ? AppTheme.primary : AppTheme.card,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: selected ? AppTheme.primary : AppTheme.border, width: 1.5),
+                    ),
+                    child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 22) : null,
+                  )
+                : _typeBox(info),
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -893,9 +1313,9 @@ class _DocTile extends StatelessWidget {
                     style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
-            menu,
+            if (!selecting) menu else const SizedBox(width: 10),
           ]),
-          Padding(
+          if (!selecting) Padding(
             padding: const EdgeInsets.only(right: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 10),
