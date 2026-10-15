@@ -23,52 +23,64 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic> _user = {};
   bool _isLoading = true;
+  int _section = 0;
+
+  // Secciones del perfil (como una página de configuración)
+  static const _sections = [
+    (Icons.person_outline_rounded, 'Datos personales', 'Nombre, teléfono y datos de la cuenta'),
+    (Icons.lock_outline_rounded, 'Seguridad', 'Contraseña y recomendaciones'),
+    (Icons.key_outlined, 'Llaves de firma', 'Tu identidad criptográfica'),
+    (Icons.draw_outlined, 'Firma manuscrita', 'La imagen que se estampa al firmar'),
+    (Icons.manage_accounts_outlined, 'Cuenta', 'Eliminar la cuenta'),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) setState(() {});
-    });
     _loadProfile();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadProfile() async {
-    setState(() => _isLoading = true);
+    setState(() => _isLoading = _user.isEmpty);
     final res = await ProfileService.getProfile();
     if (!mounted) return;
-    if (res.containsKey('user')) {
-      setState(() => _user = res['user']);
-    }
-    setState(() => _isLoading = false);
+    setState(() {
+      if (res.containsKey('user')) _user = Map<String, dynamic>.from(res['user']);
+      _isLoading = false;
+    });
   }
+
+  Widget _content() => switch (_section) {
+        0 => _InfoTab(key: const ValueKey('info'), user: _user, onUpdated: _loadProfile),
+        1 => _SecurityTab(key: const ValueKey('sec'), user: _user),
+        2 => const _KeysSection(),
+        3 => const _SignatureTab(),
+        _ => _AccountSection(user: _user),
+      };
 
   @override
   Widget build(BuildContext context) {
-    final isWeb = MediaQuery.of(context).size.width > 600;
+    final w = MediaQuery.of(context).size.width;
+    final isWeb = w > 600;
+    final wide = w > 1050;
     final pad = isWeb ? 28.0 : 16.0;
 
     if (_isLoading) {
-      return Container(
-        color: BSColors.page,
-        child: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-      );
+      return Container(color: BSColors.page, child: const Center(child: CircularProgressIndicator(color: AppTheme.primary)));
     }
 
-    final stats = (_user['stats'] as Map<String, dynamic>?) ?? {};
-    final idx = _tabController.index;
+    final header = _ProfileCard(user: _user, isWeb: isWeb, onAvatarUpdated: _loadProfile);
+    final sectionTitle = Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(_sections[_section].$2, style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(_sections[_section].$3, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      ]),
+    );
 
     return Container(
       color: BSColors.page,
@@ -77,60 +89,130 @@ class _ProfileScreenState extends State<ProfileScreen>
         onRefresh: _loadProfile,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(pad, 20, pad, 28),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const BSPageHeader(
-              breadcrumb: ['Inicio', 'Mi perfil'],
-              title: 'Mi perfil',
-              subtitle: 'Tus datos, la seguridad de tu cuenta y tus llaves de firma.',
-            ),
+          padding: EdgeInsets.fromLTRB(pad, 20, pad, isWeb ? 28 : 96),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            if (isWeb) ...[
+              const BSPageHeader(
+                breadcrumb: ['Inicio', 'Mi perfil'],
+                title: 'Mi perfil',
+                subtitle: 'Administra tus datos, la seguridad de tu cuenta y tu firma.',
+              ),
+              const SizedBox(height: 20),
+            ],
+            header,
             const SizedBox(height: 20),
+            if (wide)
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                SizedBox(
+                  width: 260,
+                  child: _SectionNav(sections: _sections, selected: _section, onSelect: (i) => setState(() => _section = i)),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sectionTitle, _content()]),
+                ),
+              ])
+            else ...[
+              _SectionChips(sections: _sections, selected: _section, onSelect: (i) => setState(() => _section = i)),
+              const SizedBox(height: 16),
+              sectionTitle,
+              _content(),
+            ],
+          ]),
+        ),
+      ),
+    );
+  }
+}
 
-            _ProfileCard(user: _user, isWeb: isWeb, onAvatarUpdated: _loadProfile),
-            const SizedBox(height: 12),
+/// Menú lateral de secciones (escritorio)
+class _SectionNav extends StatelessWidget {
+  final List<(IconData, String, String)> sections;
+  final int selected;
+  final ValueChanged<int> onSelect;
+  const _SectionNav({required this.sections, required this.selected, required this.onSelect});
 
-            BSKpiRow(items: [
-              BSKpiCard(label: 'Documentos', value: '${stats['total_docs'] ?? 0}', caption: 'Subidos', color: AppTheme.primary, icon: Icons.folder_copy_outlined),
-              BSKpiCard(label: 'Firmados', value: '${stats['signed_docs'] ?? 0}', caption: 'Con registro en blockchain', color: AppTheme.featureCyan, icon: Icons.draw_outlined),
-              BSKpiCard(label: 'Verificados', value: '${stats['verified_docs'] ?? 0}', caption: 'Integridad comprobada', color: BSColors.success, icon: Icons.verified_outlined),
-              BSKpiCard(label: 'Almacenamiento', value: '${stats['total_size_mb'] ?? 0}'.replaceAll('.', ','), caption: 'MB usados', color: BSColors.warning, icon: Icons.cloud_outlined),
-            ]),
-            const SizedBox(height: 20),
-
-            // Pestañas con subrayado
-            Container(
-              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                padding: EdgeInsets.zero,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 18),
-                indicatorColor: AppTheme.primary,
-                indicatorWeight: 3,
-                labelColor: AppTheme.primary,
-                unselectedLabelColor: AppTheme.hint,
-                dividerColor: Colors.transparent,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-                unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
-                tabs: const [
-                  Tab(text: 'Datos personales'),
-                  Tab(text: 'Seguridad'),
-                  Tab(text: 'Firma manuscrita'),
-                ],
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(children: [
+        for (var i = 0; i < sections.length; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Material(
+              color: i == selected ? BSColors.selected : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                onTap: () => onSelect(i),
+                borderRadius: BorderRadius.circular(10),
+                hoverColor: BSColors.page,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                  child: Row(children: [
+                    Icon(sections[i].$1, size: 20, color: i == selected ? AppTheme.primary : (i == sections.length - 1 ? BSColors.danger : AppTheme.hint)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(sections[i].$2,
+                          style: TextStyle(
+                            color: i == selected ? AppTheme.primary : AppTheme.text,
+                            fontSize: 14,
+                            fontWeight: i == selected ? FontWeight.w800 : FontWeight.w500,
+                          )),
+                    ),
+                    if (i == selected) const Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.primary),
+                  ]),
+                ),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // Contenido de la pestaña seleccionada
-            if (idx == 0) _InfoTab(user: _user, onUpdated: _loadProfile),
-            if (idx == 1) _SecurityTab(user: _user),
-            if (idx == 2) const _SignatureTab(),
-          ],
           ),
-        ),
+      ]),
+    );
+  }
+}
+
+/// Secciones como fichas desplazables (celular y tableta)
+class _SectionChips extends StatelessWidget {
+  final List<(IconData, String, String)> sections;
+  final int selected;
+  final ValueChanged<int> onSelect;
+  const _SectionChips({required this.sections, required this.selected, required this.onSelect});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: sections.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final sel = i == selected;
+          return InkWell(
+            onTap: () => onSelect(i),
+            borderRadius: BorderRadius.circular(20),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: sel ? AppTheme.primary : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: sel ? AppTheme.primary : AppTheme.border),
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Icon(sections[i].$1, size: 16, color: sel ? Colors.white : AppTheme.hint),
+                const SizedBox(width: 6),
+                Text(sections[i].$2, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+          );
+        },
       ),
     );
   }
@@ -169,12 +251,35 @@ class _ProfileCard extends StatelessWidget {
     final email = user['email']?.toString() ?? '';
     final isVerified = user['is_email_verified'] == true;
     final isGoogle = user['google_id'] != null;
+    final stats = (user['stats'] as Map?) ?? {};
+    final created = DateTime.tryParse('${user['created_at'] ?? ''}')?.toLocal();
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
     final pills = Wrap(spacing: 8, runSpacing: 6, alignment: isWeb ? WrapAlignment.start : WrapAlignment.center, children: [
       isVerified
           ? const BSPill(label: 'Correo verificado', color: BSColors.success)
           : const BSPill(label: 'Correo sin verificar', color: BSColors.warning),
-      BSPill(label: isGoogle ? 'Cuenta Google' : 'Cuenta con contraseña', color: isGoogle ? AppTheme.primary : BSColors.neutral),
+      BSPill(label: isGoogle ? 'Cuenta Google' : 'Cuenta con contraseña', color: isGoogle ? AppTheme.primary : BSColors.neutral, dot: false),
+    ]);
+
+    // Resumen de uso en una sola línea (sin tarjetas grandes)
+    Widget stat(String v, String l) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Column(children: [
+            Text(v, style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 2),
+            Text(l, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+          ]),
+        );
+    final divider = Container(width: 1, height: 30, color: AppTheme.border);
+    final statsRow = Row(mainAxisSize: MainAxisSize.min, children: [
+      stat('${stats['total_docs'] ?? 0}', 'Documentos'),
+      divider,
+      stat('${stats['signed_docs'] ?? 0}', 'Firmados'),
+      divider,
+      stat('${stats['verified_docs'] ?? 0}', 'Verificados'),
+      divider,
+      stat('${stats['total_size_mb'] ?? 0}'.replaceAll('.', ','), 'MB usados'),
     ]);
 
     final info = Column(
@@ -183,60 +288,53 @@ class _ProfileCard extends StatelessWidget {
         Text(name, textAlign: isWeb ? TextAlign.start : TextAlign.center,
             style: const TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
-        Text(email, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+        Text(
+          [email, if (created != null) 'miembro desde ${meses[created.month - 1]} de ${created.year}'].join(' · '),
+          textAlign: isWeb ? TextAlign.start : TextAlign.center,
+          style: const TextStyle(color: AppTheme.hint, fontSize: 13),
+        ),
         const SizedBox(height: 10),
         pills,
       ],
     );
 
     final avatar = _AvatarWidget(avatarUrl: avatarUrl, name: name, onTap: () => _pickAvatar(context));
-    // Aro blanco alrededor de la foto, para que resalte sobre la banda azul
-    final ringed = Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: AppTheme.cardShadow),
-      child: avatar,
-    );
-    const lift = 44.0; // cuánto sube la foto sobre la banda
 
     return Container(
+      padding: EdgeInsets.all(isWeb ? 22 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.border),
         boxShadow: AppTheme.cardShadow,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        // Banda azul institucional
-        Container(
-          height: isWeb ? 96 : 84,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(isWeb ? 24 : 16, 0, isWeb ? 24 : 16, 20),
-          child: isWeb
-              ? Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  SizedBox(
-                    width: 88,
-                    height: 88 - lift,
-                    child: Stack(clipBehavior: Clip.none, children: [Positioned(top: -lift, left: 0, child: ringed)]),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(child: Padding(padding: const EdgeInsets.only(top: 14), child: info)),
-                  BSOutlineButton(label: 'Cambiar foto', icon: Icons.photo_camera_outlined, onPressed: () => _pickAvatar(context)),
-                ])
-              : Column(children: [
-                  SizedBox(
-                    height: 88 - lift,
-                    child: Stack(clipBehavior: Clip.none, alignment: Alignment.topCenter, children: [Positioned(top: -lift, child: ringed)]),
-                  ),
-                  const SizedBox(height: 10),
-                  info,
-                ]),
-        ),
-      ]),
+      child: isWeb
+          ? LayoutBuilder(builder: (context, c) {
+              final top = Row(children: [
+                avatar,
+                const SizedBox(width: 20),
+                Expanded(child: info),
+                if (c.maxWidth > 900) ...[statsRow, const SizedBox(width: 16)],
+                BSOutlineButton(label: 'Cambiar foto', icon: Icons.photo_camera_outlined, onPressed: () => _pickAvatar(context)),
+              ]);
+              if (c.maxWidth > 900) return top;
+              return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                top,
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: AppTheme.border),
+                const SizedBox(height: 14),
+                Center(child: statsRow),
+              ]);
+            })
+          : Column(children: [
+              avatar,
+              const SizedBox(height: 12),
+              info,
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: AppTheme.border),
+              const SizedBox(height: 14),
+              FittedBox(fit: BoxFit.scaleDown, child: statsRow),
+            ]),
     );
   }
 }
@@ -300,7 +398,7 @@ class _TabBody extends StatelessWidget {
 class _InfoTab extends StatefulWidget {
   final Map<String, dynamic> user;
   final VoidCallback onUpdated;
-  const _InfoTab({required this.user, required this.onUpdated});
+  const _InfoTab({super.key, required this.user, required this.onUpdated});
 
   @override
   State<_InfoTab> createState() => _InfoTabState();
@@ -388,7 +486,7 @@ class _InfoTabState extends State<_InfoTab> {
 // ─────────────────────────────────────────
 class _SecurityTab extends StatefulWidget {
   final Map<String, dynamic> user;
-  const _SecurityTab({required this.user});
+  const _SecurityTab({super.key, required this.user});
 
   @override
   State<_SecurityTab> createState() => _SecurityTabState();
@@ -475,28 +573,6 @@ class _SecurityTabState extends State<_SecurityTab> {
     } finally { if (mounted) setState(() => _isLoading = false); }
   }
 
-  Future<void> _deleteAccount() async {
-    final confirm = await SweetAlert.confirm(
-      context,
-      type: SweetAlertType.warning,
-      danger: true,
-      title: '¿Eliminar tu cuenta?',
-      text: 'Esta acción es permanente. Se eliminarán todos tus documentos y datos.',
-      confirmText: 'Sí, eliminar cuenta',
-    );
-    if (!confirm || !mounted) return;
-    final res = await ProfileService.deleteAccount();
-    if (!mounted) return;
-    if (res.containsKey('error')) {
-      await SweetAlert.error(context, title: 'No se pudo eliminar', text: res['error'].toString());
-    } else {
-      await AuthService.logout();
-      if (!mounted) return;
-      await SweetAlert.success(context, title: 'Cuenta eliminada', text: 'Lamentamos verte partir.', autoClose: const Duration(seconds: 2));
-      if (mounted) Navigator.pushReplacementNamed(context, '/');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isGoogle = widget.user['google_id'] != null;
@@ -525,8 +601,6 @@ class _SecurityTabState extends State<_SecurityTab> {
           text: 'La contraseña se gestiona desde tu cuenta de Google.',
         ),
     ], right: [
-      const _KeysCard(),
-      const SizedBox(height: 16),
       const BSCard(
         title: 'Recomendaciones de seguridad',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -536,20 +610,76 @@ class _SecurityTabState extends State<_SecurityTab> {
           _Tip(icon: Icons.logout_rounded, text: 'Cierra sesión al usar equipos compartidos.'),
         ]),
       ),
-      const SizedBox(height: 16),
-      BSCard(
-        title: 'Zona de peligro',
-        borderColor: BSColors.danger.withOpacity(0.35),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Eliminar cuenta', style: TextStyle(color: BSColors.danger, fontWeight: FontWeight.w700, fontSize: 14)),
-          const SizedBox(height: 4),
-          const Text('Se eliminarán permanentemente tu cuenta y todos tus documentos. Las firmas ya registradas en blockchain no se pueden borrar.',
-              style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
-          const SizedBox(height: 14),
-          BSOutlineButton(label: 'Eliminar mi cuenta', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: _deleteAccount),
-        ]),
-      ),
     ]);
+  }
+}
+
+// ─────────────────────────────────────────
+// LLAVES DE FIRMA
+// ─────────────────────────────────────────
+class _KeysSection extends StatelessWidget {
+  const _KeysSection();
+  @override
+  Widget build(BuildContext context) => const _TabBody(left: [
+        _KeysCard(),
+      ], right: [
+        BSCard(
+          title: '¿Para qué sirven?',
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            _Tip(icon: Icons.key_rounded, text: 'Tu llave privada firma cada documento; nunca sale del servidor y se guarda cifrada.'),
+            _Tip(icon: Icons.verified_user_outlined, text: 'Tu llave pública permite comprobar que la firma es tuya.'),
+            _Tip(icon: Icons.fingerprint_rounded, text: 'La huella identifica tu llave en los comprobantes y en la verificación.'),
+          ]),
+        ),
+      ]);
+}
+
+// ─────────────────────────────────────────
+// CUENTA (eliminar)
+// ─────────────────────────────────────────
+class _AccountSection extends StatefulWidget {
+  final Map<String, dynamic> user;
+  const _AccountSection({required this.user});
+  @override
+  State<_AccountSection> createState() => _AccountSectionState();
+}
+
+class _AccountSectionState extends State<_AccountSection> {
+  Future<void> _deleteAccount() async {
+    final confirm = await SweetAlert.confirm(
+      context,
+      type: SweetAlertType.warning,
+      danger: true,
+      title: '¿Eliminar tu cuenta?',
+      text: 'Esta acción es permanente. Se eliminarán todos tus documentos y datos.',
+      confirmText: 'Sí, eliminar cuenta',
+    );
+    if (!confirm || !mounted) return;
+    final res = await ProfileService.deleteAccount();
+    if (!mounted) return;
+    if (res.containsKey('error')) {
+      await SweetAlert.error(context, title: 'No se pudo eliminar', text: res['error'].toString());
+    } else {
+      await AuthService.logout();
+      if (!mounted) return;
+      await SweetAlert.success(context, title: 'Cuenta eliminada', text: 'Lamentamos verte partir.', autoClose: const Duration(seconds: 2));
+      if (mounted) Navigator.pushReplacementNamed(context, '/');
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return BSCard(
+      title: 'Eliminar cuenta',
+      borderColor: BSColors.danger.withOpacity(0.35),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('Se eliminarán permanentemente tu cuenta y todos tus documentos. Las firmas ya registradas en blockchain no se pueden borrar, porque la cadena es inmutable.',
+            style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5)),
+        const SizedBox(height: 16),
+        BSOutlineButton(label: 'Eliminar mi cuenta', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: _deleteAccount),
+      ]),
+    );
   }
 }
 

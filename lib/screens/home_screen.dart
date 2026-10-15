@@ -1105,11 +1105,11 @@ class _DashboardContent extends StatelessWidget {
         icon: Icons.timer_outlined,
       ),
       BSKpiCard(
-        label: 'Analizados con IA',
+        label: 'Documentos analizados',
         value: v('${n('analyzed_pct')} %'),
         caption: n('ai_errors') > 0 ? '${n('ai_errors')} con error' : '${n('analyzed')} de ${n('total')} documentos',
         color: BSColors.success,
-        icon: Icons.auto_awesome_outlined,
+        icon: Icons.insights_outlined,
       ),
       BSKpiCard(
         label: 'Mensajes sin leer',
@@ -1258,7 +1258,7 @@ class _HeroCard extends StatelessWidget {
     final first = bsPrimerNombre(userName);
     final steps = [
       ('Subidos', total, Icons.upload_file_rounded, null as String?, 'Subidos'),
-      ('Analizados con IA', n('analyzed'), Icons.auto_awesome_rounded, null, 'Con IA'),
+      ('Analizados', n('analyzed'), Icons.manage_search_rounded, null, 'Analizados'),
       ('Firmados en blockchain', firmados, Icons.draw_rounded, 'signed', 'Firmados'),
       ('Verificados', n('verified'), Icons.verified_rounded, 'verified', 'Verificados'),
     ];
@@ -2239,13 +2239,13 @@ class _ActivityCard extends StatelessWidget {
       final up = at('uploaded_at') ?? DateTime.tryParse(d['created_at']?.toString() ?? '')?.toLocal();
       if (up != null) events.add((up, 'Documento subido', title, AppTheme.primary));
       final ai = at('ai_analyzed_at');
-      if (ai != null) events.add((ai, 'Análisis con IA completado', '$title · ${_categoryOf(m)}', AppTheme.primary));
+      if (ai != null) events.add((ai, 'Análisis completado', '$title · ${_categoryOf(m)}', AppTheme.primary));
       final edited = at('last_edited_at');
       if (edited != null) events.add((edited, 'Documento editado', title, AppTheme.featureCyan));
       final shared = at('last_shared_at');
       if (shared != null) events.add((shared, 'Enviado por correo', title, AppTheme.primary));
       final aiErr = at('ai_error_at');
-      if (aiErr != null && (ai == null || aiErr.isAfter(ai))) events.add((aiErr, 'Análisis con IA falló', title, BSColors.danger));
+      if (aiErr != null && (ai == null || aiErr.isAfter(ai))) events.add((aiErr, 'El análisis falló', title, BSColors.danger));
       final sent = at('blockchain_sent_at');
       if (sent != null && ['sending', 'confirming'].contains(m['blockchain_status'])) {
         events.add((sent, 'Firma enviada a Sepolia', title, BSColors.warning));

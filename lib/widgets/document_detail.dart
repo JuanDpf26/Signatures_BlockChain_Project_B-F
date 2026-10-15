@@ -321,7 +321,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         Row(children: [
           if (d.canSign && widget.onSend != null)
             Expanded(child: _ActionTile(icon: Icons.send_outlined, label: 'Enviar', onTap: widget.onSend!)),
-          Expanded(child: _ActionTile(icon: Icons.auto_awesome_rounded, label: 'Analizar IA', onTap: widget.onReanalyze)),
+          Expanded(child: _ActionTile(icon: Icons.manage_search_rounded, label: 'Analizar', onTap: widget.onReanalyze)),
           Expanded(child: _ActionTile(icon: Icons.edit_outlined, label: 'Editar', onTap: () => _tabs.animateTo(4))),
           Expanded(child: _moreMenu(child: const _ActionTile(icon: Icons.more_horiz_rounded, label: 'Más'))),
         ]),
@@ -336,7 +336,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         Expanded(
           child: Wrap(spacing: 4, runSpacing: 4, children: [
             if (d.canSign && widget.onSend != null) _GhostButton(icon: Icons.send_outlined, label: 'Enviar', onTap: widget.onSend!),
-            _GhostButton(icon: Icons.auto_awesome_rounded, label: 'Analizar con IA', onTap: widget.onReanalyze),
+            _GhostButton(icon: Icons.manage_search_rounded, label: 'Analizar contenido', onTap: widget.onReanalyze),
             _GhostButton(icon: Icons.edit_outlined, label: 'Editar', onTap: () => _tabs.animateTo(4)),
           ]),
         ),
@@ -372,7 +372,6 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
               Wrap(spacing: 6, runSpacing: 6, children: [
                 BSPill.docStatus(d.status),
                 if (d.confidentiality != null) BSPill(label: d.confidentiality!, color: confidentialityColor(d.confidentiality), dot: false),
-                if (d.analyzed) const BSPill(label: 'Analizado con IA', color: AppTheme.primary),
               ]),
             ]),
           ),
@@ -406,7 +405,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           tabs: const [
             _TabLabel(Icons.dashboard_outlined, 'Resumen'),
             _TabLabel(Icons.verified_user_outlined, 'Firma y registro'),
-            _TabLabel(Icons.auto_awesome_outlined, 'Análisis IA'),
+            _TabLabel(Icons.insights_outlined, 'Análisis'),
             _TabLabel(Icons.description_outlined, 'Archivo'),
             _TabLabel(Icons.edit_outlined, 'Editar'),
           ],
@@ -570,8 +569,8 @@ class _NextStepCard extends StatelessWidget {
     final (IconData icon, Color color, String title, String text, String? action, VoidCallback? onTap) = switch (true) {
       _ when d.revoked => (Icons.gpp_bad_rounded, BSColors.danger, 'La firma fue revocada', 'El registro sigue en la blockchain, pero ya no es válido.', 'Ver registro', onOpenRecord),
       _ when d.inChain => (Icons.hourglass_top_rounded, BSColors.warning, 'Registrándose en blockchain', 'La red está confirmando la firma; no tienes que hacer nada.', 'Ver registro', onOpenRecord),
-      _ when !d.analyzed && d.aiError != null => (Icons.error_outline_rounded, BSColors.danger, 'El análisis con IA falló', 'Vuelve a intentarlo para obtener resumen, categoría y etiquetas.', 'Reintentar', onReanalyze),
-      _ when !d.analyzed => (Icons.auto_awesome_rounded, AppTheme.primary, 'Siguiente paso: analizar con IA', 'La IA propone descripción, categoría, etiquetas y confidencialidad.', 'Analizar', onReanalyze),
+      _ when !d.analyzed && d.aiError != null => (Icons.error_outline_rounded, BSColors.danger, 'No se pudo analizar el contenido', 'Vuelve a intentarlo para obtener resumen, categoría y etiquetas.', 'Reintentar', onReanalyze),
+      _ when !d.analyzed => (Icons.manage_search_rounded, AppTheme.primary, 'Siguiente paso: analizar el contenido', 'Se obtienen descripción, resumen, categoría, etiquetas y nivel de confidencialidad.', 'Analizar', onReanalyze),
       _ when d.canSign => (Icons.draw_rounded, BSColors.success, 'Siguiente paso: firmar', 'Tu firma y la huella del archivo quedarán registradas en Ethereum.', isSigning ? 'Firmando…' : 'Firmar ahora', isSigning ? null : onSign),
       _ => (Icons.verified_rounded, BSColors.success, 'Documento firmado y registrado', 'Ya puedes enviarlo o pedir que lo revisen; cualquiera con cuenta puede verificarlo.', onSend != null ? 'Enviar' : 'Ver registro', onSend ?? onOpenRecord),
     };
@@ -657,7 +656,7 @@ class DocFichaCard extends StatelessWidget {
   }
 }
 
-/// Análisis con IA (completo o compacto)
+/// Análisis del contenido (completo o compacto), con estilo de informe
 class DocAiCard extends StatelessWidget {
   final DocView d;
   final bool compact;
@@ -665,17 +664,19 @@ class DocAiCard extends StatelessWidget {
   final VoidCallback? onMore;
   const DocAiCard({super.key, required this.d, this.compact = false, this.onReanalyze, this.onMore});
 
+  static const _title = 'Análisis del contenido';
+
   @override
   Widget build(BuildContext context) {
     // Error
     if (!d.analyzed && d.aiError != null) {
       return BSCard(
-        title: 'Análisis con IA',
+        title: _title,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           BSInfoBanner(title: 'No se pudo analizar el documento', text: d.aiError, color: BSColors.danger, icon: Icons.error_outline_rounded),
           if (onReanalyze != null) ...[
             const SizedBox(height: 14),
-            BSPrimaryButton(label: 'Intentar de nuevo', icon: Icons.refresh_rounded, onPressed: onReanalyze),
+            BSOutlineButton(label: 'Intentar de nuevo', icon: Icons.refresh_rounded, onPressed: onReanalyze),
           ],
         ]),
       );
@@ -684,37 +685,35 @@ class DocAiCard extends StatelessWidget {
     // Pendiente
     if (!d.analyzed) {
       return BSCard(
-        title: 'Análisis con IA',
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
-                child: const Icon(Icons.auto_awesome_outlined, color: AppTheme.primary, size: 26),
-              ),
-              const SizedBox(height: 12),
-              const Text('Análisis pendiente', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
-              const SizedBox(height: 4),
-              const Text('La IA genera una descripción, un resumen, etiquetas y el nivel de confidencialidad.',
-                  textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
-              if (onReanalyze != null) ...[
-                const SizedBox(height: 14),
-                BSPrimaryButton(label: 'Analizar ahora', icon: Icons.auto_awesome_rounded, onPressed: onReanalyze),
-              ],
+        title: _title,
+        child: Row(children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+            child: const Icon(Icons.manage_search_rounded, color: AppTheme.hint, size: 24),
+          ),
+          const SizedBox(width: 14),
+          const Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text('Aún no se ha analizado', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14.5)),
+              SizedBox(height: 2),
+              Text('El análisis obtiene una descripción, un resumen, la categoría, etiquetas y el nivel de confidencialidad.',
+                  style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
             ]),
           ),
-        ),
+          if (onReanalyze != null) ...[
+            const SizedBox(width: 12),
+            BSOutlineButton(label: 'Analizar', icon: Icons.manage_search_rounded, onPressed: onReanalyze),
+          ],
+        ]),
       );
     }
 
     final conf = d.confidentiality;
-    final confColor = confidentialityColor(conf);
 
     return BSCard(
-      title: 'Análisis con IA',
+      title: _title,
       trailing: compact && onMore != null
           ? InkWell(
               onTap: onMore,
@@ -724,45 +723,35 @@ class DocAiCard extends StatelessWidget {
                 child: Text('Ver completo →', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
               ),
             )
-          : const BSPill(label: 'IA', color: AppTheme.primary),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Descripción
-        _AiBlock(icon: Icons.description_outlined, title: 'Descripción', text: d.aiDescription!),
-        if (!compact && d.aiSummary != null) ...[
-          const SizedBox(height: 12),
-          _AiBlock(icon: Icons.summarize_outlined, title: 'Resumen', text: d.aiSummary!),
-        ],
-        const SizedBox(height: 14),
-
-        // Categoría y confidencialidad
+          : null,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        // Clasificación: dos datos en una fila
         Row(children: [
-          Expanded(child: _StatTile(label: 'Categoría', value: d.category, color: AppTheme.primary, icon: Icons.folder_outlined)),
+          Expanded(child: _StatTile(label: 'Categoría', value: d.category, color: AppTheme.text, icon: Icons.folder_outlined)),
           const SizedBox(width: 10),
-          Expanded(child: _StatTile(label: 'Confidencialidad', value: conf ?? '—', color: confColor, icon: Icons.shield_outlined)),
+          Expanded(child: _StatTile(label: 'Confidencialidad', value: conf ?? 'Sin definir', color: confidentialityColor(conf), icon: Icons.shield_outlined, dot: true)),
         ]),
-
-        // Etiquetas
+        const SizedBox(height: 16),
+        _AiBlock(icon: Icons.notes_rounded, title: 'Descripción', text: d.aiDescription!),
+        if (!compact && d.aiSummary != null) ...[
+          const SizedBox(height: 14),
+          _AiBlock(icon: Icons.subject_rounded, title: 'Resumen', text: d.aiSummary!),
+        ],
         if (d.aiTags.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Text('Etiquetas', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
+          const Text('PALABRAS CLAVE', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: d.aiTags.map((t) => _TagChip(t)).toList()),
         ],
-
         if (!compact) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           const Divider(color: AppTheme.border, height: 1),
           const SizedBox(height: 10),
-          Row(children: [
-            const Icon(Icons.schedule_rounded, color: AppTheme.hint, size: 14),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                'Analizado ${d.analyzedLabel ?? ''}${d.aiModel != null ? ' · ${d.aiModel}' : ''}',
-                style: const TextStyle(color: AppTheme.hint, fontSize: 11.5),
-              ),
-            ),
-          ]),
+          Text(
+            'Generado automáticamente${d.analyzedLabel != null ? ' el ${d.analyzedLabel}' : ''}${d.aiModel != null ? ' · modelo ${d.aiModel}' : ''}. '
+            'Puedes corregir la categoría, las etiquetas y la confidencialidad en Editar.',
+            style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.4),
+          ),
         ],
       ]),
     );
@@ -1082,7 +1071,7 @@ class _EditTabState extends State<_EditTab> {
           decoration: _dec('Nombre del documento', suffix: _ext).copyWith(counterText: ''),
         ),
         const SizedBox(height: 16),
-        _label('Descripción', 'Tu propia descripción; la de la IA se conserva aparte'),
+        _label('Descripción', 'Tu propia descripción; la automática se conserva aparte'),
         TextField(
           controller: _desc,
           minLines: 3,
@@ -1096,8 +1085,8 @@ class _EditTabState extends State<_EditTab> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () => _desc.text = d.aiDescription!,
-              icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-              label: const Text('Usar la descripción de la IA'),
+              icon: const Icon(Icons.content_copy_rounded, size: 16),
+              label: const Text('Usar la descripción automática'),
               style: TextButton.styleFrom(foregroundColor: AppTheme.primary, minimumSize: const Size(0, 36)),
             ),
           ),
@@ -1155,7 +1144,7 @@ class _EditTabState extends State<_EditTab> {
     final confidentiality = BSCard(
       title: 'Confidencialidad',
       trailing: d.aiConfidentiality != null
-          ? Text('IA sugirió: ${d.aiConfidentiality}', style: const TextStyle(color: AppTheme.hint, fontSize: 12))
+          ? Text('Sugerido: ${d.aiConfidentiality}', style: const TextStyle(color: AppTheme.hint, fontSize: 12))
           : null,
       child: LayoutBuilder(builder: (context, c) {
         final cols = c.maxWidth > 520 ? 4 : 2;
@@ -1213,7 +1202,7 @@ class _EditTabState extends State<_EditTab> {
         ]),
         if (aiSuggest.isNotEmpty) ...[
           const SizedBox(height: 12),
-          const Text('Sugeridas por la IA', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
+          const Text('Sugeridas automáticamente', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
@@ -1410,7 +1399,7 @@ class _FileVersionCard extends StatelessWidget {
         if (d.canReplaceFile && onReplace != null) ...[
           BSOutlineButton(label: 'Subir nueva versión', icon: Icons.upload_file_rounded, onPressed: onReplace),
           const SizedBox(height: 6),
-          const Text('Cambia la huella SHA-256 y se vuelve a analizar con IA. Tus datos editados se conservan.',
+          const Text('Cambia la huella SHA-256 y el contenido se vuelve a analizar. Tus datos editados se conservan.',
               style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
         ] else
           Text(
@@ -1512,24 +1501,11 @@ class _AiBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.12)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(icon, color: AppTheme.primary, size: 15),
-          const SizedBox(width: 6),
-          Text(title, style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
-        ]),
-        const SizedBox(height: 6),
-        SelectableText(text, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.55)),
-      ]),
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title.toUpperCase(), style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+      const SizedBox(height: 6),
+      SelectableText(text, style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.6)),
+    ]);
   }
 }
 
@@ -1537,24 +1513,35 @@ class _StatTile extends StatelessWidget {
   final String label, value;
   final Color color;
   final IconData icon;
-  const _StatTile({required this.label, required this.value, required this.color, required this.icon});
+  final bool dot;
+  const _StatTile({required this.label, required this.value, required this.color, required this.icon, this.dot = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
+        color: BSColors.page,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Row(children: [
-        Icon(icon, color: color, size: 20),
+        Icon(icon, color: AppTheme.hint, size: 18),
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
-            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 14)),
+            const SizedBox(height: 1),
+            Row(children: [
+              if (dot) ...[
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                const SizedBox(width: 6),
+              ],
+              Flexible(
+                child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
+              ),
+            ]),
           ]),
         ),
       ]),
@@ -1571,11 +1558,11 @@ class _TagChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppTheme.primary.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.18)),
+        color: BSColors.page,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppTheme.border),
       ),
-      child: Text('#$text', style: const TextStyle(color: AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w600)),
+      child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1600,10 +1587,10 @@ class DocLifecycleCard extends StatelessWidget {
     final steps = <(String, _Gate, String)>[
       ('Subido', _Gate.done, 'Completado'),
       d.analyzed
-          ? ('Análisis IA', _Gate.done, 'Completado')
+          ? ('Análisis', _Gate.done, 'Completado')
           : d.aiError != null
-              ? ('Análisis IA', _Gate.error, 'Con error')
-              : ('Análisis IA', _Gate.current, 'En curso'),
+              ? ('Análisis', _Gate.error, 'Con error')
+              : ('Análisis', _Gate.current, 'En curso'),
       revoked
           ? ('Firmado', _Gate.error, 'Revocado')
           : signedOk || inChain
@@ -1717,7 +1704,7 @@ class DocIntegrityCard extends StatelessWidget {
       ('Huella digital calculada', d.hash != null),
       ('Metadatos extraídos', m['word_count'] != null || m['pages'] != null),
       ('Texto legible', m['has_text'] == null ? null : m['has_text'] == true),
-      ('Análisis con IA', d.analyzed ? true : (d.aiError != null ? false : null)),
+      ('Análisis del contenido', d.analyzed ? true : (d.aiError != null ? false : null)),
       ('Firma electrónica', d.revoked ? false : (d.signedOk || m['signature_hash'] != null ? true : null)),
       ('Registro en blockchain', d.signedOk ? true : (m['blockchain_status'] == 'failed' ? false : null)),
     ];

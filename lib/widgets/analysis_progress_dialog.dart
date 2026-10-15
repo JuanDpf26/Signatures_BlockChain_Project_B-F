@@ -222,7 +222,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
         setState(() {
           _meta = m;
           _phase = _Phase.failed;
-          _error = m['ai_error']?.toString() ?? 'La IA no respondió';
+          _error = m['ai_error']?.toString() ?? 'El servicio de análisis no respondió';
         });
       } else if (DateTime.now().difference(_started) > const Duration(seconds: 90)) {
         _poll?.cancel();
@@ -252,8 +252,8 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
     if (_s(3) == ChainStepState.done) return 'Analizado con ${_model ?? 'Groq'}';
     if (_s(3) != ChainStepState.active) return 'Un modelo de lenguaje lee el texto y lo clasifica.';
     final stage = switch (_aiStage) {
-      'reading' => 'Preparando el texto para la IA',
-      'thinking' => 'Pensando con ${_model ?? 'Groq'}',
+      'reading' => 'Preparando el texto',
+      'thinking' => 'Procesando con el modelo ${_model ?? 'Groq'}',
       _ => 'En cola',
     };
     return '$stage · ${_aiHints[_hint]}';
@@ -288,7 +288,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
               ].join(' · ').ifEmpty('Sin texto legible (posible escaneo)'),
         extra: [if (_visual >= 2) _MetaReveal(meta: _meta)],
       ),
-      ChainStep('La IA lee el documento', state: _s(3), detail: _visual >= 3 || _phase == _Phase.failed ? _aiDetail : null),
+      ChainStep('Leer y comprender el contenido', state: _s(3), detail: _visual >= 3 || _phase == _Phase.failed ? _aiDetail : null),
       ChainStep(
         'Clasificar, etiquetar y resumir',
         state: _s(4),
@@ -340,7 +340,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
             if (failed) ...[
               const SizedBox(height: 14),
               BSInfoBanner(
-                title: _docId == null ? 'No se pudo subir' : 'La IA no pudo analizarlo',
+                title: _docId == null ? 'No se pudo subir' : 'No se pudo analizar',
                 text: _error,
                 color: BSColors.danger,
                 icon: Icons.error_outline_rounded,
@@ -349,7 +349,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
             if (_phase == _Phase.slow) ...[
               const SizedBox(height: 14),
               const BSInfoBanner(
-                title: 'La IA está tardando',
+                title: 'El análisis está tardando',
                 text: 'Puedes seguir usando la app: te avisaremos cuando termine.',
                 color: BSColors.warning,
                 icon: Icons.schedule_rounded,
@@ -369,7 +369,7 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
             ),
           if (done || failed)
             BSPrimaryButton(
-              label: done ? '¡Genial!' : 'Cerrar',
+              label: done ? 'Listo' : 'Cerrar',
               icon: done ? Icons.check_rounded : Icons.close_rounded,
               color: done ? BSColors.success : null,
               onPressed: () => Navigator.of(context).pop(AnalysisResult(ok: done, docId: _docId)),
@@ -385,19 +385,16 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
     final title = failed
         ? 'No se pudo completar el análisis'
         : done
-            ? '¡Análisis listo!'
+            ? 'Análisis completado'
             : _phase == _Phase.ai
-                ? 'La IA está leyendo tu documento…'
+                ? 'Analizando el contenido…'
                 : _isUpload
                     ? 'Subiendo y preparando…'
                     : 'Preparando el análisis…';
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        gradient: failed
-            ? null
-            : const LinearGradient(colors: [_aiA, _aiB, _aiC], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        color: failed ? BSColors.danger : null,
+        color: failed ? BSColors.danger : (done ? BSColors.success : AppTheme.primary),
       ),
       child: Row(children: [
         Container(
@@ -405,10 +402,13 @@ class _AnalysisProgressPanelState extends State<AnalysisProgressPanel> with Tick
           height: 42,
           decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
           child: done
-              ? const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22)
+              ? const Icon(Icons.task_alt_rounded, color: Colors.white, size: 22)
               : failed
                   ? const Icon(Icons.error_outline_rounded, color: Colors.white, size: 22)
-                  : RotationTransition(turns: _scan, child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22)),
+                  : const Padding(
+                      padding: EdgeInsets.all(11),
+                      child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white),
+                    ),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -655,7 +655,7 @@ class _Scanner extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: [_aiC.withOpacity(0), _aiC.withOpacity(0.22), _aiA.withOpacity(0.55), _aiC.withOpacity(0)],
+                            colors: [_aiC.withOpacity(0), _aiC.withOpacity(0.10), _aiA.withOpacity(0.25), _aiC.withOpacity(0)],
                             stops: const [0, 0.45, 0.5, 1],
                           ),
                         ),
@@ -757,13 +757,13 @@ class _ResultCard extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutBack,
+      curve: Curves.easeOut,
       builder: (_, v, child) => Transform.scale(scale: 0.92 + 0.08 * v, child: Opacity(opacity: v.clamp(0, 1), child: child)),
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(colors: [_aiA.withOpacity(0.07), _aiC.withOpacity(0.07)]),
-          border: Border.all(color: _aiA.withOpacity(0.25)),
+          color: Colors.white,
+          border: Border.all(color: AppTheme.border),
         ),
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -771,13 +771,14 @@ class _ResultCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [_aiA, _aiB]),
-                borderRadius: BorderRadius.circular(20),
+                color: BSColors.page,
+                border: Border.all(color: AppTheme.border),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.folder_special_rounded, size: 15, color: Colors.white),
+                const Icon(Icons.folder_outlined, size: 15, color: AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(cat, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+                Text(cat, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
               ]),
             ),
             if (conf != null)
@@ -785,22 +786,16 @@ class _ResultCard extends StatelessWidget {
           ]),
           if (desc.isNotEmpty) ...[
             const SizedBox(height: 14),
-            _Typewriter(text: desc, style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.5, fontWeight: FontWeight.w600)),
+            Text(desc, style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.5)),
           ],
           if (tags.isNotEmpty) ...[
             const SizedBox(height: 14),
             Wrap(spacing: 6, runSpacing: 6, children: [
               for (var i = 0; i < tags.length; i++)
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 1),
-                  duration: Duration(milliseconds: 500 + i * 160),
-                  curve: Interval((i * 160) / (500 + i * 160), 1, curve: Curves.elasticOut),
-                  builder: (_, v, child) => Transform.scale(scale: v, child: child),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: _aiA.withOpacity(0.3))),
-                    child: Text('#${tags[i]}', style: const TextStyle(color: _aiA, fontSize: 12, fontWeight: FontWeight.w700)),
-                  ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
+                  child: Text(tags[i], style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
                 ),
             ]),
           ],

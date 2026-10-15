@@ -8,6 +8,8 @@ import '../widgets/chain_steps.dart';
 import '../widgets/sweet_alert.dart';
 import 'document_viewer_screen.dart';
 import 'verify_screen.dart';
+import '../services/document_service.dart';
+import '../widgets/send_document_dialog.dart';
 
 /// Bandeja de entrada al estilo de un cliente de correo: carpetas, mensajes
 /// agrupados por fecha, panel de lectura y acciones (responder, reenviar,
@@ -113,6 +115,19 @@ class _InboxScreenState extends State<InboxScreen> {
     widget.onChanged?.call();
   }
 
+  /// Nuevo envío: elegir un documento y abrir la ventana de envío
+  Future<void> _compose() async {
+    final doc = await showDialog<Map<String, dynamic>>(context: context, builder: (_) => const _PickDocumentDialog());
+    if (doc == null || !mounted) return;
+    final sent = await showSendDocumentDialog(context, doc);
+    if (!sent || !mounted) return;
+    setState(() {
+      _folder = _Folder.sent;
+      _focus = 0;
+    });
+    _load();
+  }
+
   Future<void> _refreshSummary() async {
     final s = await CollabService.inboxSummary();
     if (mounted && s['error'] == null) setState(() => _summary = s);
@@ -211,6 +226,7 @@ class _InboxScreenState extends State<InboxScreen> {
       unread: unread,
       flagged: flagged,
       onFolder: _setFolder,
+      onCompose: w > 600 ? null : _compose,
     );
 
     return Container(
@@ -227,7 +243,10 @@ class _InboxScreenState extends State<InboxScreen> {
                 if (unread > 0) BSPill(label: '$unread sin leer', color: AppTheme.primary),
                 if (pending > 0) BSPill(label: '$pending por revisar', color: BSColors.warning),
               ],
-              actions: [BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : () => _load(keepSelection: true))],
+              actions: [
+                BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : () => _load(keepSelection: true)),
+                BSPrimaryButton(label: 'Nuevo envío', icon: Icons.edit_square, onPressed: _compose),
+              ],
             ),
             const SizedBox(height: 16),
           ],
@@ -406,6 +425,7 @@ class _ListPane extends StatelessWidget {
   final bool showFolderChips;
   final int unread, flagged;
   final ValueChanged<_Folder> onFolder;
+  final VoidCallback? onCompose;
 
   const _ListPane({
     required this.folder,
@@ -427,6 +447,7 @@ class _ListPane extends StatelessWidget {
     required this.unread,
     required this.flagged,
     required this.onFolder,
+    this.onCompose,
   });
 
   @override
@@ -489,10 +510,11 @@ class _ListPane extends StatelessWidget {
               ],
             ),
           ),
-        // Buscador
+        // Buscador (y en celular, botón de nuevo envío)
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-          child: SizedBox(
+          child: Row(children: [
+           Expanded(child: SizedBox(
             height: 40,
             child: TextField(
               controller: searchCtrl,
@@ -510,7 +532,26 @@ class _ListPane extends StatelessWidget {
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
               ),
             ),
-          ),
+           )),
+           if (onCompose != null) ...[
+             const SizedBox(width: 8),
+             SizedBox(
+               height: 40,
+               child: ElevatedButton.icon(
+                 onPressed: onCompose,
+                 style: ElevatedButton.styleFrom(
+                   backgroundColor: AppTheme.primary,
+                   foregroundColor: Colors.white,
+                   elevation: 0,
+                   padding: const EdgeInsets.symmetric(horizontal: 12),
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                 ),
+                 icon: const Icon(Icons.edit_square, size: 17),
+                 label: const Text('Nuevo', style: TextStyle(fontWeight: FontWeight.w800)),
+               ),
+             ),
+           ],
+          ]),
         ),
         // Prioritarios / Otros + filtro
         Padding(
@@ -1080,15 +1121,8 @@ class _ReadingState extends State<_Reading> {
   }
 
   Future<void> _respond(bool approve) async {
-    final comment = _comment.text.trim();
-    if (!approve && comment.isEmpty) {
-      await SweetAlert.warning(context, title: 'Falta el motivo', text: 'Escribe por qué rechazas el documento; se lo enviaremos a quien te lo pidió.');
-      return;
-    }
-    if (!approve) {
-      final ok = await SweetAlert.confirm(context, title: '¿Rechazar el documento?', text: 'Quien lo envió recibirá tu comentario por correo.', confirmText: 'Sí, rechazar', danger: true);
-      if (!ok) return;
-    }
+    final comment = await showDialog<String>(context: context, builder: (_) => _RespondDialog(approve: approve));
+    if (comment == null || !mounted) return;
     setState(() => _sending = true);
     final r = await CollabService.respond(widget.id, approve: approve, comment: comment.isEmpty ? null : comment);
     if (!mounted) return;
@@ -1158,6 +1192,8 @@ class _ReadingState extends State<_Reading> {
               _MiniPill(text: 'Equipo ${share['team_name']}', color: AppTheme.primary, icon: Icons.groups_rounded),
           ]),
           const SizedBox(height: 16),
+          if (review && !_isSender) ...[_reviewPrompt(share), const SizedBox(height: 16)],
+          if (review && _isSender && recipients.isNotEmpty) ...[_reviewProgress(recipients), const SizedBox(height: 16)],
           // De / Para / fecha
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1195,7 +1231,6 @@ class _ReadingState extends State<_Reading> {
           const SizedBox(height: 20),
           _DocumentCard(doc: doc),
           const SizedBox(height: 18),
-          if (!_isSender && review) _reviewBox(share),
           if (_isSender) _recipients(recipients),
           if (!widget.standalone || narrow) ...[
             const SizedBox(height: 16),
@@ -1217,7 +1252,8 @@ class _ReadingState extends State<_Reading> {
         child: IconButton(onPressed: widget.onClosed, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
       );
 
-  Widget _reviewBox(Map<String, dynamic> share) {
+  /// Solicitud de revisión: lo primero que se ve, con las dos respuestas a mano
+  Widget _reviewPrompt(Map<String, dynamic> share) {
     final status = share['status']?.toString();
     if (status == 'approved' || status == 'rejected') {
       final ok = status == 'approved';
@@ -1232,36 +1268,70 @@ class _ReadingState extends State<_Reading> {
       );
     }
     final narrow = MediaQuery.of(context).size.width < 600;
-    final buttons = [
-      BSOutlineButton(label: 'Rechazar', icon: Icons.close_rounded, color: BSColors.danger, onPressed: _sending ? null : () => _respond(false)),
-      BSPrimaryButton(label: 'Aprobar', icon: Icons.check_rounded, color: BSColors.success, loading: _sending, onPressed: () => _respond(true)),
-    ];
-    return BSCard(
-      title: '¿Apruebas este documento?',
-      borderColor: BSColors.warning.withOpacity(0.4),
+    final reject = BSOutlineButton(label: 'Rechazar', icon: Icons.close_rounded, color: BSColors.danger, onPressed: _sending ? null : () => _respond(false));
+    final approve = BSPrimaryButton(label: 'Aprobar', icon: Icons.check_rounded, color: BSColors.success, loading: _sending, onPressed: () => _respond(true));
+    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+      Text('Te piden aprobar este documento', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+      SizedBox(height: 2),
+      Text('Revísalo con “Ver documento” y responde. Quien lo envió recibe tu respuesta por correo.',
+          style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
+    ]);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: BSColors.warning.withOpacity(0.07),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: BSColors.warning.withOpacity(0.35)),
+      ),
+      child: narrow
+          ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              text,
+              const SizedBox(height: 12),
+              Row(children: [Expanded(child: reject), const SizedBox(width: 10), Expanded(child: approve)]),
+            ])
+          : Row(children: [
+              const Icon(Icons.fact_check_outlined, color: BSColors.warning, size: 26),
+              const SizedBox(width: 14),
+              Expanded(child: text),
+              const SizedBox(width: 12),
+              reject,
+              const SizedBox(width: 8),
+              approve,
+            ]),
+    );
+  }
+
+  /// Para quien envió: avance de las respuestas
+  Widget _reviewProgress(List<Map> list) {
+    final total = list.length;
+    final ok = list.where((r) => r['status'] == 'approved').length;
+    final no = list.where((r) => r['status'] == 'rejected').length;
+    final pending = total - ok - no;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        const Text('Revísalo y deja tu respuesta. Quien lo envió recibirá un aviso por correo.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _comment,
-          minLines: 2,
-          maxLines: 5,
-          maxLength: 1000,
-          style: const TextStyle(color: AppTheme.text, fontSize: 13.5),
-          decoration: InputDecoration(
-            hintText: 'Comentario (obligatorio si rechazas)',
-            hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+        Row(children: [
+          const Icon(Icons.fact_check_outlined, color: AppTheme.primary, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(pending == 0 ? 'Todos respondieron' : 'Esperando $pending de $total ${total == 1 ? 'respuesta' : 'respuestas'}',
+                style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+          ),
+          Text('$ok aprobado${ok == 1 ? '' : 's'} · $no rechazado${no == 1 ? '' : 's'}', style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+        ]),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 8,
+            child: Row(children: [
+              if (ok > 0) Expanded(flex: ok, child: Container(color: BSColors.success)),
+              if (no > 0) Expanded(flex: no, child: Container(color: BSColors.danger)),
+              if (pending > 0) Expanded(flex: pending, child: Container(color: AppTheme.border)),
+            ]),
           ),
         ),
-        const SizedBox(height: 4),
-        narrow
-            ? Row(children: [Expanded(child: buttons[0]), const SizedBox(width: 10), Expanded(child: buttons[1])])
-            : Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: buttons),
       ]),
     );
   }
@@ -1484,6 +1554,209 @@ class _ComposeDialogState extends State<_ComposeDialog> {
             ]),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+/// Aprobar (comentario opcional) o rechazar (motivo obligatorio)
+class _RespondDialog extends StatefulWidget {
+  final bool approve;
+  const _RespondDialog({required this.approve});
+  @override
+  State<_RespondDialog> createState() => _RespondDialogState();
+}
+
+class _RespondDialogState extends State<_RespondDialog> {
+  final _ctrl = TextEditingController();
+  String? _err;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ok = widget.approve;
+    final color = ok ? BSColors.success : BSColors.danger;
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Row(children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(ok ? Icons.check_rounded : Icons.close_rounded, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(ok ? 'Aprobar documento' : 'Rechazar documento',
+                    style: const TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
+              ),
+            ]),
+            const SizedBox(height: 12),
+            Text(ok ? 'Puedes dejar un comentario para quien lo envió (opcional).' : 'Explica qué hay que corregir; se lo enviaremos a quien lo pidió.',
+                style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _ctrl,
+              autofocus: true,
+              minLines: 3,
+              maxLines: 6,
+              maxLength: 1000,
+              decoration: InputDecoration(
+                hintText: ok ? 'Comentario' : 'Motivo del rechazo',
+                errorText: _err,
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: color, width: 1.5)),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+              const SizedBox(width: 8),
+              BSPrimaryButton(
+                label: ok ? 'Aprobar' : 'Rechazar',
+                icon: ok ? Icons.check_rounded : Icons.close_rounded,
+                color: color,
+                onPressed: () {
+                  final t = _ctrl.text.trim();
+                  if (!ok && t.isEmpty) return setState(() => _err = 'Escribe el motivo');
+                  Navigator.pop(context, t);
+                },
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+/// Nuevo envío: elegir cuál documento compartir
+class _PickDocumentDialog extends StatefulWidget {
+  const _PickDocumentDialog();
+  @override
+  State<_PickDocumentDialog> createState() => _PickDocumentDialogState();
+}
+
+class _PickDocumentDialogState extends State<_PickDocumentDialog> {
+  final _q = TextEditingController();
+  List<Map<String, dynamic>> _docs = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _q.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final r = await DocumentService.getDocuments(search: _q.text.trim().isEmpty ? null : _q.text.trim());
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _docs = ((r['documents'] as List?) ?? []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final h = MediaQuery.of(context).size.height;
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 560, maxHeight: h * 0.8),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
+            child: Row(children: [
+              const Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Nuevo envío', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
+                  SizedBox(height: 2),
+                  Text('Elige el documento que quieres compartir o enviar a revisión.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+                ]),
+              ),
+              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: AppTheme.hint)),
+            ]),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: SizedBox(
+              height: 42,
+              child: TextField(
+                controller: _q,
+                onSubmitted: (_) => _load(),
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Buscar documento',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.hint),
+                  filled: true,
+                  fillColor: BSColors.page,
+                  contentPadding: EdgeInsets.zero,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ),
+          ),
+          Flexible(
+            child: _loading
+                ? const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)))
+                : _docs.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text('No hay documentos. Súbelos desde la sección Documentos.', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint)),
+                      )
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                        itemCount: _docs.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                        itemBuilder: (_, i) {
+                          final d = _docs[i];
+                          final m = Map<String, dynamic>.from((d['metadata'] as Map?) ?? {});
+                          final pdf = (m['extension'] ?? 'pdf').toString().toLowerCase() == 'pdf';
+                          final signed = ['signed', 'verified'].contains(d['status']);
+                          return ListTile(
+                            onTap: () => Navigator.pop(context, d),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            leading: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(color: (pdf ? BSColors.danger : AppTheme.primary).withOpacity(0.09), borderRadius: BorderRadius.circular(9)),
+                              child: Icon(pdf ? Icons.picture_as_pdf_outlined : Icons.article_outlined, color: pdf ? BSColors.danger : AppTheme.primary, size: 20),
+                            ),
+                            title: Text(d['title']?.toString() ?? 'Documento', maxLines: 1, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                            subtitle: Text(fmtFecha(d['created_at']?.toString()), style: const TextStyle(fontSize: 12)),
+                            trailing: BSPill(label: signed ? 'Firmado' : 'Sin firmar', color: signed ? BSColors.success : BSColors.warning),
+                          );
+                        },
+                      ),
+          ),
+        ]),
       ),
     );
   }

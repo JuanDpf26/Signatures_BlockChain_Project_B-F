@@ -213,7 +213,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           final short = desc.length > 180 ? '${desc.substring(0, 180)}…' : desc;
           SweetAlert.success(
             context,
-            title: 'Análisis con IA listo',
+            title: 'Análisis completado',
             text: [
               name,
               if (cat != null && cat.isNotEmpty) 'Categoría: $cat',
@@ -228,7 +228,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
           SweetAlert.error(
             context,
             title: 'No se pudo analizar',
-            text: '${meta['ai_error'] ?? 'La IA no respondió.'}\n\nPuedes intentarlo de nuevo desde el detalle del documento.',
+            text: '${meta['ai_error'] ?? 'El servicio de análisis no respondió.'}\n\nPuedes intentarlo de nuevo desde el detalle del documento.',
           );
           return;
         }
@@ -411,7 +411,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             BSPageHeader(
               breadcrumb: const ['Inicio', 'Documentos'],
               title: 'Documentos',
-              subtitle: 'Sube tus archivos, analízalos con IA y fírmalos con registro en blockchain.',
+              subtitle: 'Sube tus archivos, revisa su análisis y fírmalos con registro en blockchain.',
               actions: [
                 BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _isLoading ? null : _load),
                 BSPrimaryButton(
@@ -798,16 +798,12 @@ class _DocRow extends StatelessWidget {
                       style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 3),
                   info.aiDesc != null
-                      ? Row(children: [
-                          const Icon(Icons.auto_awesome_rounded, color: AppTheme.primary, size: 12),
-                          const SizedBox(width: 4),
-                          Expanded(child: Text(info.aiDesc!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: AppTheme.hint, fontSize: 12))),
-                        ])
+                      ? Text(info.aiDesc!, maxLines: 1, overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppTheme.hint, fontSize: 12))
                       : const Row(children: [
                           Icon(Icons.hourglass_empty_rounded, color: AppTheme.hint, size: 12),
                           SizedBox(width: 4),
-                          Text('Análisis IA pendiente…', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+                          Text('Análisis pendiente…', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                         ]),
                 ]),
               ),
@@ -1005,7 +1001,7 @@ class _DocActions extends StatelessWidget {
           PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalles', AppTheme.text)),
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar datos', AppTheme.text)),
           PopupMenuItem(value: 'send', child: _MenuItem(Icons.send_outlined, 'Enviar o pedir revisión', AppTheme.text)),
-          PopupMenuItem(value: 'ai', child: _MenuItem(Icons.auto_awesome_rounded, 'Analizar con IA', AppTheme.text)),
+          PopupMenuItem(value: 'ai', child: _MenuItem(Icons.manage_search_rounded, 'Analizar contenido', AppTheme.text)),
           PopupMenuDivider(),
           PopupMenuItem(value: 'delete', child: _MenuItem(Icons.delete_outline_rounded, 'Eliminar', BSColors.danger)),
         ],
