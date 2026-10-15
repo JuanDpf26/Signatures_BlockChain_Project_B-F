@@ -847,12 +847,13 @@ class _DocTile extends StatelessWidget {
               disabledBackgroundColor: BSColors.success.withOpacity(0.5),
               elevation: 0,
               minimumSize: const Size(0, 42),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               shape: btnShape,
             ),
             icon: isSigning
                 ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.8, color: Colors.white))
                 : const Icon(Icons.draw_rounded, size: 16),
-            label: const Text('Firmar', style: TextStyle(fontWeight: FontWeight.w800)),
+            label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Firmar', maxLines: 1, style: TextStyle(fontWeight: FontWeight.w800))),
           )
         : ElevatedButton.icon(
             onPressed: onSend,
@@ -861,10 +862,11 @@ class _DocTile extends StatelessWidget {
               foregroundColor: Colors.white,
               elevation: 0,
               minimumSize: const Size(0, 42),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               shape: btnShape,
             ),
             icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Enviar', style: TextStyle(fontWeight: FontWeight.w800)),
+            label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Enviar', maxLines: 1, style: TextStyle(fontWeight: FontWeight.w800))),
           );
     Widget outline(IconData icon, String label, VoidCallback onPressed) => OutlinedButton.icon(
           onPressed: onPressed,
@@ -876,12 +878,12 @@ class _DocTile extends StatelessWidget {
             shape: btnShape,
           ),
           icon: Icon(icon, size: 16),
-          label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+          label: FittedBox(fit: BoxFit.scaleDown, child: Text(label, maxLines: 1, style: const TextStyle(fontWeight: FontWeight.w700))),
         );
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 14, 6, 14),
+        padding: const EdgeInsets.fromLTRB(14, 14, 4, 14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _typeBox(info),
@@ -898,7 +900,7 @@ class _DocTile extends StatelessWidget {
             menu,
           ]),
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 10),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const SizedBox(height: 10),
               Row(children: [
