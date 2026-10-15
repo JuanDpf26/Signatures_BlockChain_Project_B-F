@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/doc_name.dart';
 import '../widgets/skeleton.dart';
 import '../services/update_service.dart';
 import '../widgets/accessibility_menu.dart';
@@ -1368,7 +1369,7 @@ class _TodoCard extends StatelessWidget {
       items.add(_TodoItem(
         icon: _isPdf(d) ? Icons.picture_as_pdf_outlined : Icons.article_outlined,
         color: _isPdf(d) ? BSColors.danger : AppTheme.primary,
-        title: d['title']?.toString() ?? 'Documento',
+        title: docDisplayName(d['title']?.toString()),
         subtitle: 'Por firmar · ${_categoryOf(m)}',
         action: 'Firmar',
         onTap: () => onOpenDoc(d['title']?.toString() ?? ''),
@@ -2053,7 +2054,7 @@ class _RecentRowState extends State<_RecentRow> {
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(d['title']?.toString() ?? 'Sin nombre',
+                Text(docDisplayName(d['title']?.toString()),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: _hover ? AppTheme.primary : AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
@@ -2076,7 +2077,7 @@ class _RecentRowState extends State<_RecentRow> {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(d['title']?.toString() ?? 'Sin nombre',
+                Text(docDisplayName(d['title']?.toString()),
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
@@ -2118,7 +2119,7 @@ class _ActivityCard extends StatelessWidget {
     final events = <(DateTime, String, String, Color)>[];
     for (final d in docs) {
       final m = _metaOf(d);
-      final title = d['title']?.toString() ?? 'Documento';
+      final title = docDisplayName(d['title']?.toString());
       DateTime? at(String k) => DateTime.tryParse(m[k]?.toString() ?? '')?.toLocal();
       final up = at('uploaded_at') ?? DateTime.tryParse(d['created_at']?.toString() ?? '')?.toLocal();
       if (up != null) events.add((up, 'Documento subido', title, AppTheme.primary));
