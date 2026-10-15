@@ -194,7 +194,7 @@ class _AuditScreenState extends State<AuditScreen> {
     final head = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Column(children: [
       if (table)
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(8, 0, 8, 12),
           child: Row(children: [
             Expanded(flex: 3, child: Text('FECHA Y HORA', style: head)),

@@ -759,7 +759,7 @@ class _TableHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
-      child: const Row(children: [
+      child: Row(children: [
         Expanded(flex: 5, child: Text('DOCUMENTO', style: s)),
         Expanded(flex: 2, child: Text('CATEGORÍA', style: s)),
         Expanded(flex: 2, child: Text('TAMAÑO', style: s)),
