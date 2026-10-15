@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/doc_name.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
@@ -357,7 +358,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(d.title,
+              Text(docDisplayName(d.title),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: AppTheme.text, fontSize: narrow ? 17 : 20, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
