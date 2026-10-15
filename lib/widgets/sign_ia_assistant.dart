@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import '../screens/document_viewer_screen.dart';
 import '../services/agent_service.dart';
 import '../services/document_service.dart';
@@ -19,7 +20,8 @@ import 'sweet_alert.dart';
 const _iaA = Color(0xFF08368F); // azul profundo (paleta institucional)
 const _iaB = Color(0xFF0B45B5); // azul DocBlockSign
 const _iaC = Color(0xFF4F7FD9); // azul claro
-const _iaGradient = LinearGradient(colors: [_iaA, _iaB, _iaC], begin: Alignment.topLeft, end: Alignment.bottomRight);
+const _iaGradient = LinearGradient(colors: [_iaB, _iaB]);
+const _iaIcon = Icons.forum_outlined;
 
 /// Mensaje del chat (se guarda mientras la app esté abierta)
 class _Msg {
@@ -103,58 +105,76 @@ class SignIaFab extends StatefulWidget {
   final bool extended;
   const SignIaFab({super.key, required this.onTap, this.extended = true});
 
+  /// Se oculta mientras el usuario baja por una lista y vuelve al subir,
+  /// para que nunca tape botones ni filas al final de la pantalla.
+  static final visible = ValueNotifier<bool>(true);
+
+  static Widget scrollAware(Widget child) => NotificationListener<ScrollNotification>(
+        onNotification: (n) {
+          if (n.depth != 0 || n.metrics.axis != Axis.vertical) return false;
+          if (n is UserScrollNotification) {
+            if (n.direction == ScrollDirection.reverse) visible.value = false;
+            if (n.direction == ScrollDirection.forward) visible.value = true;
+          }
+          // Al llegar al final de la lista se mantiene oculto
+          if (n is ScrollUpdateNotification && n.metrics.extentAfter < 24 && n.metrics.maxScrollExtent > 0) {
+            visible.value = false;
+          }
+          return false;
+        },
+        child: child,
+      );
+
   @override
   State<SignIaFab> createState() => _SignIaFabState();
 }
 
-class _SignIaFabState extends State<SignIaFab> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+class _SignIaFabState extends State<SignIaFab> {
   bool _hover = false;
 
   @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedBuilder(
-          animation: _c,
-          builder: (_, child) {
-            final glow = 0.35 + 0.25 * (0.5 + 0.5 * math.sin(_c.value * 2 * math.pi));
-            return AnimatedScale(
-              scale: _hover ? 1.06 : 1,
-              duration: const Duration(milliseconds: 160),
-              child: Container(
-                height: 56,
-                padding: EdgeInsets.symmetric(horizontal: widget.extended ? 18 : 0),
-                constraints: const BoxConstraints(minWidth: 56),
-                decoration: BoxDecoration(
-                  gradient: SweepGradient(
-                    colors: const [_iaA, _iaB, _iaC, _iaA],
-                    transform: GradientRotation(_c.value * 2 * math.pi),
-                  ),
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: [BoxShadow(color: _iaA.withOpacity(glow), blurRadius: 22, spreadRadius: 1, offset: const Offset(0, 6))],
-                ),
-                child: child,
+    final size = widget.extended ? 52.0 : 50.0;
+    return ValueListenableBuilder<bool>(
+      valueListenable: SignIaFab.visible,
+      builder: (_, show, child) => AnimatedSlide(
+        offset: show ? Offset.zero : const Offset(0, 1.6),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: show ? 1 : 0,
+          duration: const Duration(milliseconds: 180),
+          child: IgnorePointer(ignoring: !show, child: child),
+        ),
+      ),
+      child: Semantics(
+        button: true,
+        label: 'Abrir asistente',
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              height: size,
+              padding: EdgeInsets.symmetric(horizontal: widget.extended ? 18 : 0),
+              constraints: BoxConstraints(minWidth: size),
+              decoration: BoxDecoration(
+                color: _hover ? _iaA : _iaB,
+                borderRadius: BorderRadius.circular(size / 2),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 4))],
               ),
-            );
-          },
-          child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
-            if (widget.extended) ...[
-              const SizedBox(width: 10),
-              const Text('Sign IA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-            ],
-          ]),
+              child: Row(mainAxisSize: MainAxisSize.min, mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(_iaIcon, color: Colors.white, size: 22),
+                if (widget.extended) ...[
+                  const SizedBox(width: 8),
+                  const Text('Sign IA', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                ],
+              ]),
+            ),
+          ),
         ),
       ),
     );
@@ -372,19 +392,13 @@ class _SignIaPanelState extends State<SignIaPanel> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(12)),
-          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
+          child: const Icon(_iaIcon, color: Colors.white, size: 22),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
               const Text('Sign IA', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(6)),
-                child: const Text('PLUS', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
-              ),
             ]),
             Text(
               widget.documentTitle != null ? 'Hablando sobre: ${widget.documentTitle}' : 'Tu asistente de documentos y firmas',
@@ -418,9 +432,9 @@ class _SignIaPanelState extends State<SignIaPanel> {
           decoration: BoxDecoration(
             gradient: _iaGradient,
             borderRadius: BorderRadius.circular(22),
-            boxShadow: [BoxShadow(color: _iaA.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 8))],
+            
           ),
-          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 36),
+          child: const Icon(_iaIcon, color: Colors.white, size: 36),
         ),
       ),
       const SizedBox(height: 16),
@@ -545,7 +559,7 @@ class _MessageView extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12, left: 48),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(colors: [_iaB, _iaA]),
+            color: _iaB,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(16), topRight: Radius.circular(16), bottomLeft: Radius.circular(16), bottomRight: Radius.circular(4)),
           ),
@@ -563,7 +577,7 @@ class _MessageView extends StatelessWidget {
           height: 28,
           margin: const EdgeInsets.only(top: 2),
           decoration: BoxDecoration(gradient: isError ? null : _iaGradient, color: isError ? BSColors.danger : null, shape: BoxShape.circle),
-          child: Icon(isError ? Icons.error_outline_rounded : Icons.auto_awesome_rounded, color: Colors.white, size: 15),
+          child: Icon(isError ? Icons.error_outline_rounded : _iaIcon, color: Colors.white, size: 15),
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -741,7 +755,7 @@ class _ThinkingBubbleState extends State<_ThinkingBubble> with SingleTickerProvi
           width: 28,
           height: 28,
           decoration: const BoxDecoration(gradient: _iaGradient, shape: BoxShape.circle),
-          child: RotationTransition(turns: _c, child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)),
+          child: const Icon(_iaIcon, color: Colors.white, size: 15),
         ),
         const SizedBox(width: 8),
         Container(

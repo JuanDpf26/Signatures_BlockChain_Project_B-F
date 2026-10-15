@@ -128,7 +128,7 @@ class _SectionNav extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(bottom: 2),
           child: Material(
-            color: i == selected ? AppTheme.card : Colors.transparent,
+            color: i == selected ? AppTheme.primary.withOpacity(AppTheme.isDark ? 0.18 : 0.08) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             child: InkWell(
               onTap: () => onSelect(i),
@@ -137,16 +137,16 @@ class _SectionNav extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: i == selected ? AppTheme.border : Colors.transparent),
+                  border: Border.all(color: Colors.transparent),
                 ),
                 child: Row(children: [
                   Icon(sections[i].$1, size: 18,
-                      color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.text : AppTheme.hint)),
+                      color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(sections[i].$2,
                         style: TextStyle(
-                          color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.text : AppTheme.hint),
+                          color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint),
                           fontSize: 14,
                           fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
                         )),
@@ -184,14 +184,14 @@ class _SectionChips extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: sel ? AppTheme.text : AppTheme.card,
+                color: sel ? AppTheme.primary : AppTheme.card,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: sel ? AppTheme.text : AppTheme.border),
+                border: Border.all(color: sel ? AppTheme.primary : AppTheme.border),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(sections[i].$1, size: 16, color: sel ? AppTheme.card : AppTheme.hint),
+                Icon(sections[i].$1, size: 16, color: sel ? Colors.white : AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(sections[i].$2, style: TextStyle(color: sel ? AppTheme.card : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                Text(sections[i].$2, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
               ]),
             ),
           );
@@ -265,16 +265,16 @@ class _SaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color ?? AppTheme.text;
+    final bg = color ?? AppTheme.primary;
     return SizedBox(
       height: 36,
       child: ElevatedButton(
         onPressed: loading ? null : onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: bg,
-          foregroundColor: color != null ? Colors.white : AppTheme.card,
+          foregroundColor: Colors.white,
           disabledBackgroundColor: bg.withOpacity(0.35),
-          disabledForegroundColor: (color != null ? Colors.white : AppTheme.card).withOpacity(0.8),
+          disabledForegroundColor: Colors.white.withOpacity(0.8),
           minimumSize: const Size(0, 36),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           elevation: 0,
@@ -282,7 +282,7 @@ class _SaveButton extends StatelessWidget {
           textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
         ),
         child: loading
-            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.card))
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
             : Text(label),
       ),
     );
@@ -322,7 +322,7 @@ class _Field extends StatelessWidget {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
           enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
           disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.text, width: 1.4)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.primary, width: 1.4)),
         ),
       ),
     );
@@ -602,7 +602,7 @@ class _SecurityTabState extends State<_SecurityTab> {
         await SweetAlert.error(context, title: 'No se pudo cambiar', text: res['error'].toString());
       } else {
         _currentPassCtrl.clear(); _newPassCtrl.clear(); _confirmPassCtrl.clear();
-        await SweetAlert.success(context, title: 'Contraseña actualizada', text: 'Usa tu nueva contraseña la próxima vez que inicies sesión.');
+        await SweetAlert.success(context, title: 'Contraseña actualizada', text: 'Usa tu nueva contraseña la próxima vez que inicies sesión.', autoClose: const Duration(seconds: 3));
       }
     } finally { if (mounted) setState(() => _isLoading = false); }
   }

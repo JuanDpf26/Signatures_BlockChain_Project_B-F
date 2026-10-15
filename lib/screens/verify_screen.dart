@@ -385,8 +385,8 @@ class _VerifyScreenState extends State<VerifyScreen> {
 
 String _fmtSize(int b) {
   if (b < 1024) return '$b B';
-  if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(1)} KB';
-  return '${(b / (1024 * 1024)).toStringAsFixed(2)} MB';
+  if (b < 1024 * 1024) return '${(b / 1024).toStringAsFixed(1).replaceAll('.', ',')} KB';
+  return '${(b / (1024 * 1024)).toStringAsFixed(2).replaceAll('.', ',')} MB';
 }
 
 // ── Selector Archivo / Huella ──────────────────────────────

@@ -77,14 +77,20 @@ class SweetAlert {
           String? text,
           String confirmText = 'Aceptar',
           bool barrierDismissible = true,
-          Duration? autoClose}) =>
-      showSweetAlert(context,
+          Duration? autoClose}) {
+    // Las confirmaciones que se cierran solas se muestran como aviso discreto
+    if (autoClose != null) {
+      showToast(context, title: title, text: text);
+      return Future.value(true);
+    }
+    return showSweetAlert(context,
           type: SweetAlertType.success,
           title: title,
           text: text,
           confirmText: confirmText,
           barrierDismissible: barrierDismissible,
           autoClose: autoClose);
+  }
 
   static Future<bool?> error(BuildContext context,
           {required String title,
@@ -426,4 +432,133 @@ class _SweetIconPainter extends CustomPainter {
   @override
   bool shouldRepaint(_SweetIconPainter old) =>
       old.progress != progress || old.type != type || old.color != color;
+}
+
+
+// ─────────────────────────────────────────────────────────────
+// AVISO DISCRETO (toast)
+// ─────────────────────────────────────────────────────────────
+OverlayEntry? _currentToast;
+
+/// Aviso pequeño que aparece abajo y desaparece solo, sin bloquear la pantalla.
+void showToast(BuildContext context,
+    {required String title, String? text, SweetAlertType type = SweetAlertType.success, Duration duration = const Duration(milliseconds: 2800)}) {
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return;
+  _currentToast?.remove();
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (_) => _Toast(
+      title: title,
+      text: text,
+      type: type,
+      duration: duration,
+      onDone: () {
+        if (_currentToast == entry) _currentToast = null;
+        if (entry.mounted) entry.remove();
+      },
+    ),
+  );
+  _currentToast = entry;
+  overlay.insert(entry);
+}
+
+class _Toast extends StatefulWidget {
+  final String title;
+  final String? text;
+  final SweetAlertType type;
+  final Duration duration;
+  final VoidCallback onDone;
+  const _Toast({required this.title, this.text, required this.type, required this.duration, required this.onDone});
+
+  @override
+  State<_Toast> createState() => _ToastState();
+}
+
+class _ToastState extends State<_Toast> {
+  bool _show = false;
+  Timer? _t;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _show = true);
+    });
+    _t = Timer(widget.duration, _hide);
+  }
+
+  void _hide() {
+    if (!mounted) return;
+    setState(() => _show = false);
+    Timer(const Duration(milliseconds: 220), widget.onDone);
+  }
+
+  @override
+  void dispose() {
+    _t?.cancel();
+    super.dispose();
+  }
+
+  IconData get _icon => switch (widget.type) {
+        SweetAlertType.success => Icons.check_circle_rounded,
+        SweetAlertType.error => Icons.error_rounded,
+        SweetAlertType.warning => Icons.warning_amber_rounded,
+        _ => Icons.info_rounded,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final mobile = mq.size.width < 700;
+    final color = _typeColor(widget.type);
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: mq.padding.bottom + (mobile ? 84 : 28),
+      child: Center(
+        child: AnimatedSlide(
+          offset: _show ? Offset.zero : const Offset(0, 0.4),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          child: AnimatedOpacity(
+            opacity: _show ? 1 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: Material(
+              color: Colors.transparent,
+              child: Semantics(
+                liveRegion: true,
+                child: GestureDetector(
+                  onTap: _hide,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.card,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.border),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.14), blurRadius: 18, offset: const Offset(0, 6))],
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(_icon, color: color, size: 20),
+                      const SizedBox(width: 10),
+                      Flexible(
+                        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+                          if (widget.text != null && widget.text!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(widget.text!, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.35)),
+                          ],
+                        ]),
+                      ),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

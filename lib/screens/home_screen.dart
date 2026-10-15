@@ -308,7 +308,7 @@ class _WebShellState extends State<_WebShell> {
               pending: widget.pending,
               onShowPending: widget.onShowPending,
             ),
-            Expanded(child: _ContentSwitcher(index: widget.selectedIndex, child: widget.content)),
+            Expanded(child: SignIaFab.scrollAware(_ContentSwitcher(index: widget.selectedIndex, child: widget.content))),
           ]),
         ),
       ]),
@@ -939,7 +939,7 @@ class _MobileShell extends StatelessWidget {
               ),
             ]),
           ),
-          Expanded(child: _ContentSwitcher(index: selectedIndex, child: content)),
+          Expanded(child: SignIaFab.scrollAware(_ContentSwitcher(index: selectedIndex, child: content))),
         ]),
       ),
       bottomNavigationBar: Container(
@@ -1002,8 +1002,8 @@ class _DashboardContent extends StatelessWidget {
     final x = double.tryParse('${h ?? ''}');
     if (x == null) return '—';
     if (x < 1) return '${(x * 60).round()} min';
-    if (x < 48) return '${x.toStringAsFixed(1)} h';
-    return '${(x / 24).toStringAsFixed(1)} d';
+    if (x < 48) return '${x.toStringAsFixed(1).replaceAll('.', ',')} h';
+    return '${(x / 24).toStringAsFixed(1).replaceAll('.', ',')} d';
   }
 
   @override

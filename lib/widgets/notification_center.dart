@@ -231,7 +231,7 @@ class _NotificationPanelState extends State<_NotificationPanel> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 14),
             margin: const EdgeInsets.only(right: 18),
-            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _tab == i ? AppTheme.text : Colors.transparent, width: 2))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: _tab == i ? AppTheme.primary : Colors.transparent, width: 2))),
             child: Text(label,
                 style: TextStyle(color: _tab == i ? AppTheme.text : AppTheme.hint, fontSize: 14.5, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w500)),
           ),
@@ -344,8 +344,8 @@ class _NotificationPanelState extends State<_NotificationPanel> {
                   },
                   style: FilledButton.styleFrom(
                     minimumSize: const Size(0, 38),
-                    backgroundColor: AppTheme.text,
-                    foregroundColor: AppTheme.card,
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
                   ),
                   child: const Text('Ir a la bandeja'),
                 ),
