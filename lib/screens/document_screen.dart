@@ -823,7 +823,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             icon: Icon(Icons.close_rounded, color: AppTheme.text, size: 20),
           ),
           Expanded(
-            child: Text('$n ${n == 1 ? 'seleccionado' : 'seleccionados'}',
+            child: Text(narrow ? '$n' : '$n ${n == 1 ? 'seleccionado' : 'seleccionados'}',
                 maxLines: 1, overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
           ),
