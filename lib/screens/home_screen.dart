@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/update_service.dart';
 import '../widgets/accessibility_menu.dart';
+import '../widgets/notification_center.dart';
 import '../widgets/brand.dart';
 import '../services/auth_service.dart';
 import '../services/document_service.dart';
@@ -49,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) UpdateService.checkAndPrompt(context);
     });
+    NotificationBell.navigate = (i) => _goTo(i);
+    NotificationBell.openDocument = _searchDocs;
     _loadUser();
     _loadData();
   }
@@ -822,7 +825,7 @@ class _TopBarState extends State<_TopBar> {
         const AccessibilityButton(),
         const SizedBox(width: 6),
         // Notificaciones: documentos pendientes de firma
-        _Bell(pending: widget.pending, onShowAll: widget.onShowPending),
+        NotificationBell(pending: widget.pending, onShowPending: widget.onShowPending),
         const SizedBox(width: 14),
         Tooltip(
           message: 'Mi perfil',
@@ -857,68 +860,6 @@ class _TopBarState extends State<_TopBar> {
 }
 
 /// Campana con punto rojo y menú de documentos pendientes de firma
-class _Bell extends StatelessWidget {
-  final List<Map<String, dynamic>> pending;
-  final VoidCallback onShowAll;
-  const _Bell({required this.pending, required this.onShowAll});
-
-  @override
-  Widget build(BuildContext context) {
-    final n = pending.length;
-    return PopupMenuButton<int>(
-      tooltip: n == 0 ? 'Sin pendientes' : '$n documento${n == 1 ? '' : 's'} pendiente${n == 1 ? '' : 's'} de firma',
-      offset: const Offset(0, 48),
-      constraints: const BoxConstraints(minWidth: 300, maxWidth: 340),
-      onSelected: (_) => onShowAll(),
-      itemBuilder: (_) => [
-        PopupMenuItem<int>(
-          enabled: false,
-          child: Text(n == 0 ? 'Todo al día 🎉' : 'Pendientes de firma ($n)',
-              style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
-        ),
-        for (final d in pending.take(5))
-          PopupMenuItem<int>(
-            value: 1,
-            child: Row(children: [
-              Container(width: 8, height: 8, decoration: const BoxDecoration(color: BSColors.warning, shape: BoxShape.circle)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(d['title']?.toString() ?? 'Documento',
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13)),
-              ),
-            ]),
-          ),
-        if (n > 0)
-          PopupMenuItem<int>(
-            value: 1,
-            child: Text('Ver todos →', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
-          ),
-      ],
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppTheme.border)),
-        child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
-          Icon(Icons.notifications_none_rounded, color: AppTheme.text, size: 22),
-          if (n > 0)
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 16),
-                height: 16,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(color: BSColors.danger, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white, width: 1.5)),
-                alignment: Alignment.center,
-                child: Text(n > 9 ? '9+' : '$n', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800)),
-              ),
-            ),
-        ]),
-      ),
-    );
-  }
-}
-
 // ── Mobile shell ───────────────────────────────────────────────────────────
 class _MobileShell extends StatelessWidget {
   final int selectedIndex;
@@ -970,7 +911,7 @@ class _MobileShell extends StatelessWidget {
                 ),
               ),
               const AccessibilityButton(),
-              _Bell(pending: pending, onShowAll: onShowPending),
+              NotificationBell(pending: pending, onShowPending: onShowPending),
               const SizedBox(width: 6),
               // Avatar con menú: perfil o cerrar sesión
               PopupMenuButton<int>(

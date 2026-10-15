@@ -28,6 +28,20 @@ class CollabService {
     }
   }
 
+  // ── Notificaciones (campana) ─────────────────────────────
+  static Future<Map<String, dynamic>> notifications({String box = 'inbox'}) =>
+      _send((h) => http.get(Uri.parse('$_base/api/notifications').replace(queryParameters: {'box': box}), headers: h));
+
+  static Future<Map<String, dynamic>> notificationsSummary() => _send((h) => http.get(Uri.parse('$_base/api/notifications/summary'), headers: h));
+
+  static Future<Map<String, dynamic>> notificationsRead({List<String>? keys, bool all = false, bool read = true, String box = 'inbox'}) =>
+      _send((h) => http.post(Uri.parse('$_base/api/notifications/read'),
+          headers: h, body: jsonEncode({if (keys != null) 'keys': keys, 'all': all, 'read': read, 'box': box})));
+
+  static Future<Map<String, dynamic>> notificationsArchive({List<String>? keys, bool all = false, bool archived = true, String box = 'inbox'}) =>
+      _send((h) => http.post(Uri.parse('$_base/api/notifications/archive'),
+          headers: h, body: jsonEncode({if (keys != null) 'keys': keys, 'all': all, 'archived': archived, 'box': box})));
+
   // ── Bandeja ──────────────────────────────────────────────
   static Future<Map<String, dynamic>> inbox({String box = 'received', String? q}) => _send((h) => http.get(
         Uri.parse('$_base/api/inbox').replace(queryParameters: {'box': box, if (q != null && q.isNotEmpty) 'q': q}),

@@ -10,6 +10,7 @@ import 'document_viewer_screen.dart';
 import 'verify_screen.dart';
 import '../services/document_service.dart';
 import '../widgets/send_document_dialog.dart';
+import '../widgets/notification_center.dart';
 
 /// Bandeja de entrada al estilo de un cliente de correo: carpetas, mensajes
 /// agrupados por fecha, panel de lectura y acciones (responder, reenviar,
@@ -129,6 +130,7 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Future<void> _refreshSummary() async {
+    NotificationBell.refresh.value++; // la campana vuelve a contar
     final s = await CollabService.inboxSummary();
     if (mounted && s['error'] == null) setState(() => _summary = s);
     widget.onChanged?.call();
