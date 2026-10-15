@@ -102,31 +102,31 @@ class HuellaField extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(9)),
-          child: const Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 19),
+          child: Icon(Icons.fingerprint_rounded, color: AppTheme.primary, size: 19),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
             const SizedBox(height: 2),
             Tooltip(
               message: value,
               child: Text(fmtHuella(value),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600, fontFamily: 'monospace', letterSpacing: 0.2)),
             ),
             if (help != null) ...[
               const SizedBox(height: 2),
-              Text(help!, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
+              Text(help!, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
             ],
           ]),
         ),
         IconButton(
           tooltip: 'Copiar huella completa',
           onPressed: () => copiarValor(context, value, 'Huella'),
-          icon: const Icon(Icons.copy_rounded, color: AppTheme.hint, size: 18),
+          icon: Icon(Icons.copy_rounded, color: AppTheme.hint, size: 18),
         ),
       ]),
     );
@@ -159,7 +159,7 @@ class FactGrid extends StatelessWidget {
         final chunk = facts.sublist(i, (i + cols).clamp(0, facts.length));
         rows.add(Container(
           decoration: BoxDecoration(
-            border: i + cols < facts.length ? const Border(bottom: BorderSide(color: Color(0xFFEDF0F5))) : null,
+            border: i + cols < facts.length ? Border(bottom: BorderSide(color: AppTheme.border)) : null,
           ),
           child: IntrinsicHeight(
             child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -192,13 +192,13 @@ class _FactCell extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(f.label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+            Text(f.label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
             const SizedBox(height: 3),
             f.valueWidget ??
                 Text(f.value ?? '—',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.3)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600, height: 1.3)),
           ]),
         ),
       ]),
@@ -245,24 +245,24 @@ class _TechDetailsState extends State<TechDetails> {
       clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Material(
-          color: Colors.white,
+          color: AppTheme.card,
           child: InkWell(
             onTap: () => setState(() => _open = !_open),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(children: [
-                const Icon(Icons.code_rounded, size: 17, color: AppTheme.hint),
+                Icon(Icons.code_rounded, size: 17, color: AppTheme.hint),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(widget.title,
-                      style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                 ),
                 Text(_open ? 'Ocultar' : 'Mostrar',
-                    style: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
                 AnimatedRotation(
                   turns: _open ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.expand_more_rounded, size: 20, color: AppTheme.primary),
+                  child: Icon(Icons.expand_more_rounded, size: 20, color: AppTheme.primary),
                 ),
               ]),
             ),
@@ -282,7 +282,7 @@ class _TechDetailsState extends State<TechDetails> {
                     if (widget.note != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 8, right: 8),
-                        child: Text(widget.note!, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
+                        child: Text(widget.note!, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
                       ),
                   ]),
                 ),
@@ -301,11 +301,11 @@ class _TechRowView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: const BoxConstraints(minHeight: 40),
-      decoration: BoxDecoration(border: last ? null : const Border(bottom: BorderSide(color: Color(0xFFE6EAF0)))),
+      decoration: BoxDecoration(border: last ? null : Border(bottom: BorderSide(color: AppTheme.border))),
       child: Row(children: [
         SizedBox(
           width: 118,
-          child: Text(r.label, style: const TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
+          child: Text(r.label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
         ),
         Expanded(
           child: Tooltip(
@@ -379,7 +379,7 @@ class StatusSeal extends StatelessWidget {
             Text(title, style: TextStyle(color: color, fontSize: 14.5, fontWeight: FontWeight.w800)),
             if (subtitle != null) ...[
               const SizedBox(height: 2),
-              Text(subtitle!, style: const TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
+              Text(subtitle!, style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
             ],
           ]),
         ),

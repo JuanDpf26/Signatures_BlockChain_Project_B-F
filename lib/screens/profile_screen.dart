@@ -15,6 +15,7 @@ import '../widgets/sweet_alert.dart';
 import '../widgets/proof_ui.dart';
 import '../widgets/bs_ui.dart';
 import '../theme/app_theme.dart';
+import '../widgets/accessibility_menu.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -28,13 +29,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   int _section = 0;
 
-  // Secciones del perfil (como una página de configuración)
+  // Secciones (como la configuración de cuenta de Vercel)
   static const _sections = [
-    (Icons.person_outline_rounded, 'Datos personales', 'Nombre, teléfono y datos de la cuenta'),
-    (Icons.lock_outline_rounded, 'Seguridad', 'Contraseña y recomendaciones'),
-    (Icons.key_outlined, 'Llaves de firma', 'Tu identidad criptográfica'),
-    (Icons.draw_outlined, 'Firma manuscrita', 'La imagen que se estampa al firmar'),
-    (Icons.manage_accounts_outlined, 'Cuenta', 'Eliminar la cuenta'),
+    (Icons.person_outline_rounded, 'General'),
+    (Icons.lock_outline_rounded, 'Seguridad'),
+    (Icons.key_outlined, 'Llaves de firma'),
+    (Icons.draw_outlined, 'Firma manuscrita'),
+    (Icons.accessibility_new_rounded, 'Apariencia y accesibilidad'),
+    (Icons.warning_amber_rounded, 'Eliminar cuenta'),
   ];
 
   @override
@@ -58,6 +60,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         1 => _SecurityTab(key: const ValueKey('sec'), user: _user),
         2 => const _KeysSection(),
         3 => const _SignatureTab(),
+        4 => const _SettingsCard(
+            title: 'Apariencia y accesibilidad',
+            description: 'Elige el tema, el tamaño del texto y otras opciones para leer con comodidad.',
+            footer: 'También puedes abrir este menú desde el ícono de accesibilidad de la barra superior.',
+            child: AccessibilityPanel(),
+          ),
         _ => _AccountSection(user: _user),
       };
 
@@ -69,18 +77,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final pad = isWeb ? 28.0 : 16.0;
 
     if (_isLoading) {
-      return Container(color: BSColors.page, child: const Center(child: CircularProgressIndicator(color: AppTheme.primary)));
+      return Container(color: BSColors.page, child: Center(child: CircularProgressIndicator(color: AppTheme.primary)));
     }
-
-    final header = _ProfileCard(user: _user, isWeb: isWeb, onAvatarUpdated: _loadProfile);
-    final sectionTitle = Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(_sections[_section].$2, style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 2),
-        Text(_sections[_section].$3, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
-      ]),
-    );
 
     return Container(
       color: BSColors.page,
@@ -91,31 +89,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           padding: EdgeInsets.fromLTRB(pad, 20, pad, isWeb ? 28 : 96),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            if (isWeb) ...[
-              const BSPageHeader(
-                breadcrumb: ['Inicio', 'Mi perfil'],
-                title: 'Mi perfil',
-                subtitle: 'Administra tus datos, la seguridad de tu cuenta y tu firma.',
-              ),
-              const SizedBox(height: 20),
-            ],
-            header,
-            const SizedBox(height: 20),
+            Text('Configuración de la cuenta', style: TextStyle(color: AppTheme.text, fontSize: isWeb ? 28 : 22, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
+            const SizedBox(height: 4),
+            Text('Tu información, la seguridad, la firma y cómo se ve la aplicación.', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
+            const SizedBox(height: 24),
             if (wide)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 SizedBox(
-                  width: 260,
+                  width: 240,
                   child: _SectionNav(sections: _sections, selected: _section, onSelect: (i) => setState(() => _section = i)),
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [sectionTitle, _content()]),
-                ),
+                const SizedBox(width: 32),
+                Expanded(child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 860), child: _content())),
               ])
             else ...[
               _SectionChips(sections: _sections, selected: _section, onSelect: (i) => setState(() => _section = i)),
-              const SizedBox(height: 16),
-              sectionTitle,
+              const SizedBox(height: 18),
               _content(),
             ],
           ]),
@@ -125,61 +114,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-/// Menú lateral de secciones (escritorio)
+/// Menú lateral sin caja, como en Vercel: texto simple y el elegido resaltado
 class _SectionNav extends StatelessWidget {
-  final List<(IconData, String, String)> sections;
+  final List<(IconData, String)> sections;
   final int selected;
   final ValueChanged<int> onSelect;
   const _SectionNav({required this.sections, required this.selected, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: Column(children: [
-        for (var i = 0; i < sections.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Material(
-              color: i == selected ? BSColors.selected : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                onTap: () => onSelect(i),
-                borderRadius: BorderRadius.circular(10),
-                hoverColor: BSColors.page,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                  child: Row(children: [
-                    Icon(sections[i].$1, size: 20, color: i == selected ? AppTheme.primary : (i == sections.length - 1 ? BSColors.danger : AppTheme.hint)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(sections[i].$2,
-                          style: TextStyle(
-                            color: i == selected ? AppTheme.primary : AppTheme.text,
-                            fontSize: 14,
-                            fontWeight: i == selected ? FontWeight.w800 : FontWeight.w500,
-                          )),
-                    ),
-                    if (i == selected) const Icon(Icons.chevron_right_rounded, size: 18, color: AppTheme.primary),
-                  ]),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      for (var i = 0; i < sections.length; i++)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Material(
+            color: i == selected ? AppTheme.card : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            child: InkWell(
+              onTap: () => onSelect(i),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: i == selected ? AppTheme.border : Colors.transparent),
                 ),
+                child: Row(children: [
+                  Icon(sections[i].$1, size: 18,
+                      color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.text : AppTheme.hint)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(sections[i].$2,
+                        style: TextStyle(
+                          color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.text : AppTheme.hint),
+                          fontSize: 14,
+                          fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
+                        )),
+                  ),
+                ]),
               ),
             ),
           ),
-      ]),
-    );
+        ),
+    ]);
   }
 }
 
 /// Secciones como fichas desplazables (celular y tableta)
 class _SectionChips extends StatelessWidget {
-  final List<(IconData, String, String)> sections;
+  final List<(IconData, String)> sections;
   final int selected;
   final ValueChanged<int> onSelect;
   const _SectionChips({required this.sections, required this.selected, required this.onSelect});
@@ -201,14 +184,14 @@ class _SectionChips extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: sel ? AppTheme.primary : Colors.white,
+                color: sel ? AppTheme.text : AppTheme.card,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: sel ? AppTheme.primary : AppTheme.border),
+                border: Border.all(color: sel ? AppTheme.text : AppTheme.border),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                Icon(sections[i].$1, size: 16, color: sel ? Colors.white : AppTheme.hint),
+                Icon(sections[i].$1, size: 16, color: sel ? AppTheme.card : AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(sections[i].$2, style: TextStyle(color: sel ? Colors.white : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                Text(sections[i].$2, style: TextStyle(color: sel ? AppTheme.card : AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
               ]),
             ),
           );
@@ -218,124 +201,147 @@ class _SectionChips extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-// TARJETA DE PERFIL
-// ─────────────────────────────────────────
-class _ProfileCard extends StatelessWidget {
-  final Map<String, dynamic> user;
-  final bool isWeb;
-  final VoidCallback onAvatarUpdated;
-
-  const _ProfileCard({required this.user, required this.isWeb, required this.onAvatarUpdated});
-
-  Future<void> _pickAvatar(BuildContext context) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 400, maxHeight: 400, imageQuality: 85);
-    if (picked == null) return;
-    final bytes = await picked.readAsBytes();
-    final mimeType = picked.mimeType ?? 'image/jpeg';
-    final res = await ProfileService.uploadAvatar(bytes, mimeType);
-    if (!context.mounted) return;
-    if (res.containsKey('error')) {
-      await SweetAlert.error(context, title: 'No se pudo actualizar la foto', text: res['error'].toString());
-    } else {
-      SweetAlert.success(context, title: 'Foto actualizada', autoClose: const Duration(milliseconds: 1500));
-      onAvatarUpdated();
-    }
-  }
+/// Tarjeta de ajuste al estilo Vercel: título, explicación, contenido y
+/// una barra inferior con una ayuda y la acción.
+class _SettingsCard extends StatelessWidget {
+  final String title;
+  final String? description;
+  final Widget? child;
+  final Widget? trailing; // a la derecha del título (p. ej. la foto)
+  final String? footer;
+  final Widget? action;
+  final bool danger;
+  const _SettingsCard({required this.title, this.description, this.child, this.trailing, this.footer, this.action, this.danger = false});
 
   @override
   Widget build(BuildContext context) {
-    final avatarUrl = user['avatar_url']?.toString();
-    final name = user['name']?.toString() ?? 'Usuario';
-    final email = user['email']?.toString() ?? '';
-    final isVerified = user['is_email_verified'] == true;
-    final isGoogle = user['google_id'] != null;
-    final stats = (user['stats'] as Map?) ?? {};
-    final created = DateTime.tryParse('${user['created_at'] ?? ''}')?.toLocal();
-    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-
-    final pills = Wrap(spacing: 8, runSpacing: 6, alignment: isWeb ? WrapAlignment.start : WrapAlignment.center, children: [
-      isVerified
-          ? const BSPill(label: 'Correo verificado', color: BSColors.success)
-          : const BSPill(label: 'Correo sin verificar', color: BSColors.warning),
-      BSPill(label: isGoogle ? 'Cuenta Google' : 'Cuenta con contraseña', color: isGoogle ? AppTheme.primary : BSColors.neutral, dot: false),
-    ]);
-
-    // Resumen de uso en una sola línea (sin tarjetas grandes)
-    Widget stat(String v, String l) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Column(children: [
-            Text(v, style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 2),
-            Text(l, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
-          ]),
-        );
-    final divider = Container(width: 1, height: 30, color: AppTheme.border);
-    final statsRow = Row(mainAxisSize: MainAxisSize.min, children: [
-      stat('${stats['total_docs'] ?? 0}', 'Documentos'),
-      divider,
-      stat('${stats['signed_docs'] ?? 0}', 'Firmados'),
-      divider,
-      stat('${stats['verified_docs'] ?? 0}', 'Verificados'),
-      divider,
-      stat('${stats['total_size_mb'] ?? 0}'.replaceAll('.', ','), 'MB usados'),
-    ]);
-
-    final info = Column(
-      crossAxisAlignment: isWeb ? CrossAxisAlignment.start : CrossAxisAlignment.center,
-      children: [
-        Text(name, textAlign: isWeb ? TextAlign.start : TextAlign.center,
-            style: const TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 2),
-        Text(
-          [email, if (created != null) 'miembro desde ${meses[created.month - 1]} de ${created.year}'].join(' · '),
-          textAlign: isWeb ? TextAlign.start : TextAlign.center,
-          style: const TextStyle(color: AppTheme.hint, fontSize: 13),
-        ),
-        const SizedBox(height: 10),
-        pills,
+    final narrow = MediaQuery.of(context).size.width < 600;
+    final border = danger ? BSColors.danger.withOpacity(0.45) : AppTheme.border;
+    final head = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(title, style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w800)),
+      if (description != null) ...[
+        const SizedBox(height: 8),
+        Text(description!, style: TextStyle(color: AppTheme.text.withOpacity(0.8), fontSize: 14, height: 1.5)),
       ],
-    );
-
-    final avatar = _AvatarWidget(avatarUrl: avatarUrl, name: name, onTap: () => _pickAvatar(context));
-
+    ]);
     return Container(
-      padding: EdgeInsets.all(isWeb ? 22 : 18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-        boxShadow: AppTheme.cardShadow,
-      ),
-      child: isWeb
-          ? LayoutBuilder(builder: (context, c) {
-              final top = Row(children: [
-                avatar,
-                const SizedBox(width: 20),
-                Expanded(child: info),
-                if (c.maxWidth > 900) ...[statsRow, const SizedBox(width: 16)],
-                BSOutlineButton(label: 'Cambiar foto', icon: Icons.photo_camera_outlined, onPressed: () => _pickAvatar(context)),
-              ]);
-              if (c.maxWidth > 900) return top;
-              return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                top,
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: AppTheme.border),
-                const SizedBox(height: 14),
-                Center(child: statsRow),
-              ]);
-            })
-          : Column(children: [
-              avatar,
-              const SizedBox(height: 12),
-              info,
-              const SizedBox(height: 16),
-              const Divider(height: 1, color: AppTheme.border),
-              const SizedBox(height: 14),
-              FittedBox(fit: BoxFit.scaleDown, child: statsRow),
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: border)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Padding(
+          padding: EdgeInsets.all(narrow ? 18 : 24),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            trailing == null ? head : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: head), const SizedBox(width: 16), trailing!]),
+            if (child != null) ...[const SizedBox(height: 18), child!],
+          ]),
+        ),
+        if (footer != null || action != null)
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: narrow ? 18 : 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: danger ? BSColors.danger.withOpacity(0.06) : AppTheme.surface,
+              border: Border(top: BorderSide(color: border)),
+            ),
+            child: Row(children: [
+              Expanded(
+                child: Text(footer ?? '', style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
+              ),
+              if (action != null) ...[const SizedBox(width: 12), action!],
             ]),
+          ),
+      ]),
     );
+  }
+}
+
+/// Botón compacto de las tarjetas (Guardar)
+class _SaveButton extends StatelessWidget {
+  final String label;
+  final bool loading;
+  final VoidCallback? onPressed;
+  final Color? color;
+  const _SaveButton({this.label = 'Guardar', this.loading = false, this.onPressed, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = color ?? AppTheme.text;
+    return SizedBox(
+      height: 36,
+      child: ElevatedButton(
+        onPressed: loading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: bg,
+          foregroundColor: color != null ? Colors.white : AppTheme.card,
+          disabledBackgroundColor: bg.withOpacity(0.35),
+          disabledForegroundColor: (color != null ? Colors.white : AppTheme.card).withOpacity(0.8),
+          minimumSize: const Size(0, 36),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+        ),
+        child: loading
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.card))
+            : Text(label),
+      ),
+    );
+  }
+}
+
+/// Campo de texto sobrio para las tarjetas de ajustes
+class _Field extends StatelessWidget {
+  final TextEditingController controller;
+  final String? hint;
+  final bool obscure;
+  final bool enabled;
+  final int? maxLength;
+  final TextInputType? keyboard;
+  final ValueChanged<String>? onChanged;
+  const _Field({required this.controller, this.hint, this.obscure = false, this.enabled = true, this.maxLength, this.keyboard, this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 420),
+      child: TextField(
+        controller: controller,
+        obscureText: obscure,
+        enabled: enabled,
+        maxLength: maxLength,
+        keyboardType: keyboard,
+        onChanged: onChanged,
+        style: TextStyle(color: AppTheme.text, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: hint,
+          counterText: '',
+          isDense: true,
+          filled: true,
+          fillColor: enabled ? AppTheme.card : AppTheme.surface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
+          disabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.border)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: AppTheme.text, width: 1.4)),
+        ),
+      ),
+    );
+  }
+}
+
+Future<void> _pickAvatar(BuildContext context, VoidCallback onDone) async {
+  final picker = ImagePicker();
+  final picked = await picker.pickImage(source: ImageSource.gallery, maxWidth: 400, maxHeight: 400, imageQuality: 85);
+  if (picked == null) return;
+  final bytes = await picked.readAsBytes();
+  final mimeType = picked.mimeType ?? 'image/jpeg';
+  final res = await ProfileService.uploadAvatar(bytes, mimeType);
+  if (!context.mounted) return;
+  if (res.containsKey('error')) {
+    await SweetAlert.error(context, title: 'No se pudo actualizar la foto', text: res['error'].toString());
+  } else {
+    SweetAlert.success(context, title: 'Foto actualizada', autoClose: const Duration(milliseconds: 1500));
+    onDone();
   }
 }
 
@@ -393,7 +399,7 @@ class _TabBody extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────
-// TAB 1: INFORMACIÓN
+// GENERAL
 // ─────────────────────────────────────────
 class _InfoTab extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -405,76 +411,104 @@ class _InfoTab extends StatefulWidget {
 }
 
 class _InfoTabState extends State<_InfoTab> {
-  final _nameCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
-  bool _isLoading = false;
+  late final _nameCtrl = TextEditingController(text: widget.user['name']?.toString() ?? '');
+  late final _phoneCtrl = TextEditingController(text: widget.user['phone']?.toString() ?? '');
+  String? _saving; // 'name' | 'phone'
 
   @override
-  void initState() {
-    super.initState();
-    _nameCtrl.text = widget.user['name'] ?? '';
-    _phoneCtrl.text = widget.user['phone'] ?? '';
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
   }
 
-  @override
-  void dispose() { _nameCtrl.dispose(); _phoneCtrl.dispose(); super.dispose(); }
+  bool get _nameChanged => _nameCtrl.text.trim() != (widget.user['name']?.toString() ?? '');
+  bool get _phoneChanged => _phoneCtrl.text.trim() != (widget.user['phone']?.toString() ?? '');
 
-  Future<void> _save() async {
+  Future<void> _save(String what) async {
     if (_nameCtrl.text.trim().length < 2) {
       await SweetAlert.warning(context, title: 'Revisa el nombre', text: 'El nombre debe tener mínimo 2 caracteres.');
       return;
     }
-    setState(() => _isLoading = true);
-    try {
-      final res = await ProfileService.updateProfile(name: _nameCtrl.text.trim(), phone: _phoneCtrl.text.trim());
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      if (res.containsKey('error')) {
-        await SweetAlert.error(context, title: 'No se pudo guardar', text: res['error'].toString());
-      } else {
-        SweetAlert.success(context, title: 'Perfil actualizado', autoClose: const Duration(milliseconds: 1500));
-        widget.onUpdated();
-      }
-    } finally { if (mounted) setState(() => _isLoading = false); }
+    setState(() => _saving = what);
+    final res = await ProfileService.updateProfile(name: _nameCtrl.text.trim(), phone: _phoneCtrl.text.trim());
+    if (!mounted) return;
+    setState(() => _saving = null);
+    if (res.containsKey('error')) {
+      await SweetAlert.error(context, title: 'No se pudo guardar', text: res['error'].toString());
+    } else {
+      SweetAlert.success(context, title: what == 'name' ? 'Nombre actualizado' : 'Teléfono actualizado', autoClose: const Duration(milliseconds: 1400));
+      widget.onUpdated();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final created = widget.user['created_at'] != null
-        ? DateTime.tryParse(widget.user['created_at'].toString())?.toLocal()
-        : null;
-    String two(int n) => n.toString().padLeft(2, '0');
+    final u = widget.user;
+    final stats = (u['stats'] as Map?) ?? {};
+    final verified = u['is_email_verified'] == true;
+    final isGoogle = u['google_id'] != null;
+    final readOnly = Row(children: [
+      Icon(Icons.lock_outline_rounded, size: 15, color: AppTheme.hint),
+      const SizedBox(width: 6),
+      Text('Solo lectura', style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+    ]);
 
-    return _TabBody(left: [
-      BSCard(
-        title: 'Datos de la cuenta',
-        child: BSLabelGrid(items: [
-          BSLabelValue(label: 'Correo electrónico', value: widget.user['email']?.toString() ?? '-'),
-          BSLabelValue(label: 'Número de cédula', value: widget.user['document_id']?.toString() ?? 'No registrado'),
-          BSLabelValue(label: 'Miembro desde', value: created != null ? '${two(created.day)}/${two(created.month)}/${created.year}' : '-'),
-          BSLabelValue(label: 'Último acceso', value: widget.user['last_login'] != null
-              ? fmtFechaHora(widget.user['last_login'].toString())
-              : '-'),
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _SettingsCard(
+        title: 'Foto de perfil',
+        description: 'Esta es tu foto. Haz clic en ella para subir una desde tus archivos.',
+        trailing: _AvatarWidget(avatarUrl: u['avatar_url']?.toString(), name: u['name']?.toString() ?? '', onTap: () => _pickAvatar(context, widget.onUpdated)),
+        footer: 'La foto es opcional, pero ayuda a que te reconozcan en la bandeja y en los equipos.',
+      ),
+      _SettingsCard(
+        title: 'Nombre',
+        description: 'Tu nombre completo, como aparecerá en las firmas, la bandeja y los correos.',
+        child: _Field(controller: _nameCtrl, hint: 'Tu nombre completo', maxLength: 60, onChanged: (_) => setState(() {})),
+        footer: 'Usa máximo 60 caracteres.',
+        action: _SaveButton(loading: _saving == 'name', onPressed: _nameChanged ? () => _save('name') : null),
+      ),
+      _SettingsCard(
+        title: 'Teléfono',
+        description: 'Un número de contacto para tu cuenta.',
+        child: _Field(controller: _phoneCtrl, hint: '3001234567', keyboard: TextInputType.phone, maxLength: 20, onChanged: (_) => setState(() {})),
+        footer: 'Es opcional.',
+        action: _SaveButton(loading: _saving == 'phone', onPressed: _phoneChanged ? () => _save('phone') : null),
+      ),
+      _SettingsCard(
+        title: 'Correo electrónico',
+        description: 'Con este correo inicias sesión y recibes los avisos de DocBlockSign.',
+        child: Wrap(spacing: 10, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: [
+          Text(u['email']?.toString() ?? '—', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w600)),
+          verified ? const BSPill(label: 'Verificado', color: BSColors.success) : const BSPill(label: 'Sin verificar', color: BSColors.warning),
+          if (isGoogle) BSPill(label: 'Cuenta Google', color: AppTheme.primary, dot: false),
         ]),
+        footer: 'El correo identifica tu firma en los documentos registrados en blockchain, por eso no se puede cambiar.',
+        action: readOnly,
       ),
-      const SizedBox(height: 12),
-      const BSInfoBanner(
-        title: 'El correo y la cédula no se pueden modificar.',
-        text: 'Identifican tu firma en los documentos registrados en blockchain.',
-        icon: Icons.lock_outline_rounded,
+      _SettingsCard(
+        title: 'Número de documento',
+        description: 'Tu cédula queda asociada a cada firma que haces.',
+        child: Text(u['document_id']?.toString() ?? 'No registrado', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w600)),
+        footer: 'Por seguridad no se puede modificar.',
+        action: readOnly,
       ),
-    ], right: [
-      BSCard(
-        title: 'Datos personales',
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          BSTextField(label: 'Nombre completo', hint: 'Tu nombre', controller: _nameCtrl, icon: Icons.person_outline_rounded, textCapitalization: TextCapitalization.words),
-          const SizedBox(height: 16),
-          BSTextField(label: 'Teléfono', hint: '3001234567', controller: _phoneCtrl, icon: Icons.phone_outlined, keyboardType: TextInputType.phone),
-          const SizedBox(height: 20),
-          Align(
-            alignment: Alignment.centerRight,
-            child: BSPrimaryButton(label: 'Guardar cambios', icon: Icons.save_rounded, loading: _isLoading, onPressed: _save),
-          ),
+      _SettingsCard(
+        title: 'Actividad de la cuenta',
+        child: Wrap(spacing: 28, runSpacing: 16, children: [
+          for (final (label, value) in [
+            ('Miembro desde', fmtFecha(u['created_at']?.toString())),
+            ('Último acceso', u['last_login'] != null ? fmtFechaHora(u['last_login'].toString()) : '—'),
+            ('Documentos', '${stats['total_docs'] ?? 0}'),
+            ('Firmados', '${stats['signed_docs'] ?? 0}'),
+            ('Verificados', '${stats['verified_docs'] ?? 0}'),
+            ('Espacio usado', '${'${stats['total_size_mb'] ?? 0}'.replaceAll('.', ',')} MB'),
+          ])
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              const SizedBox(height: 3),
+              Text(value, style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
+            ]),
         ]),
       ),
     ]);
@@ -576,35 +610,39 @@ class _SecurityTabState extends State<_SecurityTab> {
   @override
   Widget build(BuildContext context) {
     final isGoogle = widget.user['google_id'] != null;
-    return _TabBody(left: [
+    Widget label(String t) => Padding(
+          padding: const EdgeInsets.only(bottom: 6, top: 4),
+          child: Text(t, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+        );
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       if (!isGoogle)
-        BSCard(
-          title: 'Cambiar contraseña',
+        _SettingsCard(
+          title: 'Contraseña',
+          description: 'Cámbiala cuando quieras. Te enviaremos un aviso por correo cuando se actualice.',
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            BSTextField(label: 'Contraseña actual', hint: '••••••••', controller: _currentPassCtrl, icon: Icons.lock_outline_rounded, obscureText: true),
-            const SizedBox(height: 14),
-            BSTextField(label: 'Nueva contraseña', hint: '8+ caracteres, mayúscula y número', controller: _newPassCtrl, icon: Icons.lock_reset_rounded, obscureText: true),
+            label('Contraseña actual'),
+            _Field(controller: _currentPassCtrl, hint: '••••••••', obscure: true),
+            const SizedBox(height: 12),
+            label('Nueva contraseña'),
+            _Field(controller: _newPassCtrl, hint: 'Mínimo 8 caracteres', obscure: true),
             const SizedBox(height: 10),
-            _strength(),
-            const SizedBox(height: 14),
-            BSTextField(label: 'Confirmar nueva contraseña', hint: 'Repite la nueva contraseña', controller: _confirmPassCtrl, icon: Icons.lock_reset_rounded, obscureText: true),
-            const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.centerRight,
-              child: BSPrimaryButton(label: 'Actualizar contraseña', icon: Icons.key_rounded, loading: _isLoading, onPressed: _changePassword),
-            ),
+            ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: _strength()),
+            const SizedBox(height: 12),
+            label('Confirmar nueva contraseña'),
+            _Field(controller: _confirmPassCtrl, hint: 'Repítela', obscure: true),
           ]),
+          footer: 'Debe tener 8 o más caracteres, una mayúscula y un número.',
+          action: _SaveButton(label: 'Actualizar', loading: _isLoading, onPressed: _changePassword),
         )
       else
-        const BSInfoBanner(
-          title: 'Tu cuenta usa Google.',
-          text: 'La contraseña se gestiona desde tu cuenta de Google.',
+        const _SettingsCard(
+          title: 'Contraseña',
+          description: 'Tu cuenta inicia sesión con Google, así que la contraseña se gestiona desde tu cuenta de Google.',
         ),
-    ], right: [
-      const BSCard(
-        title: 'Recomendaciones de seguridad',
+      const _SettingsCard(
+        title: 'Recomendaciones',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          _Tip(icon: Icons.password_rounded, text: 'Usa una contraseña única de al menos 8 caracteres, con mayúsculas y números.'),
+          _Tip(icon: Icons.password_rounded, text: 'Usa una contraseña única que no uses en otros sitios.'),
           _Tip(icon: Icons.mark_email_read_outlined, text: 'Mantén tu correo verificado: por ahí recibes los enlaces de recuperación.'),
           _Tip(icon: Icons.draw_outlined, text: 'Tu firma solo se aplica cuando confirmas cada documento.'),
           _Tip(icon: Icons.logout_rounded, text: 'Cierra sesión al usar equipos compartidos.'),
@@ -620,10 +658,10 @@ class _SecurityTabState extends State<_SecurityTab> {
 class _KeysSection extends StatelessWidget {
   const _KeysSection();
   @override
-  Widget build(BuildContext context) => const _TabBody(left: [
+  Widget build(BuildContext context) => const Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         _KeysCard(),
-      ], right: [
-        BSCard(
+        SizedBox(height: 20),
+        _SettingsCard(
           title: '¿Para qué sirven?',
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             _Tip(icon: Icons.key_rounded, text: 'Tu llave privada firma cada documento; nunca sale del servidor y se guarda cifrada.'),
@@ -670,15 +708,12 @@ class _AccountSectionState extends State<_AccountSection> {
 
   @override
   Widget build(BuildContext context) {
-    return BSCard(
+    return _SettingsCard(
+      danger: true,
       title: 'Eliminar cuenta',
-      borderColor: BSColors.danger.withOpacity(0.35),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Se eliminarán permanentemente tu cuenta y todos tus documentos. Las firmas ya registradas en blockchain no se pueden borrar, porque la cadena es inmutable.',
-            style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5)),
-        const SizedBox(height: 16),
-        BSOutlineButton(label: 'Eliminar mi cuenta', icon: Icons.delete_outline_rounded, color: BSColors.danger, onPressed: _deleteAccount),
-      ]),
+      description: 'Elimina de forma permanente tu cuenta y todos tus documentos de DocBlockSign. Esta acción no se puede deshacer, así que hazlo con cuidado.',
+      footer: 'Las firmas ya registradas en blockchain no se borran, porque la cadena es inmutable.',
+      action: _SaveButton(label: 'Eliminar mi cuenta', color: BSColors.danger, onPressed: _deleteAccount),
     );
   }
 }
@@ -804,7 +839,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 48),
         child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
@@ -826,12 +861,13 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
               height: 130, width: double.infinity,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+              decoration: BoxDecoration(color: const Color(0xFFFFFFFF), // papel blanco: la firma es tinta oscura
+                  borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(_savedSignatureUrl!, fit: BoxFit.contain,
-                  loadingBuilder: (ctx, child, progress) => progress == null ? child : const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-                  errorBuilder: (_, __, ___) => const Center(child: Icon(Icons.broken_image_rounded, color: AppTheme.hint)),
+                  loadingBuilder: (ctx, child, progress) => progress == null ? child : Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+                  errorBuilder: (_, __, ___) => Center(child: Icon(Icons.broken_image_rounded, color: AppTheme.hint)),
                 ),
               ),
             ),
@@ -843,7 +879,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
           ]),
         ),
       ] else
-        const BSCard(
+        BSCard(
           title: 'Firma actual',
           trailing: BSPill(label: 'Sin registrar', color: BSColors.warning),
           child: Row(children: [
@@ -859,7 +895,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
       BSCard(
         title: _savedSignatureUrl != null ? 'Actualizar firma' : 'Crear firma digital',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Dibuja tu firma o sube una imagen PNG/JPG.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+          Text('Dibuja tu firma o sube una imagen PNG/JPG.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           const SizedBox(height: 14),
 
           // Tabs: Dibujar / Subir
@@ -892,7 +928,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                     child: RepaintBoundary(
                       key: _canvasKey,
                       child: Container(
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border, width: 1.5)),
+                        decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border, width: 1.5)),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(11),
                           // El recognizer "eager" reclama el gesto para que la página
@@ -943,11 +979,11 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                     border: Border.all(color: AppTheme.border),
                   ),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Container(width: 56, height: 56, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle), child: const Icon(Icons.upload_file_rounded, color: AppTheme.primary, size: 28)),
+                    Container(width: 56, height: 56, decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle), child: Icon(Icons.upload_file_rounded, color: AppTheme.primary, size: 28)),
                     const SizedBox(height: 12),
-                    const Text('Sube tu firma como imagen', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+                    Text('Sube tu firma como imagen', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
                     const SizedBox(height: 6),
-                    const Text('Formatos: PNG, JPG\nFondo transparente recomendado (PNG)', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.5)),
+                    Text('Formatos: PNG, JPG\nFondo transparente recomendado (PNG)', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.5)),
                     const SizedBox(height: 18),
                     BSPrimaryButton(label: _isSaving ? 'Subiendo...' : 'Seleccionar imagen', icon: Icons.image_rounded, loading: _isSaving, onPressed: _pickAndUpload),
                   ]),
@@ -1004,7 +1040,7 @@ class _Tip extends StatelessWidget {
           child: Icon(icon, color: AppTheme.primary, size: 17),
         ),
         const SizedBox(width: 12),
-        Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45))),
+        Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45))),
       ]),
     );
   }
@@ -1057,9 +1093,9 @@ class _KeysCardState extends State<_KeysCard> {
 
   Widget _row(String k, String v, {bool mono = false}) => Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
         child: Row(children: [
-          Expanded(child: Text(k, style: const TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w600))),
+          Expanded(child: Text(k, style: TextStyle(color: AppTheme.hint, fontSize: 13, fontWeight: FontWeight.w600))),
           Flexible(
             child: SelectableText(v,
                 textAlign: TextAlign.right,
@@ -1073,13 +1109,13 @@ class _KeysCardState extends State<_KeysCard> {
     final pem = _k?['publicKey']?.toString() ?? '';
     return BSCard(
       title: 'Tus llaves de firma',
-      trailing: const BSPill(label: 'ECDSA P-256', color: AppTheme.primary, dot: false),
+      trailing: BSPill(label: 'ECDSA P-256', color: AppTheme.primary, dot: false),
       child: _error != null
           ? BSInfoBanner(title: 'No se pudieron cargar', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded)
           : _k == null
               ? const SizedBox(height: 90, child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
               : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  const Text(
+                  Text(
                     'Cada firma se hace con tu llave privada, que se guarda cifrada (AES-256-GCM) y nunca sale del servidor. '
                     'Cualquiera puede comprobarla con tu llave pública.',
                     style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.5),

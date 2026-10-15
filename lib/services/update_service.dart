@@ -64,19 +64,19 @@ class UpdateService {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Container(
           width: 52,
           height: 52,
           decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), shape: BoxShape.circle),
-          child: const Icon(Icons.system_update_rounded, color: AppTheme.primary, size: 28),
+          child: Icon(Icons.system_update_rounded, color: AppTheme.primary, size: 28),
         ),
-        title: const Text('Nueva versión disponible', style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
+        title: Text('Nueva versión disponible', style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
         content: Text(
           'Hay una versión más reciente de DocBlockSign (compilación ${upd.build}; tienes la $currentBuild).\n\n'
           'Se descargará el instalador; ábrelo y pulsa "Actualizar". No perderás tu sesión ni tus documentos.',
-          style: const TextStyle(color: AppTheme.hint, height: 1.4),
+          style: TextStyle(color: AppTheme.hint, height: 1.4),
         ),
         actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: [

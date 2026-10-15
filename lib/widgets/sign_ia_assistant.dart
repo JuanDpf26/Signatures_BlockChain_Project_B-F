@@ -60,7 +60,7 @@ Future<void> showSignIa(
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Material(
-            color: Colors.white,
+            color: AppTheme.card,
             elevation: 18,
             shadowColor: Colors.black26,
             borderRadius: BorderRadius.circular(20),
@@ -85,7 +85,7 @@ Future<void> showSignIa(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
       child: Container(
         height: MediaQuery.of(ctx).size.height * 0.92,
-        decoration: const BoxDecoration(color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+        decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
         clipBehavior: Clip.antiAlias,
         child: panel,
       ),
@@ -320,7 +320,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
       _header(),
       Expanded(
         child: Container(
-          color: const Color(0xFFF7F8FC),
+          color: AppTheme.surface,
           child: _msgs.isEmpty && !_thinking
               ? _welcome()
               : ListView.builder(
@@ -399,10 +399,10 @@ class _SignIaPanelState extends State<SignIaPanel> {
         ),
       ),
       const SizedBox(height: 16),
-      const Text('¿En qué te ayudo hoy?',
+      Text('¿En qué te ayudo hoy?',
           textAlign: TextAlign.center, style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
       const SizedBox(height: 6),
-      const Text(
+      Text(
         'Busco tus documentos, los reviso antes de que firmes, respondo preguntas sobre su contenido y verifico firmas en blockchain.',
         textAlign: TextAlign.center,
         style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45),
@@ -414,7 +414,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
       ],
       for (final s in _suggestions) _SuggestionTile(icon: s.$1, text: s.$2, onTap: () => _send(s.$2)),
       const SizedBox(height: 14),
-      const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.shield_outlined, size: 13, color: AppTheme.hint),
         SizedBox(width: 6),
         Flexible(
@@ -428,7 +428,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
   Widget _composer() {
     return Container(
       padding: EdgeInsets.fromLTRB(12, 10, 12, 12 + MediaQuery.of(context).padding.bottom * 0.5),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: AppTheme.border))),
+      decoration: BoxDecoration(color: AppTheme.card, border: Border(top: BorderSide(color: AppTheme.border))),
       child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
         Expanded(
           child: TextField(
@@ -444,7 +444,7 @@ class _SignIaPanelState extends State<SignIaPanel> {
               hintText: 'Pregúntale algo a Sign IA…',
               isDense: true,
               filled: true,
-              fillColor: const Color(0xFFF4F6FA),
+              fillColor: BSColors.page,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(22), borderSide: BorderSide.none),
             ),
@@ -483,7 +483,7 @@ class _SuggestionTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -494,8 +494,8 @@ class _SuggestionTile extends StatelessWidget {
             child: Row(children: [
               Icon(icon, size: 18, color: _iaA),
               const SizedBox(width: 12),
-              Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600))),
-              const Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.hint),
+              Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600))),
+              Icon(Icons.arrow_forward_rounded, size: 16, color: AppTheme.hint),
             ]),
           ),
         ),
@@ -697,7 +697,7 @@ class _ThinkingBubbleState extends State<_ThinkingBubble> with SingleTickerProvi
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          decoration: BoxDecoration(color: Colors.white, border: Border.all(color: AppTheme.border), borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(color: AppTheme.card, border: Border.all(color: AppTheme.border), borderRadius: BorderRadius.circular(16)),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             AnimatedBuilder(
               animation: _c,
@@ -717,7 +717,7 @@ class _ThinkingBubbleState extends State<_ThinkingBubble> with SingleTickerProvi
             const SizedBox(width: 6),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              child: Text(widget.text, key: ValueKey(widget.text), style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+              child: Text(widget.text, key: ValueKey(widget.text), style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             ),
           ]),
         ),
@@ -757,20 +757,20 @@ class _ReviewCard extends StatelessWidget {
               Row(children: [
                 Icon(icon, size: 14, color: AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(title, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                Text(title, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w800)),
               ]),
               const SizedBox(height: 4),
               for (final it in items)
                 Padding(
                   padding: const EdgeInsets.only(top: 3, left: 20),
-                  child: Text('• $it', style: const TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
+                  child: Text('• $it', style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35)),
                 ),
             ]),
           );
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.35)),
         boxShadow: [BoxShadow(color: color.withOpacity(0.08), blurRadius: 14, offset: const Offset(0, 4))],
@@ -800,9 +800,9 @@ class _ReviewCard extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text('Revisión antes de firmar', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.4)),
                 const SizedBox(height: 2),
-                Text('Riesgo ${risk.toLowerCase()}', style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w900)),
+                Text('Riesgo ${risk.toLowerCase()}', style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w900)),
                 Text(data['title']?.toString() ?? '',
-                    maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                    maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
           ]),
@@ -810,7 +810,7 @@ class _ReviewCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            if (data['summary'] != null) Text(data['summary'].toString(), style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45)),
+            if (data['summary'] != null) Text(data['summary'].toString(), style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.45)),
             if (alerts.isNotEmpty) ...[
               const SizedBox(height: 12),
               for (final a in alerts)
@@ -825,7 +825,7 @@ class _ReviewCard extends StatelessWidget {
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Icon(Icons.warning_amber_rounded, size: 15, color: riskColor(a['level']?.toString())),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(a['text']?.toString() ?? '', style: const TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35))),
+                    Expanded(child: Text(a['text']?.toString() ?? '', style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.35))),
                   ]),
                 ),
             ],
@@ -844,13 +844,13 @@ class _ReviewCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(data['recommendation'].toString(),
-                        style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.35)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.35)),
                   ),
                 ]),
               ),
             ],
             const SizedBox(height: 8),
-            const Text('Revisión orientativa generada con IA. No reemplaza asesoría legal.',
+            Text('Revisión orientativa generada con IA. No reemplaza asesoría legal.',
                 style: TextStyle(color: AppTheme.hint, fontSize: 10.5, fontStyle: FontStyle.italic)),
           ]),
         ),

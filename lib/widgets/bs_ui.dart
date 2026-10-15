@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_settings.dart';
 
 /// Componentes de interfaz de DocBlockSign (estilo panel administrativo):
 /// encabezado con migas de pan, tarjetas blancas con borde, KPIs con
@@ -12,9 +13,10 @@ class BSColors {
   static const success = Color(0xFF2E7D32);
   static const warning = Color(0xFFD99A00);
   static const danger = Color(0xFFD32F2F);
-  static const neutral = Color(0xFF5F6670);
-  static const page = Color(0xFFF4F6FA); // fondo gris claro de página
-  static const selected = Color(0xFFE8EEFB); // fondo de opción/fila seleccionada
+  // Cambian con la apariencia (clara / oscura / alto contraste)
+  static Color get neutral => AppTheme.p.neutral;
+  static Color get page => AppTheme.p.page; // fondo de página
+  static Color get selected => AppTheme.p.selected; // fondo de opción/fila seleccionada
 }
 
 // ── Encabezado de página ────────────────────────────────────────────
@@ -43,7 +45,7 @@ class BSPageHeader extends StatelessWidget {
       children: [
         Text(
           breadcrumb.join(' / '),
-          style: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+          style: TextStyle(color: AppTheme.hint, fontSize: 13.5),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -65,7 +67,7 @@ class BSPageHeader extends StatelessWidget {
         ),
         if (subtitle != null) ...[
           const SizedBox(height: 4),
-          Text(subtitle!, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+          Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
         ],
       ],
     );
@@ -137,7 +139,7 @@ class _BSCardState extends State<BSCard> {
       width: double.infinity,
       transform: Matrix4.translationValues(0, lifted ? -2 : 0, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: widget.borderColor ?? (lifted ? AppTheme.primary.withOpacity(0.25) : AppTheme.border)),
         boxShadow: lifted ? AppTheme.hoverShadow : AppTheme.cardShadow,
@@ -152,7 +154,7 @@ class _BSCardState extends State<BSCard> {
                 Expanded(
                   child: Text(
                     widget.title!,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700),
                   ),
                 ),
                 if (widget.trailing != null) widget.trailing!,
@@ -204,7 +206,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
   Widget build(BuildContext context) {
     final c = widget.color;
     final number = int.tryParse(widget.value);
-    final valueStyle = const TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w800, height: 1.1);
+    final valueStyle = TextStyle(color: AppTheme.text, fontSize: 26, fontWeight: FontWeight.w800, height: 1.1);
     final narrow = MediaQuery.of(context).size.width < 600;
     Widget valueText(String t) => FittedBox(
           fit: BoxFit.scaleDown,
@@ -225,7 +227,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
           transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
           padding: EdgeInsets.fromLTRB(narrow ? 14 : 18, narrow ? 14 : 16, narrow ? 12 : 16, narrow ? 14 : 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: _hover ? c.withOpacity(0.35) : AppTheme.border),
             boxShadow: _hover
@@ -325,7 +327,7 @@ class BSPill extends StatelessWidget {
       case 'pending':
         return const BSPill(label: 'Pendiente', color: BSColors.warning);
       case 'signed':
-        return const BSPill(label: 'Firmado', color: AppTheme.primary);
+        return BSPill(label: 'Firmado', color: AppTheme.primary);
       case 'verified':
         return const BSPill(label: 'Verificado', color: BSColors.success);
       case 'rejected':
@@ -345,7 +347,7 @@ class BSPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color, width: 1.4),
       ),
@@ -384,16 +386,17 @@ String bsDocStatusLabel(String s) => const {
 class BSInfoBanner extends StatelessWidget {
   final String title;
   final String? text;
-  final Color color;
+  final Color? _color;
+  Color get color => _color ?? AppTheme.primary;
   final IconData icon;
 
   const BSInfoBanner({
     super.key,
     required this.title,
     this.text,
-    this.color = AppTheme.primary,
+    Color? color,
     this.icon = Icons.info_rounded,
-  });
+  }) : _color = color;
 
   @override
   Widget build(BuildContext context) {
@@ -444,7 +447,7 @@ class BSLabelValue extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
         const SizedBox(height: 3),
         SelectableText(
@@ -476,9 +479,10 @@ class BSLabelGrid extends StatelessWidget {
 // ── Cuadro con inicial (avatar cuadrado de filas) ───────────────────
 class BSInitialBox extends StatelessWidget {
   final String text;
-  final Color color;
+  final Color? _color;
+  Color get color => _color ?? AppTheme.primary;
   final IconData? icon;
-  const BSInitialBox({super.key, required this.text, this.color = AppTheme.primary, this.icon});
+  const BSInitialBox({super.key, required this.text, Color? color, this.icon}) : _color = color;
 
   @override
   Widget build(BuildContext context) {
@@ -545,7 +549,7 @@ class BSFilterDropdown extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 10.5, fontWeight: FontWeight.w600)),
+                        Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 10.5, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 1),
                         Text(show(o),
                             maxLines: 1,
@@ -555,7 +559,7 @@ class BSFilterDropdown extends StatelessWidget {
                     ))
                 .toList(),
             items: options
-                .map((o) => DropdownMenuItem(value: o, child: Text(show(o), style: const TextStyle(fontSize: 13, color: AppTheme.text))))
+                .map((o) => DropdownMenuItem(value: o, child: Text(show(o), style: TextStyle(fontSize: 13, color: AppTheme.text))))
                 .toList(),
             onChanged: (v) {
               if (v != null) onChanged(v);
@@ -594,7 +598,7 @@ class BSFilterDropdown extends StatelessWidget {
               .map((o) => DropdownMenuItem(
                   value: o,
                   child: Text(show(o),
-                      style: const TextStyle(fontSize: 13, color: AppTheme.text))))
+                      style: TextStyle(fontSize: 13, color: AppTheme.text))))
               .toList(),
           onChanged: (v) {
             if (v != null) onChanged(v);
@@ -665,7 +669,7 @@ class BSOutlineButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: c,
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.card,
           side: BorderSide(color: c, width: 1.4),
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -777,7 +781,7 @@ class _BSAvatarState extends State<BSAvatar> {
       width: size,
       height: size,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle),
       clipBehavior: Clip.antiAlias,
       child: !usable
           ? initials
@@ -890,7 +894,10 @@ class _BSEntranceState extends State<BSEntrance> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    if (widget.delay == Duration.zero) {
+    // Accesibilidad: con "Reducir animaciones" aparece sin moverse
+    if (AppSettings.instance.reduceMotion) {
+      _c.value = 1;
+    } else if (widget.delay == Duration.zero) {
       _c.forward();
     } else {
       _t = Timer(widget.delay, () {

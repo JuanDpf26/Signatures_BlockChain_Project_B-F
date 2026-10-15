@@ -36,7 +36,7 @@ Future<AnalysisResult> showAnalysisProgress(
           context: context,
           barrierDismissible: false,
           builder: (_) => Dialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppTheme.card,
             insetPadding: const EdgeInsets.all(24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             clipBehavior: Clip.antiAlias,
@@ -48,7 +48,7 @@ Future<AnalysisResult> showAnalysisProgress(
           isScrollControlled: true,
           isDismissible: false,
           enableDrag: false,
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.card,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
           builder: (ctx) => ConstrainedBox(
             constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.94),
@@ -596,7 +596,7 @@ class _Scanner extends StatelessWidget {
         aspectRatio: 0.78,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: color.withOpacity(0.35), width: 1.4),
             boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 8))],
@@ -723,9 +723,9 @@ class _CountStat extends StatelessWidget {
             duration: const Duration(milliseconds: 1100),
             curve: Curves.easeOutCubic,
             builder: (_, v, __) => Text('${v.round()}',
-                style: const TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w900)),
+                style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w900)),
           ),
-          Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w600)),
         ]),
       ),
     );
@@ -762,7 +762,7 @@ class _ResultCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          color: Colors.white,
+          color: AppTheme.card,
           border: Border.all(color: AppTheme.border),
         ),
         padding: const EdgeInsets.all(16),
@@ -776,9 +776,9 @@ class _ResultCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.folder_outlined, size: 15, color: AppTheme.hint),
+                Icon(Icons.folder_outlined, size: 15, color: AppTheme.hint),
                 const SizedBox(width: 6),
-                Text(cat, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
+                Text(cat, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
               ]),
             ),
             if (conf != null)
@@ -786,7 +786,7 @@ class _ResultCard extends StatelessWidget {
           ]),
           if (desc.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(desc, style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.5)),
+            Text(desc, style: TextStyle(color: AppTheme.text, fontSize: 14, height: 1.5)),
           ],
           if (tags.isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -795,15 +795,15 @@ class _ResultCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(6), border: Border.all(color: AppTheme.border)),
-                  child: Text(tags[i], style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
+                  child: Text(tags[i], style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
                 ),
             ]),
           ],
           if (summary != null && summary.isNotEmpty) ...[
             const SizedBox(height: 14),
-            const Text('RESUMEN', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+            Text('RESUMEN', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
             const SizedBox(height: 4),
-            Text(summary, style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.5)),
+            Text(summary, style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.5)),
           ],
         ]),
       ),

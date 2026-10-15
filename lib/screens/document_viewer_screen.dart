@@ -61,7 +61,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         maxChildSize: 0.95,
         minChildSize: 0.4,
         builder: (_, ctrl) => Container(
-          decoration: const BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
           child: ListView(controller: ctrl, padding: const EdgeInsets.fromLTRB(16, 10, 16, 24), children: [
             Center(
               child: Container(
@@ -126,7 +126,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOut,
                       width: _showPanel ? 390 : 0,
-                      decoration: const BoxDecoration(color: BSColors.page, border: Border(left: BorderSide(color: AppTheme.border))),
+                      decoration: BoxDecoration(color: BSColors.page, border: Border(left: BorderSide(color: AppTheme.border))),
                       child: _showPanel
                           ? ListView(padding: const EdgeInsets.all(16), children: _panelChildren())
                           : const SizedBox.shrink(),
@@ -147,12 +147,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     return Column(children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
+        decoration: BoxDecoration(color: AppTheme.card, border: Border(bottom: BorderSide(color: AppTheme.border))),
         child: Row(children: [
           _Segment(options: labels, selected: _engine, onChanged: (i) => setState(() => _engine = i)),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+            child: Text(hint, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
           ),
         ]),
       ),
@@ -232,12 +232,12 @@ class _TopBar extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.fromLTRB(4, 8, wide ? 16 : 6, 8),
-      decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
+      decoration: BoxDecoration(color: AppTheme.card, border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: Row(children: [
         IconButton(
           tooltip: 'Volver',
           onPressed: onBack,
-          icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text),
+          icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text),
         ),
         BSInitialBox(
           text: d.ext.toUpperCase(),
@@ -248,9 +248,9 @@ class _TopBar extends StatelessWidget {
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
             Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
-            Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+            Text(sub, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
           ]),
         ),
         if (wide) ...[
@@ -264,8 +264,8 @@ class _TopBar extends StatelessWidget {
             onPressed: onInfo,
           ),
         ] else ...[
-          IconButton(tooltip: 'Abrir externamente', onPressed: onOpenExternal, icon: const Icon(Icons.open_in_new_rounded, color: AppTheme.hint)),
-          IconButton(tooltip: 'Información', onPressed: onInfo, icon: const Icon(Icons.info_outline_rounded, color: AppTheme.primary)),
+          IconButton(tooltip: 'Abrir externamente', onPressed: onOpenExternal, icon: Icon(Icons.open_in_new_rounded, color: AppTheme.hint)),
+          IconButton(tooltip: 'Información', onPressed: onInfo, icon: Icon(Icons.info_outline_rounded, color: AppTheme.primary)),
         ],
       ]),
     );

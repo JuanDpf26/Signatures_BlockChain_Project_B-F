@@ -19,7 +19,7 @@ void showBS(BuildContext context, String message, {bool isError = false}) {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500),
+              style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -223,8 +223,8 @@ class _BSCaptchaWidgetState extends State<BSCaptchaWidget> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text('hCaptcha', style: TextStyle(color: AppTheme.hint, fontSize: 10)),
-              const Text('Privacidad primero', style: TextStyle(color: Color(0xFF4b5563), fontSize: 9)),
+              Text('hCaptcha', style: TextStyle(color: AppTheme.hint, fontSize: 10)),
+              Text('Privacidad primero', style: TextStyle(color: AppTheme.hint, fontSize: 9)),
             ],
           ),
         ],
@@ -272,8 +272,8 @@ class FeatureCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
-              Text(description, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+              Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 15)),
+              Text(description, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             ],
           ),
         ],
@@ -286,7 +286,7 @@ class FeatureCard extends StatelessWidget {
 class BSDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: [
         Expanded(child: Divider(color: AppTheme.border)),
         Padding(

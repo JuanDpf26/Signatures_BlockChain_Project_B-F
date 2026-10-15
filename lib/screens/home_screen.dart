@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/accessibility_menu.dart';
 import '../widgets/brand.dart';
 import '../services/auth_service.dart';
 import '../services/document_service.dart';
@@ -350,7 +351,7 @@ class _Sidebar extends StatelessWidget {
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
       width: w,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -534,7 +535,7 @@ class _UserCard extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: collapsed ? 16 : 16),
       padding: EdgeInsets.all(collapsed ? 6 : 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 18, offset: const Offset(0, 8))],
       ),
@@ -556,10 +557,10 @@ class _UserCard extends StatelessWidget {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(user.name.isEmpty ? 'Mi cuenta' : user.name,
                         maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                     if (user.email.isNotEmpty)
                       Text(user.email, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                          style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
                   ]),
                 ),
               ),
@@ -771,8 +772,8 @@ class _TopBarState extends State<_TopBar> {
     return Container(
       height: 76,
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppTheme.card,
         border: Border(bottom: BorderSide(color: AppTheme.border)),
       ),
       child: Row(children: [
@@ -791,21 +792,21 @@ class _TopBarState extends State<_TopBar> {
                 style: const TextStyle(fontSize: 14.5),
                 decoration: InputDecoration(
                   hintText: 'Buscar documento, categoría o descripción…',
-                  prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.hint, size: 22),
+                  prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 22),
                   suffixIcon: _ctrl.text.isEmpty
                       ? null
                       : IconButton(
                           tooltip: 'Buscar',
-                          icon: const Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.primary),
+                          icon: Icon(Icons.arrow_forward_rounded, size: 18, color: AppTheme.primary),
                           onPressed: () => widget.onSearch(_ctrl.text.trim()),
                         ),
                   isDense: true,
                   filled: true,
                   fillColor: BSColors.page,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.border)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -813,6 +814,8 @@ class _TopBarState extends State<_TopBar> {
           ),
         ),
         const Spacer(),
+        const AccessibilityButton(),
+        const SizedBox(width: 6),
         // Notificaciones: documentos pendientes de firma
         _Bell(pending: widget.pending, onShowAll: widget.onShowPending),
         const SizedBox(width: 14),
@@ -832,9 +835,9 @@ class _TopBarState extends State<_TopBar> {
                     child: BSLiveClock(
                       builder: (context, now) => Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(user.name.isEmpty ? 'Mi cuenta' : user.name, maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
                         Text('${bsSaludo(now)} · ${bsHora(now)}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                       ]),
                     ),
                   ),
@@ -866,7 +869,7 @@ class _Bell extends StatelessWidget {
         PopupMenuItem<int>(
           enabled: false,
           child: Text(n == 0 ? 'Todo al día 🎉' : 'Pendientes de firma ($n)',
-              style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
+              style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
         ),
         for (final d in pending.take(5))
           PopupMenuItem<int>(
@@ -881,7 +884,7 @@ class _Bell extends StatelessWidget {
             ]),
           ),
         if (n > 0)
-          const PopupMenuItem<int>(
+          PopupMenuItem<int>(
             value: 1,
             child: Text('Ver todos →', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
           ),
@@ -891,7 +894,7 @@ class _Bell extends StatelessWidget {
         height: 42,
         decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: AppTheme.border)),
         child: Stack(alignment: Alignment.center, clipBehavior: Clip.none, children: [
-          const Icon(Icons.notifications_none_rounded, color: AppTheme.text, size: 22),
+          Icon(Icons.notifications_none_rounded, color: AppTheme.text, size: 22),
           if (n > 0)
             Positioned(
               top: -2,
@@ -946,7 +949,7 @@ class _MobileShell extends StatelessWidget {
           // Encabezado: logo, saludo con hora, campana y usuario
           Container(
             padding: const EdgeInsets.fromLTRB(14, 10, 10, 10),
-            decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border))),
+            decoration: BoxDecoration(color: AppTheme.card, border: Border(bottom: BorderSide(color: AppTheme.border))),
             child: Row(children: [
               const _LogoMark(size: 36),
               const SizedBox(width: 10),
@@ -955,12 +958,13 @@ class _MobileShell extends StatelessWidget {
                   builder: (context, now) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(first.isEmpty ? bsSaludo(now) : '${bsSaludo(now)}, $first',
                         maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.text, fontSize: 15.5, fontWeight: FontWeight.w800)),
+                        style: TextStyle(color: AppTheme.text, fontSize: 15.5, fontWeight: FontWeight.w800)),
                     Text('${bsFechaLarga(now)} · ${bsHora(now)}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                        style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
                   ]),
                 ),
               ),
+              const AccessibilityButton(),
               _Bell(pending: pending, onShowAll: onShowPending),
               const SizedBox(width: 6),
               // Avatar con menú: perfil o cerrar sesión
@@ -993,27 +997,27 @@ class _MobileShell extends StatelessWidget {
         ]),
       ),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.card,
           border: Border(top: BorderSide(color: AppTheme.border)),
         ),
         child: NavigationBar(
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.card,
           surfaceTintColor: Colors.transparent,
           // Tablero · Docs · Bandeja · Verificar · Perfil (Equipos y Auditoría están en el menú del avatar)
           selectedIndex: _order.contains(selectedIndex) ? _order.indexOf(selectedIndex) : 4,
           onDestinationSelected: (i) => onNavTap(_order[i]),
           indicatorColor: BSColors.selected,
           destinations: [
-            const NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
-            const NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded, color: AppTheme.primary), label: 'Docs'),
+            NavigationDestination(icon: Icon(Icons.space_dashboard_outlined), selectedIcon: Icon(Icons.space_dashboard_rounded, color: AppTheme.primary), label: 'Tablero'),
+            NavigationDestination(icon: Icon(Icons.description_outlined), selectedIcon: Icon(Icons.description_rounded, color: AppTheme.primary), label: 'Docs'),
             NavigationDestination(
               icon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.inbox_outlined)),
-              selectedIcon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: const Icon(Icons.inbox_rounded, color: AppTheme.primary)),
+              selectedIcon: Badge(isLabelVisible: unread > 0, label: Text('$unread'), child: Icon(Icons.inbox_rounded, color: AppTheme.primary)),
               label: 'Bandeja',
             ),
-            const NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
-            const NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
+            NavigationDestination(icon: Icon(Icons.verified_outlined), selectedIcon: Icon(Icons.verified_rounded, color: AppTheme.primary), label: 'Verificar'),
+            NavigationDestination(icon: Icon(Icons.person_outline_rounded), selectedIcon: Icon(Icons.person_rounded, color: AppTheme.primary), label: 'Perfil'),
           ],
         ),
       ),
@@ -1422,7 +1426,7 @@ class _HeroStep extends StatelessWidget {
             Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(9)),
+              decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(9)),
               child: Icon(icon, color: AppTheme.primary, size: 19),
             ),
             const SizedBox(width: 10),
@@ -1537,7 +1541,7 @@ class _TodoCard extends StatelessWidget {
                       child: const Icon(Icons.task_alt_rounded, color: BSColors.success),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('¡Todo al día!', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
                         SizedBox(height: 2),
@@ -1548,7 +1552,7 @@ class _TodoCard extends StatelessWidget {
                 )
               : Column(children: [
                   for (var i = 0; i < items.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                    if (i > 0) Divider(height: 1, color: AppTheme.border),
                     items[i],
                   ],
                 ]),
@@ -1595,9 +1599,9 @@ class _TodoItemState extends State<_TodoItem> {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(widget.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800, height: 1.25)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800, height: 1.25)),
                 const SizedBox(height: 2),
-                Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
               ]),
             ),
             const SizedBox(width: 10),
@@ -1612,7 +1616,7 @@ class _TodoItemState extends State<_TodoItem> {
                     style: TextStyle(color: _hover ? Colors.white : AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w800)),
               )
             else
-              const Icon(Icons.chevron_right_rounded, color: AppTheme.hint),
+              Icon(Icons.chevron_right_rounded, color: AppTheme.hint),
           ]),
         ),
       ),
@@ -1670,9 +1674,9 @@ class _QuickLinks extends StatelessWidget {
                         ),
                     ]),
                     const SizedBox(height: 10),
-                    Text(l.$2, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                    Text(l.$2, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(l.$3, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                    Text(l.$3, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ]),
                 ),
               ),
@@ -1709,13 +1713,13 @@ class _WeekChartCard extends StatelessWidget {
 
     return BSCard(
       title: 'Actividad de los últimos 7 días',
-      trailing: Text('$totalUp subidos · $totalSig firmados', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      trailing: Text('$totalUp subidos · $totalSig firmados', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       child: loading
           ? _loadingBox(250)
           : data.isEmpty
               ? _emptyBox('Sin datos de actividad', 250)
               : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Row(children: [
+                  Row(children: [
                     _Legend(color: AppTheme.primary, label: 'Subidos'),
                     SizedBox(width: 22),
                     _Legend(color: AppTheme.featureBlue, label: 'Firmados'),
@@ -1743,7 +1747,7 @@ class _WeekChartCard extends StatelessWidget {
                       Expanded(
                         child: Text(e.$1, textAlign: TextAlign.center,
                             maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600)),
                       ),
                   ]),
                 ]),
@@ -1773,7 +1777,7 @@ class _StatusMixCard extends StatelessWidget {
 
     return BSCard(
       title: 'Estado de tus documentos',
-      trailing: Text('$total en total', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      trailing: Text('$total en total', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       child: loading
           ? _loadingBox(200)
           : total == 0
@@ -1811,11 +1815,11 @@ class _StatusMixCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Row(children: [
-                    const Icon(Icons.auto_stories_outlined, size: 16, color: AppTheme.hint),
+                    Icon(Icons.auto_stories_outlined, size: 16, color: AppTheme.hint),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text('${n('pages')} páginas · ${'${stats['total_size_mb'] ?? 0}'.replaceAll('.', ',')} MB · ${n('pdfs')} PDF / ${n('words')} Word',
-                          style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                          style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
                     ),
                   ]),
                 ]),
@@ -1914,7 +1918,7 @@ class _ConfidentialityCard extends StatelessWidget {
                         SizedBox(
                           width: 110,
                           child: Text(items[i].$1, maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                              style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
                         ),
                         Expanded(
                           child: ClipRRect(
@@ -1937,7 +1941,7 @@ class _ConfidentialityCard extends StatelessWidget {
                         SizedBox(
                           width: 36,
                           child: Text('${items[i].$2}', textAlign: TextAlign.right,
-                              style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                              style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                         ),
                       ]),
                     ),
@@ -1956,7 +1960,7 @@ class _LinkText extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Text(text, style: const TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w700)),
+          child: Text(text, style: TextStyle(color: AppTheme.primary, fontSize: 14, fontWeight: FontWeight.w700)),
         ),
       );
 }
@@ -1986,9 +1990,9 @@ Widget _emptyBox(String text, [double h = 200]) => SizedBox(
       height: h,
       child: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.insert_chart_outlined_rounded, color: AppTheme.hint, size: 30),
+          Icon(Icons.insert_chart_outlined_rounded, color: AppTheme.hint, size: 30),
           const SizedBox(height: 8),
-          Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+          Text(text, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
         ]),
       ),
     );
@@ -2002,7 +2006,7 @@ class _Legend extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 12, height: 12, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3))),
         const SizedBox(width: 7),
-        Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+        Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       ]);
 }
 
@@ -2032,7 +2036,7 @@ class _VBarState extends State<_VBar> {
         onEnter: (_) => setState(() => _hover = true),
         onExit: (_) => setState(() => _hover = false),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('${widget.value}', style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w800)),
+          Text('${widget.value}', style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w800)),
           const SizedBox(height: 5),
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0, end: h),
@@ -2074,9 +2078,9 @@ class _RecentTableCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 26),
         child: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
+            Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
-            const Text('Sube tu primer PDF o Word desde la sección Documentos.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            Text('Sube tu primer PDF o Word desde la sección Documentos.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             const SizedBox(height: 14),
             BSOutlineButton(label: 'Ir a Documentos', icon: Icons.arrow_forward_rounded, onPressed: () => onNavTap(1)),
           ]),
@@ -2143,10 +2147,10 @@ class _RecentRowState extends State<_RecentRow> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(8)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.event_outlined, size: 15, color: AppTheme.primary),
+        Icon(Icons.event_outlined, size: 15, color: AppTheme.primary),
         const SizedBox(width: 6),
         Text('$date · ${two(created.hour)}:${two(created.minute)}',
-            style: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w700)),
       ]),
     );
 
@@ -2175,7 +2179,7 @@ class _RecentRowState extends State<_RecentRow> {
                 const SizedBox(height: 4),
                 Text(sub,
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
               ]),
             ),
             const SizedBox(width: 10),
@@ -2194,12 +2198,12 @@ class _RecentRowState extends State<_RecentRow> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(d['title']?.toString() ?? 'Sin nombre',
                     maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 Row(children: [
                   Expanded(
                     child: Text('$cat · $date', maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                        style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ),
                   const SizedBox(width: 8),
                   BSPill.docStatus(_visibleStatusOf(d)),
@@ -2282,10 +2286,10 @@ class _ActivityCard extends StatelessWidget {
                           const SizedBox(width: 14),
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(top[i].$2, style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                              Text(top[i].$2, style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
                               const SizedBox(height: 3),
                               Text('${top[i].$3} · ${ago(top[i].$1)}',
-                                  maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                                  maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
                             ]),
                           ),
                         ]),

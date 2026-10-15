@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import 'package:flutter/foundation.dart';
 // ignore: avoid_web_libraries_in_flutter
 import '../utils/js_bridge.dart';
@@ -328,7 +329,7 @@ class _CaptchaWidget extends StatelessWidget {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppTheme.card,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: GoogleAuthTheme.textSecondary.withOpacity(0.6), width: 2),
                           ),

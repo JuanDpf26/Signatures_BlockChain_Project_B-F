@@ -10,25 +10,80 @@ import 'screens/reset_password_screen.dart';
 import 'screens/email_verified_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
+import 'theme/app_settings.dart';
 import 'theme/app_theme.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AppSettings.instance.load();
+  _applyPalette();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+void _applyPalette() {
+  final s = AppSettings.instance;
+  AppTheme.apply(dark: s.isDark, highContrast: s.highContrast);
+}
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    AppSettings.instance.addListener(_onSettings);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    AppSettings.instance.removeListener(_onSettings);
+    super.dispose();
+  }
+
+  @override
+  void didChangePlatformBrightness() => AppSettings.instance.platformBrightnessChanged();
+
+  /// Cambió la apariencia: se aplica la paleta y se vuelve a dibujar todo
+  /// (sin reiniciar la navegación, así sigues en la misma pantalla).
+  void _onSettings() {
+    _applyPalette();
+    setState(() {});
+    void mark(Element e) {
+      e.markNeedsBuild();
+      e.visitChildren(mark);
+    }
+    (context as Element).visitChildren(mark);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final settings = AppSettings.instance;
     return MaterialApp(
       title: 'DocBlockSign',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
+      theme: AppTheme.build(),
       initialRoute: '/',
-      // Aviso flotante mientras el servidor gratuito se despierta
+      // Accesibilidad (tamaño de texto, negrita, menos animación) y aviso
+      // flotante mientras el servidor gratuito se despierta
       builder: (context, child) => Stack(children: [
-        child ?? const SizedBox.shrink(),
+        Builder(builder: (context) {
+          final mq = MediaQuery.of(context);
+          return MediaQuery(
+            data: mq.copyWith(
+              textScaler: TextScaler.linear(settings.textScale),
+              boldText: mq.boldText || settings.boldText,
+              disableAnimations: mq.disableAnimations || settings.reduceMotion,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        }),
         ValueListenableBuilder<bool>(
           valueListenable: ServerWake.waking,
           builder: (_, waking, __) => !waking

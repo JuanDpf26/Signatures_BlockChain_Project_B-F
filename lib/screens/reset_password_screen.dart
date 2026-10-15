@@ -166,7 +166,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               border: Border.all(color: AppTheme.border),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Tu contraseña debe tener:',
+              Text('Tu contraseña debe tener:',
                   style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               _Rule(ok: p.length >= 8, text: 'Mínimo 8 caracteres'),

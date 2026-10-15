@@ -15,7 +15,7 @@ Future<bool> showSendDocumentDialog(BuildContext context, Map<String, dynamic> d
       ? await showDialog<bool>(
           context: context,
           builder: (_) => Dialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppTheme.card,
             insetPadding: const EdgeInsets.all(24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             clipBehavior: Clip.antiAlias,
@@ -25,7 +25,7 @@ Future<bool> showSendDocumentDialog(BuildContext context, Map<String, dynamic> d
       : await showModalBottomSheet<bool>(
           context: context,
           isScrollControlled: true,
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.card,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
           builder: (ctx) => Padding(
             padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
@@ -140,19 +140,19 @@ class _SendPanelState extends State<_SendPanel> {
 
   InputDecoration _dec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.card,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.6)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
       );
 
   Widget _label(String t) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
-        child: Text(t, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
+        child: Text(t, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
       );
 
   @override
@@ -165,7 +165,7 @@ class _SendPanelState extends State<_SendPanel> {
       // Encabezado azul
       Container(
         padding: const EdgeInsets.fromLTRB(22, 20, 12, 20),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(colors: [AppTheme.primary, AppTheme.primaryDark], begin: Alignment.topLeft, end: Alignment.bottomRight),
         ),
         child: Row(children: [
@@ -207,11 +207,11 @@ class _SendPanelState extends State<_SendPanel> {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(_title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
+                      style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
                   const SizedBox(height: 3),
                   Text('${fmtTamano(_meta)}${hash.isNotEmpty ? ' · Huella ${fmtHuella(hash)}' : ''}',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                      style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
               ),
               const SizedBox(width: 8),
@@ -231,13 +231,13 @@ class _SendPanelState extends State<_SendPanel> {
             child: Wrap(spacing: 6, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.center, children: [
               for (final e in _to)
                 InputChip(
-                  avatar: const Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.primary),
+                  avatar: Icon(Icons.person_outline_rounded, size: 16, color: AppTheme.primary),
                   label: Text(e),
                   onDeleted: _sending ? null : () => setState(() => _to.remove(e)),
                   deleteIconColor: AppTheme.primary,
                   backgroundColor: BSColors.selected,
                   side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
-                  labelStyle: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                  labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
                   visualDensity: VisualDensity.compact,
                 ),
               SizedBox(
@@ -257,10 +257,10 @@ class _SendPanelState extends State<_SendPanel> {
                     onTapOutside: (_) {
                       if (_toCtrl.text.trim().isNotEmpty) _commit();
                     },
-                    style: const TextStyle(color: AppTheme.text, fontSize: 13.5),
+                    style: TextStyle(color: AppTheme.text, fontSize: 13.5),
                     decoration: InputDecoration(
                       hintText: _to.isEmpty ? 'correo@ejemplo.com y Enter' : (_to.length < 5 ? 'Agregar otro…' : ''),
-                      hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+                      hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
@@ -281,7 +281,7 @@ class _SendPanelState extends State<_SendPanel> {
           // Equipos
           _label('Equipos'),
           if (_teams.isEmpty)
-            const Text('Aún no tienes equipos. Créalos en la sección Equipos para enviar a varias personas a la vez.',
+            Text('Aún no tienes equipos. Créalos en la sección Equipos para enviar a varias personas a la vez.',
                 style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
           else
             Wrap(spacing: 8, runSpacing: 8, children: [
@@ -298,7 +298,7 @@ class _SendPanelState extends State<_SendPanel> {
                   label: Text('${t['name']} · ${t['members_count'] ?? 0}'),
                   showCheckmark: false,
                   selectedColor: AppTheme.primary,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppTheme.card,
                   side: BorderSide(color: _selTeams.contains(t['id'].toString()) ? AppTheme.primary : AppTheme.border),
                   labelStyle: TextStyle(
                     color: _selTeams.contains(t['id'].toString()) ? Colors.white : AppTheme.text,
@@ -323,7 +323,7 @@ class _SendPanelState extends State<_SendPanel> {
             controller: _subjectCtrl,
             enabled: !_sending,
             maxLength: 150,
-            style: const TextStyle(color: AppTheme.text, fontSize: 13.5),
+            style: TextStyle(color: AppTheme.text, fontSize: 13.5),
             decoration: _dec('Te compartieron "$_title"').copyWith(counterText: ''),
           ),
           const SizedBox(height: 16),
@@ -335,7 +335,7 @@ class _SendPanelState extends State<_SendPanel> {
             minLines: 3,
             maxLines: 6,
             maxLength: 2000,
-            style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+            style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
             decoration: _dec('Ej.: Te envío el contrato firmado para tu revisión.'),
           ),
           const SizedBox(height: 6),
@@ -348,10 +348,10 @@ class _SendPanelState extends State<_SendPanel> {
               onChanged: _sending ? null : (v) => setState(() => _attach = v),
               activeColor: AppTheme.primary,
               contentPadding: EdgeInsets.zero,
-              title: const Text('Adjuntar el archivo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+              title: Text('Adjuntar el archivo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
               subtitle: Text(
                 _attach ? 'Va como adjunto (hasta 15 MB).' : 'Se envía un enlace de descarga en lugar del archivo.',
-                style: const TextStyle(color: AppTheme.hint, fontSize: 12),
+                style: TextStyle(color: AppTheme.hint, fontSize: 12),
               ),
             ),
           ),
@@ -366,19 +366,19 @@ class _SendPanelState extends State<_SendPanel> {
           ),
           if (shares.isNotEmpty) ...[
             const SizedBox(height: 16),
-            const Text('Enviado antes', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
+            Text('Enviado antes', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
             for (final s in shares)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(children: [
-                  const Icon(Icons.mark_email_read_outlined, size: 16, color: AppTheme.hint),
+                  Icon(Icons.mark_email_read_outlined, size: 16, color: AppTheme.hint),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(((s['to'] as List?) ?? const []).join(', '),
-                        maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.text, fontSize: 12.5)),
+                        maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 12.5)),
                   ),
-                  Text(_ago(s['at']?.toString()), style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                  Text(_ago(s['at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
               ),
           ],
@@ -388,7 +388,7 @@ class _SendPanelState extends State<_SendPanel> {
       // Pie
       Container(
         padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
-        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
         child: Row(children: [
           Expanded(
             child: Text(
@@ -398,7 +398,7 @@ class _SendPanelState extends State<_SendPanel> {
                       if (_to.isNotEmpty) '${_to.length} correo${_to.length == 1 ? '' : 's'}',
                       if (_selTeams.isNotEmpty) '${_selTeams.length} equipo${_selTeams.length == 1 ? '' : 's'}',
                     ].join(' + '),
-              style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppTheme.hint, fontSize: 12.5, fontWeight: FontWeight.w600),
             ),
           ),
           TextButton(onPressed: _sending ? null : () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
@@ -434,7 +434,7 @@ class _SendPanelState extends State<_SendPanel> {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: TextStyle(color: sel ? c : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
-              Text(help, maxLines: 2, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+              Text(help, maxLines: 2, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
             ]),
           ),
           if (sel) Icon(Icons.check_circle_rounded, color: c, size: 18),

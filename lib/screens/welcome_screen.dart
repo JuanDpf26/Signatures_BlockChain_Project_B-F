@@ -21,7 +21,7 @@ class WelcomeScreen extends StatelessWidget {
         children: [
           // En celular no se ve el panel de marca: mostramos las características aquí
           if (!wide) ...[
-            const _Feature(
+            _Feature(
               icon: Icons.lock_outline_rounded,
               color: AppTheme.primary,
               title: 'Firma con respaldo criptográfico',
@@ -45,7 +45,7 @@ class WelcomeScreen extends StatelessWidget {
           ],
 
           // Insignias de seguridad
-          const Wrap(spacing: 10, runSpacing: 10, children: [
+          Wrap(spacing: 10, runSpacing: 10, children: [
             _StatBadge(label: 'SHA-256', sub: 'Cifrado', color: AppTheme.primary),
             _StatBadge(label: 'Sepolia', sub: 'Blockchain', color: AppTheme.featureCyan),
             _StatBadge(label: 'TLS 1.3', sub: 'Conexión', color: BSColors.success),
@@ -60,7 +60,7 @@ class WelcomeScreen extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: () => Navigator.pushNamed(context, '/register'),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppTheme.border),
+                side: BorderSide(color: AppTheme.border),
                 foregroundColor: AppTheme.text,
                 minimumSize: const Size(0, 52),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -80,7 +80,7 @@ class WelcomeScreen extends StatelessWidget {
 
           if (!wide) ...[
             const SizedBox(height: 24),
-            const Center(
+            Center(
               child: Text('Universidad Manuela Beltrán · IS25133 · 2026',
                   style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
             ),
@@ -107,7 +107,7 @@ class _StatBadge extends StatelessWidget {
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
-        Text(sub, style: const TextStyle(color: AppTheme.hint, fontSize: 11)),
+        Text(sub, style: TextStyle(color: AppTheme.hint, fontSize: 11)),
       ]),
     );
   }
@@ -131,9 +131,9 @@ class _Feature extends StatelessWidget {
       const SizedBox(width: 12),
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+          Text(title, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
-          Text(desc, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+          Text(desc, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
         ]),
       ),
     ]);

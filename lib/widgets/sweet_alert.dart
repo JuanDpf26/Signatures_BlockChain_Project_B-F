@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Alertas estilo SweetAlert2 para DocBlockSign, sin dependencias externas.
 ///
@@ -201,7 +202,7 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
 
     return Center(
       child: Material(
-        color: Colors.white,
+        color: AppTheme.card,
         elevation: 24,
         shadowColor: Colors.black26,
         borderRadius: BorderRadius.circular(18),
@@ -231,8 +232,8 @@ class _SweetAlertDialogState extends State<_SweetAlertDialog>
                     Text(
                       widget.title,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF1B1F27),
+                      style: TextStyle(
+                        color: AppTheme.text,
                         fontSize: 23,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,

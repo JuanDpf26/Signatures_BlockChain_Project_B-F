@@ -94,7 +94,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: AppTheme.primary,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -115,7 +115,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       width: 104,
                       height: 104,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.card,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(color: Colors.black.withOpacity(0.22), blurRadius: 24, offset: const Offset(0, 10)),
@@ -174,7 +174,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   Wrap(spacing: 10, runSpacing: 10, alignment: WrapAlignment.center, children: [
                     FilledButton.icon(
                       onPressed: _start,
-                      style: FilledButton.styleFrom(backgroundColor: Colors.white, foregroundColor: AppTheme.primary),
+                      style: FilledButton.styleFrom(backgroundColor: AppTheme.card, foregroundColor: AppTheme.primary),
                       icon: const Icon(Icons.refresh_rounded),
                       label: const Text('Reintentar', style: TextStyle(fontWeight: FontWeight.w800)),
                     ),

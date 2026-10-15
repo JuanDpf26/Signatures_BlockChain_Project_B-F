@@ -214,7 +214,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
         BSCard(
           title: _running ? 'Verificando…' : 'Comprobaciones realizadas',
           trailing: _running
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
+              ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
               : Text(
                   '${_steps.where((x) => x.state == ChainStepState.done).length} de ${_steps.length} correctas',
                   style: TextStyle(
@@ -284,7 +284,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
         const SizedBox(height: 16),
         if (_mode == _Mode.file) _dropZone() else _hashInput(),
         const SizedBox(height: 12),
-        const Row(children: [
+        Row(children: [
           Icon(Icons.lock_outline_rounded, size: 14, color: BSColors.success),
           SizedBox(width: 6),
           Expanded(
@@ -321,13 +321,13 @@ class _VerifyScreenState extends State<VerifyScreen> {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
             picked ? '${_fmtSize(_fileSize ?? 0)} · toca para elegir otro' : 'PDF, Word o cualquier archivo firmado con DocBlockSign',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppTheme.hint, fontSize: 12.5),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
           ),
           const SizedBox(height: 14),
           BSPrimaryButton(
@@ -343,7 +343,7 @@ class _VerifyScreenState extends State<VerifyScreen> {
 
   Widget _hashInput() {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Text('Huella SHA-256 del documento', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+      Text('Huella SHA-256 del documento', style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
       const SizedBox(height: 8),
       TextField(
         controller: _hashCtrl,
@@ -356,12 +356,12 @@ class _VerifyScreenState extends State<VerifyScreen> {
           hintText: 'Ej: 3f7a9c…(64 caracteres)',
           counterText: '',
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppTheme.card,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
           suffixIcon: IconButton(
             tooltip: 'Pegar',
             icon: const Icon(Icons.content_paste_rounded, size: 18),
@@ -489,7 +489,7 @@ class _VerdictCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withOpacity(0.35), width: 1.4),
         boxShadow: [BoxShadow(color: color.withOpacity(0.10), blurRadius: 18, offset: const Offset(0, 6))],
@@ -518,11 +518,11 @@ class _VerdictCard extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(title, style: TextStyle(color: color, fontSize: 19, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
-                Text(result['message']?.toString() ?? '', style: const TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4)),
+                Text(result['message']?.toString() ?? '', style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4)),
                 if (fileName != null) ...[
                   const SizedBox(height: 6),
                   Text('Archivo: $fileName',
-                      maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                      maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ],
               ]),
             ),
@@ -571,8 +571,8 @@ class _NetworkCard extends StatelessWidget {
         tooltip: 'Actualizar',
         onPressed: loading ? null : onRefresh,
         icon: loading
-            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
-            : const Icon(Icons.refresh_rounded, size: 18, color: AppTheme.hint),
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primary))
+            : Icon(Icons.refresh_rounded, size: 18, color: AppTheme.hint),
       ),
       child: loading && info == null
           ? const Padding(padding: EdgeInsets.symmetric(vertical: 20), child: Center(child: CircularProgressIndicator(strokeWidth: 2)))
@@ -587,13 +587,13 @@ class _NetworkCard extends StatelessWidget {
                   Row(children: [
                     Container(width: 9, height: 9, decoration: const BoxDecoration(color: BSColors.success, shape: BoxShape.circle)),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text('Conectado a Ethereum · Sepolia',
                           style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
                     ),
                   ]),
                   const SizedBox(height: 4),
-                  const Text('Red de prueba pública: los registros son reales y verificables, sin costo económico.',
+                  Text('Red de prueba pública: los registros son reales y verificables, sin costo económico.',
                       style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35)),
                   const SizedBox(height: 12),
                   Row(children: [
@@ -631,12 +631,12 @@ class _Stat extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+              style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
         ]),
       ),
     );
@@ -661,9 +661,9 @@ class _HowItWorksCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
+                Text(title, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
+                Text(text, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
               ]),
             ),
           ]),

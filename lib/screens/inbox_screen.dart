@@ -294,7 +294,7 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.card,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppTheme.border),
           boxShadow: AppTheme.cardShadow,
@@ -317,7 +317,7 @@ class _FolderRail extends StatelessWidget {
   Widget build(BuildContext context) {
     return _Panel(
       child: ListView(padding: const EdgeInsets.fromLTRB(10, 14, 10, 14), children: [
-        const Padding(
+        Padding(
           padding: EdgeInsets.fromLTRB(10, 0, 10, 8),
           child: Text('CARPETAS', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8)),
         ),
@@ -343,7 +343,7 @@ class _FolderRail extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text('$pending ${pending == 1 ? 'documento espera' : 'documentos esperan'} tu revisión',
-                    style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
               ),
             ]),
           ),
@@ -395,7 +395,7 @@ class _FolderTileState extends State<_FolderTile> {
                   )),
             ),
             if (widget.count > 0)
-              Text('${widget.count}', style: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w800)),
+              Text('${widget.count}', style: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w800)),
           ]),
         ),
       ),
@@ -520,16 +520,16 @@ class _ListPane extends StatelessWidget {
               controller: searchCtrl,
               onSubmitted: (_) => onSearch(),
               textInputAction: TextInputAction.search,
-              style: const TextStyle(color: AppTheme.text, fontSize: 13),
+              style: TextStyle(color: AppTheme.text, fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Buscar en ${folder.label.toLowerCase()}',
-                hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
-                prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
+                hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
+                prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
                 filled: true,
                 fillColor: BSColors.page,
                 contentPadding: EdgeInsets.zero,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
               ),
             ),
            )),
@@ -563,7 +563,7 @@ class _ListPane extends StatelessWidget {
               const SizedBox(width: 14),
               _FocusTab(label: 'Otros', selected: focus == 1, onTap: () => onFocus(1), badge: focus == 0 ? otherUnread : 0),
             ] else
-              Text(folder.label, style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+              Text(folder.label, style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
             const Spacer(),
             if (!sent)
               Tooltip(
@@ -576,7 +576,7 @@ class _ListPane extends StatelessWidget {
               ),
           ]),
         ),
-        const Divider(height: 1, color: AppTheme.border),
+        Divider(height: 1, color: AppTheme.border),
         Expanded(child: body),
       ]),
     );
@@ -661,11 +661,11 @@ class _GroupHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-        color: Colors.white,
+        color: AppTheme.card,
         child: Row(children: [
-          const Icon(Icons.expand_more_rounded, size: 18, color: AppTheme.hint),
+          Icon(Icons.expand_more_rounded, size: 18, color: AppTheme.hint),
           const SizedBox(width: 4),
-          Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
+          Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
         ]),
       );
 }
@@ -813,10 +813,10 @@ class _MessageRowState extends State<_MessageRow> {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.fromLTRB(13, 11, 12, 11),
           decoration: BoxDecoration(
-            color: widget.selected ? BSColors.selected : (flagged ? const Color(0xFFFFF8E1) : (_hover ? BSColors.page : Colors.white)),
+            color: widget.selected ? BSColors.selected : (flagged ? BSColors.warning.withOpacity(0.10) : (_hover ? BSColors.page : Colors.white)),
             border: Border(
               left: BorderSide(color: widget.selected || unread ? AppTheme.primary : Colors.transparent, width: 3),
-              bottom: const BorderSide(color: Color(0xFFEDF0F5)),
+              bottom: BorderSide(color: AppTheme.border),
             ),
           ),
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -856,10 +856,10 @@ class _MessageRowState extends State<_MessageRow> {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: unread ? AppTheme.primary : AppTheme.text, fontSize: 13.5, fontWeight: unread ? FontWeight.w700 : FontWeight.w500)),
                   ),
-                  if (it['attached'] == true) const Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.attach_file_rounded, size: 15, color: AppTheme.hint)),
+                  if (it['attached'] == true) Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.attach_file_rounded, size: 15, color: AppTheme.hint)),
                 ]),
                 const SizedBox(height: 3),
-                Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                Text(preview, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
                 if (reviewPill != null || it['team_name'] != null) ...[
                   const SizedBox(height: 6),
                   Wrap(spacing: 6, runSpacing: 4, children: [
@@ -882,7 +882,7 @@ class _MessageRowState extends State<_MessageRow> {
     final flagged = it['flagged'] == true;
     final a = await showModalBottomSheet<String>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
       builder: (ctx) => SafeArea(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -965,11 +965,11 @@ class _EmptyList extends StatelessWidget {
         ),
       ),
       const SizedBox(height: 14),
-      Center(child: Text(title, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 15))),
+      Center(child: Text(title, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 15))),
       const SizedBox(height: 4),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Text(text, textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+        child: Text(text, textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
       ),
     ]);
   }
@@ -985,12 +985,12 @@ class _EmptyReading extends StatelessWidget {
               width: 76,
               height: 76,
               decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.07), shape: BoxShape.circle),
-              child: const Icon(Icons.mark_email_unread_outlined, color: AppTheme.primary, size: 34),
+              child: Icon(Icons.mark_email_unread_outlined, color: AppTheme.primary, size: 34),
             ),
             const SizedBox(height: 14),
-            const Text('Selecciona un mensaje para leerlo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 16)),
+            Text('Selecciona un mensaje para leerlo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 4),
-            const Text('Desde aquí puedes responder, reenviar, aprobar o rechazar.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            Text('Desde aquí puedes responder, reenviar, aprobar o rechazar.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           ]),
         ),
       );
@@ -1008,7 +1008,7 @@ class _MessagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       body: SafeArea(
         child: _Reading(id: id, folder: folder, onChanged: onChanged, onClosed: () => Navigator.of(context).pop(), standalone: true),
       ),
@@ -1198,25 +1198,25 @@ class _ReadingState extends State<_Reading> {
           // De / Para / fecha
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
-            decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border), bottom: BorderSide(color: AppTheme.border))),
+            decoration: BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border), bottom: BorderSide(color: AppTheme.border))),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _Avatar(name: _isSender ? null : senderName, icon: _isSender ? Icons.send_rounded : null, size: 42),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text.rich(TextSpan(children: [
-                    TextSpan(text: senderName, style: const TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
-                    if (senderEmail.isNotEmpty) TextSpan(text: '  <$senderEmail>', style: const TextStyle(color: AppTheme.hint)),
+                    TextSpan(text: senderName, style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
+                    if (senderEmail.isNotEmpty) TextSpan(text: '  <$senderEmail>', style: TextStyle(color: AppTheme.hint)),
                   ]), style: const TextStyle(fontSize: 14)),
                   const SizedBox(height: 3),
-                  Text('Para: $toLine', maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                  Text('Para: $toLine', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
                   if (narrow) ...[
                     const SizedBox(height: 3),
-                    Text(_fullDate(share['created_at']?.toString()), style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                    Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   ],
                 ]),
               ),
-              if (!narrow) Text(_fullDate(share['created_at']?.toString()), style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              if (!narrow) Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
             ]),
           ),
           // Mensaje
@@ -1227,7 +1227,7 @@ class _ReadingState extends State<_Reading> {
                 : (review
                     ? '$senderName te pide revisar este documento y aprobarlo o rechazarlo.'
                     : '$senderName compartió este documento contigo para tu conocimiento.'),
-            style: const TextStyle(color: AppTheme.text, fontSize: 14.5, height: 1.6),
+            style: TextStyle(color: AppTheme.text, fontSize: 14.5, height: 1.6),
           ),
           const SizedBox(height: 20),
           _DocumentCard(doc: doc),
@@ -1250,7 +1250,7 @@ class _ReadingState extends State<_Reading> {
 
   Widget _backBar(BuildContext context) => Align(
         alignment: Alignment.centerLeft,
-        child: IconButton(onPressed: widget.onClosed, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
+        child: IconButton(onPressed: widget.onClosed, icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
       );
 
   /// Solicitud de revisión: lo primero que se ve, con las dos respuestas a mano
@@ -1271,7 +1271,7 @@ class _ReadingState extends State<_Reading> {
     final narrow = MediaQuery.of(context).size.width < 600;
     final reject = BSOutlineButton(label: 'Rechazar', icon: Icons.close_rounded, color: BSColors.danger, onPressed: _sending ? null : () => _respond(false));
     final approve = BSPrimaryButton(label: 'Aprobar', icon: Icons.check_rounded, color: BSColors.success, loading: _sending, onPressed: () => _respond(true));
-    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: const [
+    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('Te piden aprobar este documento', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
       SizedBox(height: 2),
       Text('Revísalo con “Ver documento” y responde. Quien lo envió recibe tu respuesta por correo.',
@@ -1313,13 +1313,13 @@ class _ReadingState extends State<_Reading> {
       decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
-          const Icon(Icons.fact_check_outlined, color: AppTheme.primary, size: 20),
+          Icon(Icons.fact_check_outlined, color: AppTheme.primary, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(pending == 0 ? 'Todos respondieron' : 'Esperando $pending de $total ${total == 1 ? 'respuesta' : 'respuestas'}',
-                style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
+                style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800)),
           ),
-          Text('$ok aprobado${ok == 1 ? '' : 's'} · $no rechazado${no == 1 ? '' : 's'}', style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+          Text('$ok aprobado${ok == 1 ? '' : 's'} · $no rechazado${no == 1 ? '' : 's'}', style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
         ]),
         const SizedBox(height: 10),
         ClipRRect(
@@ -1340,23 +1340,23 @@ class _ReadingState extends State<_Reading> {
   Widget _recipients(List<Map> list) {
     return BSCard(
       title: 'Destinatarios',
-      trailing: Text('${list.length}', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+      trailing: Text('${list.length}', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       child: Column(children: [
         for (final r in list)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFEDF0F5)))),
+            decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _Avatar(name: (r['name'] ?? r['email'])?.toString(), size: 32),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text((r['name'] ?? r['email']).toString(), style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
+                  Text((r['name'] ?? r['email']).toString(), style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w700)),
                   Text([r['email'], if (r['team'] != null) 'equipo ${r['team']}', if (r['name'] == null) 'sin cuenta en DocBlockSign'].join(' · '),
-                      style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                      style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   if ((r['response']?.toString() ?? '').isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text('“${r['response']}”', style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontStyle: FontStyle.italic)),
+                    Text('“${r['response']}”', style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontStyle: FontStyle.italic)),
                   ],
                 ]),
               ),
@@ -1414,15 +1414,15 @@ class _Toolbar extends StatelessWidget {
             icon: Icon(icon, size: 18),
             label: Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
           );
-    const sep = SizedBox(height: 22, child: VerticalDivider(width: 14, color: AppTheme.border));
+    final sep = SizedBox(height: 22, child: VerticalDivider(width: 14, color: AppTheme.border));
 
-    final deco = const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppTheme.border)));
+    final deco = BoxDecoration(color: AppTheme.card, border: Border(bottom: BorderSide(color: AppTheme.border)));
     if (narrow) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: deco,
         child: Row(children: [
-          if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
+          if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
           const Spacer(),
           action(archived ? Icons.unarchive_outlined : Icons.archive_outlined, archived ? 'Mover a la bandeja' : 'Archivar', onArchive),
           action(deleted ? Icons.restore_from_trash_outlined : Icons.delete_outline_rounded, deleted ? 'Restaurar' : 'Eliminar', onDelete,
@@ -1440,7 +1440,7 @@ class _Toolbar extends StatelessWidget {
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(children: [
-          if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: const Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
+          if (standalone) IconButton(tooltip: 'Volver', onPressed: onBack, icon: Icon(Icons.arrow_back_rounded, color: AppTheme.text)),
           if (!narrow) ...[
             action(Icons.reply_rounded, isSender ? 'Responder a todos' : 'Responder', busy ? null : onReply, color: AppTheme.primary, primary: true),
             action(Icons.forward_rounded, 'Reenviar', busy ? null : onForward, color: AppTheme.primary, primary: true),
@@ -1500,18 +1500,18 @@ class _ComposeDialogState extends State<_ComposeDialog> {
 
   InputDecoration _dec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+        fillColor: AppTheme.card,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
       );
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -1522,8 +1522,8 @@ class _ComposeDialogState extends State<_ComposeDialog> {
             Row(children: [
               Icon(widget.forward ? Icons.forward_rounded : Icons.reply_rounded, color: AppTheme.primary),
               const SizedBox(width: 10),
-              Expanded(child: Text(widget.title, style: const TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800))),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: AppTheme.hint)),
+              Expanded(child: Text(widget.title, style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800))),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
             ]),
             const SizedBox(height: 10),
             if (widget.forward) ...[
@@ -1532,7 +1532,7 @@ class _ComposeDialogState extends State<_ComposeDialog> {
             ] else
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Text('Para: ${widget.to ?? ''}', style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                child: Text('Para: ${widget.to ?? ''}', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
               ),
             TextField(
               controller: _msg,
@@ -1547,7 +1547,7 @@ class _ComposeDialogState extends State<_ComposeDialog> {
               Expanded(
                 child: Text(
                   widget.forward ? 'Se envía el enlace del documento y su huella para verificarlo.' : 'Le llega por correo y a su bandeja de DocBlockSign.',
-                  style: const TextStyle(color: AppTheme.hint, fontSize: 11.5),
+                  style: TextStyle(color: AppTheme.hint, fontSize: 11.5),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1583,7 +1583,7 @@ class _RespondDialogState extends State<_RespondDialog> {
     final ok = widget.approve;
     final color = ok ? BSColors.success : BSColors.danger;
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -1601,12 +1601,12 @@ class _RespondDialogState extends State<_RespondDialog> {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(ok ? 'Aprobar documento' : 'Rechazar documento',
-                    style: const TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
               ),
             ]),
             const SizedBox(height: 12),
             Text(ok ? 'Puedes dejar un comentario para quien lo envió (opcional).' : 'Explica qué hay que corregir; se lo enviaremos a quien lo pidió.',
-                style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             const SizedBox(height: 10),
             TextField(
               controller: _ctrl,
@@ -1618,9 +1618,9 @@ class _RespondDialogState extends State<_RespondDialog> {
                 hintText: ok ? 'Comentario' : 'Motivo del rechazo',
                 errorText: _err,
                 filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+                fillColor: AppTheme.card,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: color, width: 1.5)),
               ),
             ),
@@ -1684,7 +1684,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
   Widget build(BuildContext context) {
     final h = MediaQuery.of(context).size.height;
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
@@ -1693,14 +1693,14 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 8, 0),
             child: Row(children: [
-              const Expanded(
+              Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Nuevo envío', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w800)),
                   SizedBox(height: 2),
                   Text('Elige el documento que quieres compartir o enviar a revisión.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
                 ]),
               ),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded, color: AppTheme.hint)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.close_rounded, color: AppTheme.hint)),
             ]),
           ),
           Padding(
@@ -1713,7 +1713,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
                 textInputAction: TextInputAction.search,
                 decoration: InputDecoration(
                   hintText: 'Buscar documento',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 18, color: AppTheme.hint),
+                  prefixIcon: Icon(Icons.search_rounded, size: 18, color: AppTheme.hint),
                   filled: true,
                   fillColor: BSColors.page,
                   contentPadding: EdgeInsets.zero,
@@ -1726,7 +1726,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
             child: _loading
                 ? const Padding(padding: EdgeInsets.all(40), child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)))
                 : _docs.isEmpty
-                    ? const Padding(
+                    ? Padding(
                         padding: EdgeInsets.all(32),
                         child: Text('No hay documentos. Súbelos desde la sección Documentos.', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint)),
                       )
@@ -1734,7 +1734,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
                         shrinkWrap: true,
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                         itemCount: _docs.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                        separatorBuilder: (_, __) => Divider(height: 1, color: AppTheme.border),
                         itemBuilder: (_, i) {
                           final d = _docs[i];
                           final m = Map<String, dynamic>.from((d['metadata'] as Map?) ?? {});
@@ -1785,7 +1785,7 @@ class _DocumentCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.border),
         boxShadow: AppTheme.cardShadow,
@@ -1802,9 +1802,9 @@ class _DocumentCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(doc['title']?.toString() ?? 'Documento', maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                  style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
               const SizedBox(height: 3),
-              Text(info, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
             ]),
           ),
           const SizedBox(width: 8),
@@ -1812,7 +1812,7 @@ class _DocumentCard extends StatelessWidget {
         ]),
         if ((doc['description']?.toString() ?? '').isNotEmpty) ...[
           const SizedBox(height: 12),
-          Text(doc['description'].toString(), style: const TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45)),
+          Text(doc['description'].toString(), style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45)),
         ],
         const SizedBox(height: 12),
         if (hash.isNotEmpty) HuellaField(label: 'Huella digital del archivo', value: hash),
@@ -1854,7 +1854,7 @@ class _DocumentCard extends StatelessWidget {
                 builder: (_) => Scaffold(
                   backgroundColor: BSColors.page,
                   appBar: AppBar(
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppTheme.card,
                     surfaceTintColor: Colors.transparent,
                     foregroundColor: AppTheme.text,
                     title: const Text('Verificar documento', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),

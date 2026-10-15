@@ -36,7 +36,7 @@ Color chainStepColor(ChainStepState s) => switch (s) {
       ChainStepState.done => BSColors.success,
       ChainStepState.active => AppTheme.primary,
       ChainStepState.error => BSColors.danger,
-      ChainStepState.waiting => const Color(0xFFCBD5E1),
+      ChainStepState.waiting => AppTheme.hint.withOpacity(0.5),
     };
 
 class _StepRow extends StatelessWidget {
@@ -61,7 +61,7 @@ class _StepRow extends StatelessWidget {
             duration: const Duration(milliseconds: 350),
             width: 2,
             decoration: BoxDecoration(
-              color: step.state == ChainStepState.done ? BSColors.success.withOpacity(0.5) : const Color(0xFFE2E8F0),
+              color: step.state == ChainStepState.done ? BSColors.success.withOpacity(0.5) : AppTheme.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -133,7 +133,7 @@ class _StepDot extends StatelessWidget {
             width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white));
         break;
       case ChainStepState.waiting:
-        inner = Text('${index + 1}', style: const TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w800, fontSize: 12));
+        inner = Text('${index + 1}', style: TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w800, fontSize: 12));
     }
     final filled = state != ChainStepState.waiting;
     return AnimatedContainer(
@@ -143,8 +143,8 @@ class _StepDot extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: filled ? color : Colors.white,
-        border: Border.all(color: filled ? color : const Color(0xFFCBD5E1), width: 2),
+        color: filled ? color : AppTheme.card,
+        border: Border.all(color: filled ? color : AppTheme.hint.withOpacity(0.5), width: 2),
         boxShadow: state == ChainStepState.active
             ? [BoxShadow(color: color.withOpacity(0.35), blurRadius: 10, spreadRadius: 1)]
             : null,
@@ -172,12 +172,12 @@ class ChainValueRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
+        color: AppTheme.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppTheme.border),
       ),
       child: Row(children: [
-        Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, fontWeight: FontWeight.w600)),
         const SizedBox(width: 10),
         Expanded(
           child: Text(shown,

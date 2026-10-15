@@ -186,12 +186,12 @@ class _AuditScreenState extends State<AuditScreen> {
       return BSInfoBanner(title: 'No se pudo cargar', text: _error, color: BSColors.danger, icon: Icons.error_outline_rounded);
     }
     if (_events.isEmpty) {
-      return const SizedBox(
+      return SizedBox(
         height: 160,
         child: Center(child: Text('Aún no hay eventos con estos filtros.', style: TextStyle(color: AppTheme.hint))),
       );
     }
-    const head = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
+    final head = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Column(children: [
       if (table)
         const Padding(
@@ -205,7 +205,7 @@ class _AuditScreenState extends State<AuditScreen> {
             SizedBox(width: 132, child: Text('RESULTADO', style: head)),
           ]),
         ),
-      const Divider(height: 1, color: AppTheme.border),
+      Divider(height: 1, color: AppTheme.border),
       for (var i = 0; i < _events.length; i++) ...[
         BSEntrance(
           key: ValueKey('ev-${_events[i]['id']}'),
@@ -223,12 +223,12 @@ class _AuditScreenState extends State<AuditScreen> {
             ),
           ),
         ),
-        const Divider(height: 1, color: AppTheme.border),
+        Divider(height: 1, color: AppTheme.border),
       ],
       Padding(
         padding: const EdgeInsets.only(top: 12, bottom: 4),
         child: Text('Mostrando ${_events.length} eventos · toca uno para ver el detalle',
-            style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
       ),
     ]);
   }
@@ -259,11 +259,11 @@ class _AuditScreenState extends State<AuditScreen> {
   }
 
   Widget _row(Map<String, dynamic> e) {
-    const cell = TextStyle(color: AppTheme.text, fontSize: 14);
-    const mono = TextStyle(color: AppTheme.hint, fontSize: 13, fontFamily: 'monospace');
+    final cell = TextStyle(color: AppTheme.text, fontSize: 14);
+    final mono = TextStyle(color: AppTheme.hint, fontSize: 13, fontFamily: 'monospace');
     final action = e['action']?.toString() ?? '';
     return Row(children: [
-      Expanded(flex: 3, child: Text(_fmt(e['created_at']?.toString()), style: const TextStyle(color: AppTheme.hint, fontSize: 13.5))),
+      Expanded(flex: 3, child: Text(_fmt(e['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 13.5))),
       Expanded(
         flex: 5,
         child: Row(children: [
@@ -298,9 +298,9 @@ class _AuditScreenState extends State<AuditScreen> {
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(e['description']?.toString() ?? action,
-              maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
+              maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700)),
           const SizedBox(height: 2),
-          Text('${_fmt(e['created_at']?.toString())} · ${e['ip'] ?? '—'}', style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+          Text('${_fmt(e['created_at']?.toString())} · ${e['ip'] ?? '—'}', style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
         ]),
       ),
       const SizedBox(width: 8),
@@ -335,7 +335,7 @@ class _AuditScreenState extends State<AuditScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(e['description']?.toString() ?? 'Evento',
-                      style: const TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 17, fontWeight: FontWeight.w800)),
                 ),
                 _pill(e),
               ]),
@@ -347,10 +347,10 @@ class _AuditScreenState extends State<AuditScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          SizedBox(width: 120, child: Text(r.$1, style: const TextStyle(color: AppTheme.hint, fontSize: 13))),
+                          SizedBox(width: 120, child: Text(r.$1, style: TextStyle(color: AppTheme.hint, fontSize: 13))),
                           Expanded(
                             child: SelectableText(r.$2,
-                                style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
+                                style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
                           ),
                         ]),
                       ),
@@ -416,10 +416,10 @@ class _ExportDialogState extends State<_ExportDialog> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(title, style: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 14)),
               const SizedBox(height: 2),
-              Text(help, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              Text(help, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
             ]),
           ),
-          if (sel) const Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
+          if (sel) Icon(Icons.check_circle_rounded, color: AppTheme.primary, size: 20),
         ]),
       ),
     );
@@ -429,7 +429,7 @@ class _ExportDialogState extends State<_ExportDialog> {
   Widget build(BuildContext context) {
     const periods = {'7d': 'Últimos 7 días', '30d': 'Últimos 30 días', '90d': 'Últimos 90 días', 'all': 'Todo el historial'};
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
@@ -440,18 +440,18 @@ class _ExportDialogState extends State<_ExportDialog> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(22, 22, 22, 8),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            const Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
+            Text('Descargar registro de auditoría', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
             Text(
               widget.filters.isEmpty ? 'Incluye todas las acciones y resultados.' : 'Con los filtros actuales: ${widget.filters.join(' · ')}.',
-              style: const TextStyle(color: AppTheme.hint, fontSize: 13),
+              style: TextStyle(color: AppTheme.hint, fontSize: 13),
             ),
             const SizedBox(height: 18),
             _formatOption('csv', Icons.table_chart_outlined, 'Excel (CSV)', 'Para filtrar y analizar en Excel o Google Sheets.'),
             const SizedBox(height: 10),
             _formatOption('html', Icons.picture_as_pdf_outlined, 'Informe para PDF', 'Con resumen y tabla; se imprime o guarda como PDF.'),
             const SizedBox(height: 18),
-            const Text('Periodo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
+            Text('Periodo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
             const SizedBox(height: 8),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final e in periods.entries)
@@ -461,7 +461,7 @@ class _ExportDialogState extends State<_ExportDialog> {
                   onSelected: (_) => setState(() => _period = e.key),
                   showCheckmark: false,
                   selectedColor: AppTheme.primary.withOpacity(0.12),
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppTheme.card,
                   side: BorderSide(color: _period == e.key ? AppTheme.primary : AppTheme.border),
                   labelStyle: TextStyle(color: _period == e.key ? AppTheme.primary : AppTheme.text, fontWeight: _period == e.key ? FontWeight.w700 : FontWeight.w500, fontSize: 12.5),
                 ),

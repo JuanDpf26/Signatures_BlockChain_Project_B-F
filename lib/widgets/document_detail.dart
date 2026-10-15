@@ -163,7 +163,7 @@ Future<void> showDocumentDetail(
       context: context,
       barrierColor: Colors.black.withOpacity(0.45),
       builder: (_) => Dialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppTheme.card,
         insetPadding: const EdgeInsets.all(24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         clipBehavior: Clip.antiAlias,
@@ -181,8 +181,8 @@ Future<void> showDocumentDetail(
     backgroundColor: Colors.transparent,
     builder: (_) => Container(
       height: size.height * 0.92,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppTheme.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -366,7 +366,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
                 [d.category, d.ext.toUpperCase(), d.sizeLabel, if (d.pages != null) '${d.pages} pág.'].join(' · '),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppTheme.hint, fontSize: 12.5),
+                style: TextStyle(color: AppTheme.hint, fontSize: 12.5),
               ),
               const SizedBox(height: 8),
               Wrap(spacing: 6, runSpacing: 6, children: [
@@ -378,7 +378,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           IconButton(
             tooltip: 'Cerrar',
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.close_rounded, color: AppTheme.hint),
+            icon: Icon(Icons.close_rounded, color: AppTheme.hint),
           ),
         ]),
       ),
@@ -389,7 +389,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
       // Pestañas
       Container(
         margin: EdgeInsets.symmetric(horizontal: pad),
-        decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+        decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
         child: TabBar(
           controller: _tabs,
           isScrollable: true,
@@ -502,7 +502,7 @@ class _GhostButton extends StatelessWidget {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Icon(icon, size: 17, color: AppTheme.primary),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w600)),
       ]),
     );
     // Sin onTap lo maneja el menú que lo envuelve
@@ -529,7 +529,7 @@ class _ActionTile extends StatelessWidget {
           child: Icon(icon, size: 20, color: AppTheme.primary),
         ),
         const SizedBox(height: 5),
-        Text(label, maxLines: 1, style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(label, maxLines: 1, style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
       ]),
     );
     if (onTap == null) return body;
@@ -550,7 +550,7 @@ class _MoreItem extends StatelessWidget {
       const SizedBox(width: 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Text(title, style: TextStyle(color: c, fontSize: 13.5, fontWeight: FontWeight.w700)),
-        Text(subtitle, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+        Text(subtitle, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
       ]),
     ]);
   }
@@ -596,9 +596,9 @@ class _NextStepCard extends StatelessWidget {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+              Text(title, style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
-              Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
+              Text(text, style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
             ]),
           ),
           if (!narrow && button != null) ...[const SizedBox(width: 12), button],
@@ -643,7 +643,7 @@ class DocFichaCard extends StatelessWidget {
       title: 'Información general',
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (d.userDescription != null) ...[
-          Text(d.userDescription!, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45)),
+          Text(d.userDescription!, style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45)),
           const SizedBox(height: 6),
         ],
         FactGrid(facts: facts),
@@ -691,10 +691,10 @@ class DocAiCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
-            child: const Icon(Icons.manage_search_rounded, color: AppTheme.hint, size: 24),
+            child: Icon(Icons.manage_search_rounded, color: AppTheme.hint, size: 24),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('Aún no se ha analizado', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14.5)),
               SizedBox(height: 2),
@@ -718,7 +718,7 @@ class DocAiCard extends StatelessWidget {
           ? InkWell(
               onTap: onMore,
               borderRadius: BorderRadius.circular(6),
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Text('Ver completo →', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w700, fontSize: 13)),
               ),
@@ -739,18 +739,18 @@ class DocAiCard extends StatelessWidget {
         ],
         if (d.aiTags.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Text('PALABRAS CLAVE', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+          Text('PALABRAS CLAVE', style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: d.aiTags.map((t) => _TagChip(t)).toList()),
         ],
         if (!compact) ...[
           const SizedBox(height: 16),
-          const Divider(color: AppTheme.border, height: 1),
+          Divider(color: AppTheme.border, height: 1),
           const SizedBox(height: 10),
           Text(
             'Generado automáticamente${d.analyzedLabel != null ? ' el ${d.analyzedLabel}' : ''}${d.aiModel != null ? ' · modelo ${d.aiModel}' : ''}. '
             'Puedes corregir la categoría, las etiquetas y la confidencialidad en Editar.',
-            style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.4),
+            style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.4),
           ),
         ],
       ]),
@@ -799,7 +799,7 @@ class DocSecurityCard extends StatelessWidget {
         subtitle: 'La firma no llegó a la blockchain. Puedes intentarlo de nuevo.',
       );
     } else {
-      seal = const StatusSeal(
+      seal = StatusSeal(
         icon: Icons.edit_note_rounded,
         color: AppTheme.primary,
         title: 'Aún no está firmado',
@@ -917,7 +917,7 @@ class DocMetadataCards extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppTheme.border)),
-            child: SelectableText(s('text_preview')!, style: const TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.5)),
+            child: SelectableText(s('text_preview')!, style: TextStyle(color: AppTheme.text, fontSize: 12.5, height: 1.5)),
           ),
         ),
       ],
@@ -1030,25 +1030,25 @@ class _EditTabState extends State<_EditTab> {
 
   InputDecoration _dec(String hint, {String? suffix}) => InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13.5),
         suffixText: suffix,
-        suffixStyle: const TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w700),
+        suffixStyle: TextStyle(color: AppTheme.hint, fontWeight: FontWeight.w700),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.card,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.6)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
       );
 
   Widget _label(String text, [String? help]) => Padding(
         padding: const EdgeInsets.only(bottom: 8),
         child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
+          Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w800)),
           if (help != null) ...[
             const SizedBox(width: 8),
-            Expanded(child: Text(help, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12))),
+            Expanded(child: Text(help, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12))),
           ],
         ]),
       );
@@ -1067,7 +1067,7 @@ class _EditTabState extends State<_EditTab> {
         TextField(
           controller: _name,
           maxLength: 140,
-          style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w600),
+          style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w600),
           decoration: _dec('Nombre del documento', suffix: _ext).copyWith(counterText: ''),
         ),
         const SizedBox(height: 16),
@@ -1077,7 +1077,7 @@ class _EditTabState extends State<_EditTab> {
           minLines: 3,
           maxLines: 6,
           maxLength: 1000,
-          style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
+          style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.45),
           decoration: _dec(d.aiDescription ?? 'Describe para qué sirve este documento…'),
         ),
         if (d.aiDescription != null && _desc.text.trim().isEmpty)
@@ -1106,7 +1106,7 @@ class _EditTabState extends State<_EditTab> {
               selected: sel,
               onSelected: (_) => setState(() => _category = c),
               selectedColor: AppTheme.primary.withOpacity(0.12),
-              backgroundColor: Colors.white,
+              backgroundColor: AppTheme.card,
               side: BorderSide(color: sel ? AppTheme.primary : AppTheme.border),
               labelStyle: TextStyle(color: sel ? AppTheme.primary : AppTheme.text, fontWeight: sel ? FontWeight.w700 : FontWeight.w500, fontSize: 12.5),
               showCheckmark: false,
@@ -1123,7 +1123,7 @@ class _EditTabState extends State<_EditTab> {
                 if (v.trim().isNotEmpty) setState(() => _category = v.trim());
                 _customCat.clear();
               },
-              style: const TextStyle(color: AppTheme.text, fontSize: 13),
+              style: TextStyle(color: AppTheme.text, fontSize: 13),
               decoration: _dec('Otra categoría…').copyWith(counterText: ''),
             ),
           ),
@@ -1144,7 +1144,7 @@ class _EditTabState extends State<_EditTab> {
     final confidentiality = BSCard(
       title: 'Confidencialidad',
       trailing: d.aiConfidentiality != null
-          ? Text('Sugerido: ${d.aiConfidentiality}', style: const TextStyle(color: AppTheme.hint, fontSize: 12))
+          ? Text('Sugerido: ${d.aiConfidentiality}', style: TextStyle(color: AppTheme.hint, fontSize: 12))
           : null,
       child: LayoutBuilder(builder: (context, c) {
         final cols = c.maxWidth > 520 ? 4 : 2;
@@ -1168,10 +1168,10 @@ class _EditTabState extends State<_EditTab> {
 
     final tags = BSCard(
       title: 'Etiquetas',
-      trailing: Text('${_tags.length}/15', style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+      trailing: Text('${_tags.length}/15', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         if (_tags.isEmpty)
-          const Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
+          Text('Sin etiquetas todavía.', style: TextStyle(color: AppTheme.hint, fontSize: 12.5))
         else
           Wrap(
             spacing: 6,
@@ -1183,7 +1183,7 @@ class _EditTabState extends State<_EditTab> {
                       deleteIconColor: AppTheme.primary,
                       backgroundColor: AppTheme.primary.withOpacity(0.07),
                       side: BorderSide(color: AppTheme.primary.withOpacity(0.2)),
-                      labelStyle: const TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      labelStyle: TextStyle(color: AppTheme.primary, fontSize: 12.5, fontWeight: FontWeight.w600),
                     ))
                 .toList(),
           ),
@@ -1193,7 +1193,7 @@ class _EditTabState extends State<_EditTab> {
             child: TextField(
               controller: _tagCtrl,
               onSubmitted: (_) => _addTag(),
-              style: const TextStyle(color: AppTheme.text, fontSize: 13),
+              style: TextStyle(color: AppTheme.text, fontSize: 13),
               decoration: _dec('Nueva etiqueta y Enter'),
             ),
           ),
@@ -1202,19 +1202,19 @@ class _EditTabState extends State<_EditTab> {
         ]),
         if (aiSuggest.isNotEmpty) ...[
           const SizedBox(height: 12),
-          const Text('Sugeridas automáticamente', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
+          Text('Sugeridas automáticamente', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: aiSuggest
                 .map((t) => ActionChip(
-                      avatar: const Icon(Icons.add_rounded, size: 15, color: AppTheme.primary),
+                      avatar: Icon(Icons.add_rounded, size: 15, color: AppTheme.primary),
                       label: Text(t),
                       onPressed: () => _addTag(t),
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: AppTheme.border),
-                      labelStyle: const TextStyle(color: AppTheme.text, fontSize: 12),
+                      backgroundColor: AppTheme.card,
+                      side: BorderSide(color: AppTheme.border),
+                      labelStyle: TextStyle(color: AppTheme.text, fontSize: 12),
                     ))
                 .toList(),
           ),
@@ -1340,7 +1340,7 @@ class _LevelOption extends StatelessWidget {
             const SizedBox(height: 8),
             Text(label, style: TextStyle(color: selected ? color : AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13.5)),
             const SizedBox(height: 2),
-            Text(help, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
+            Text(help, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.3)),
           ]),
         ),
       ),
@@ -1372,9 +1372,9 @@ class _FileVersionCard extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(d.meta['original_name']?.toString() ?? d.title,
                   maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
               const SizedBox(height: 2),
-              Text('${d.sizeLabel}${d.pages != null ? ' · ${d.pages} pág.' : ''}', style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+              Text('${d.sizeLabel}${d.pages != null ? ' · ${d.pages} pág.' : ''}', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
             ]),
           ),
         ]),
@@ -1387,10 +1387,10 @@ class _FileVersionCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(8)),
               child: Row(children: [
-                const Icon(Icons.fingerprint_rounded, color: AppTheme.hint, size: 16),
+                Icon(Icons.fingerprint_rounded, color: AppTheme.hint, size: 16),
                 const SizedBox(width: 6),
-                Expanded(child: Text(fmtHuella(d.hash!), style: const TextStyle(color: AppTheme.text, fontFamily: 'monospace', fontSize: 12))),
-                const Icon(Icons.copy_rounded, color: AppTheme.hint, size: 14),
+                Expanded(child: Text(fmtHuella(d.hash!), style: TextStyle(color: AppTheme.text, fontFamily: 'monospace', fontSize: 12))),
+                Icon(Icons.copy_rounded, color: AppTheme.hint, size: 14),
               ]),
             ),
           ),
@@ -1399,16 +1399,16 @@ class _FileVersionCard extends StatelessWidget {
         if (d.canReplaceFile && onReplace != null) ...[
           BSOutlineButton(label: 'Subir nueva versión', icon: Icons.upload_file_rounded, onPressed: onReplace),
           const SizedBox(height: 6),
-          const Text('Cambia la huella SHA-256 y el contenido se vuelve a analizar. Tus datos editados se conservan.',
+          Text('Cambia la huella SHA-256 y el contenido se vuelve a analizar. Tus datos editados se conservan.',
               style: TextStyle(color: AppTheme.hint, fontSize: 11.5, height: 1.35)),
         ] else
           Text(
             d.inChain ? 'La firma se está registrando: no se puede cambiar el archivo.' : 'Firmado: el archivo ya no se puede reemplazar.',
-            style: const TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35),
+            style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35),
           ),
         if (versions.isNotEmpty) ...[
           const SizedBox(height: 14),
-          const Text('Versiones anteriores', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
+          Text('Versiones anteriores', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
           for (final v in versions)
             Material(
@@ -1422,18 +1422,18 @@ class _FileVersionCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(6)),
-                      child: Text('v${v['version'] ?? '?'}', style: const TextStyle(color: AppTheme.text, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                      child: Text('v${v['version'] ?? '?'}', style: TextStyle(color: AppTheme.text, fontSize: 11.5, fontWeight: FontWeight.w800)),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(v['name']?.toString() ?? 'Archivo', maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w600)),
                         Text('Reemplazado ${DocView.fmtDate(v['replaced_at']?.toString()) ?? ''} · ${fmtHuella('${v['file_hash'] ?? ''}')}',
-                            maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
                       ]),
                     ),
-                    const Icon(Icons.open_in_new_rounded, color: AppTheme.hint, size: 15),
+                    Icon(Icons.open_in_new_rounded, color: AppTheme.hint, size: 15),
                   ]),
                 ),
               ),
@@ -1455,7 +1455,7 @@ class _EditHistoryCard extends StatelessWidget {
     return BSCard(
       title: 'Historial de cambios',
       child: items.isEmpty
-          ? const Text('Aún no se ha editado. Cada cambio queda registrado aquí y en Auditoría.',
+          ? Text('Aún no se ha editado. Cada cambio queda registrado aquí y en Auditoría.',
               style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4))
           : Column(children: [
               for (var i = 0; i < items.length; i++)
@@ -1479,9 +1479,9 @@ class _EditHistoryCard extends StatelessWidget {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('Cambió ${((items[i]['fields'] as List?) ?? const []).join(', ')}',
-                            style: const TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
                         Text(DocView.fmtDate(items[i]['at']?.toString()) ?? '',
-                            style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
                       ]),
                     ),
                   ),
@@ -1502,9 +1502,9 @@ class _AiBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title.toUpperCase(), style: const TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
+      Text(title.toUpperCase(), style: TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.6)),
       const SizedBox(height: 6),
-      SelectableText(text, style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.6)),
+      SelectableText(text, style: TextStyle(color: AppTheme.text, fontSize: 14, height: 1.6)),
     ]);
   }
 }
@@ -1530,7 +1530,7 @@ class _StatTile extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: const TextStyle(color: AppTheme.hint, fontSize: 11.5)),
+            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),
             const SizedBox(height: 1),
             Row(children: [
               if (dot) ...[
@@ -1539,7 +1539,7 @@ class _StatTile extends StatelessWidget {
               ],
               Flexible(
                 child: Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
+                    style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
               ),
             ]),
           ]),
@@ -1562,7 +1562,7 @@ class _TagChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: AppTheme.border),
       ),
-      child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
+      child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500)),
     );
   }
 }
@@ -1668,7 +1668,7 @@ class DocLifecycleCard extends StatelessWidget {
                   child: Text(steps[i].$1,
                       textAlign: TextAlign.center,
                       maxLines: 1,
-                      style: const TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1732,7 +1732,7 @@ class DocIntegrityCard extends StatelessWidget {
               value: v,
               minHeight: 6,
               color: allOk ? BSColors.success : AppTheme.primary,
-              backgroundColor: const Color(0xFFEEF1F6),
+              backgroundColor: AppTheme.border,
             ),
           ),
         ),
@@ -1741,12 +1741,12 @@ class DocIntegrityCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              border: i == checks.length - 1 ? null : const Border(bottom: BorderSide(color: Color(0xFFEDF0F5))),
+              border: i == checks.length - 1 ? null : Border(bottom: BorderSide(color: AppTheme.border)),
             ),
             child: Row(children: [
               Icon(look(checks[i].$2).$1, size: 18, color: look(checks[i].$2).$2),
               const SizedBox(width: 10),
-              Expanded(child: Text(checks[i].$1, style: const TextStyle(color: AppTheme.text, fontSize: 13.5))),
+              Expanded(child: Text(checks[i].$1, style: TextStyle(color: AppTheme.text, fontSize: 13.5))),
               Text(look(checks[i].$2).$3,
                   style: TextStyle(color: look(checks[i].$2).$2, fontSize: 12, fontWeight: FontWeight.w700)),
             ]),

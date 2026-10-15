@@ -16,7 +16,7 @@ Future<bool> showSigningProgress(BuildContext context, {required String docId, r
           context: context,
           barrierDismissible: false,
           builder: (_) => Dialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppTheme.card,
             insetPadding: const EdgeInsets.all(24),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 560, maxHeight: 760), child: content),
@@ -27,7 +27,7 @@ Future<bool> showSigningProgress(BuildContext context, {required String docId, r
           isScrollControlled: true,
           isDismissible: false,
           enableDrag: false,
-          backgroundColor: Colors.white,
+          backgroundColor: AppTheme.card,
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
           builder: (ctx) => ConstrainedBox(
             constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.92),
@@ -278,10 +278,10 @@ class _SigningProgressPanelState extends State<SigningProgressPanel> {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(headTitle, style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
+              Text(headTitle, style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
               Text(widget.docTitle,
-                  maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
             ]),
           ),
           const SizedBox(width: 8),

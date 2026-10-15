@@ -50,7 +50,7 @@ class _DocFrameState extends State<DocFrame> {
     return Stack(children: [
       Positioned.fill(child: WebViewWidget(controller: _c)),
       if (_loading)
-        const Positioned.fill(
+        Positioned.fill(
           child: ColoredBox(
             color: Color(0xFFE5E7EB),
             child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
@@ -64,7 +64,7 @@ class _DocFrameState extends State<DocFrame> {
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text('No se pudo cargar el visor: $_error\nRevisa tu conexión o abre el archivo en otra aplicación.',
-                    textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+                    textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
               ),
             ),
           ),

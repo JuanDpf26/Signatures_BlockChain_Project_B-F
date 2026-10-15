@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
               icon: Icons.info_rounded,
             ),
             const SizedBox(height: 24),
-            const Divider(height: 1, color: AppTheme.border),
+            Divider(height: 1, color: AppTheme.border),
             const SizedBox(height: 20),
             BSAuthSwitch(
               question: '¿No tienes cuenta?',

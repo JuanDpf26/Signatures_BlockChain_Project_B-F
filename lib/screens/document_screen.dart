@@ -355,8 +355,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       context: context,
       barrierDismissible: false,
       useRootNavigator: true,
-      builder: (_) => const Dialog(
-        backgroundColor: Colors.white,
+      builder: (_) => Dialog(
+        backgroundColor: AppTheme.card,
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 28, vertical: 24),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -442,19 +442,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                     controller: _searchCtrl,
                     onSubmitted: (_) => _load(),
                     onChanged: (v) { setState(() {}); if (v.isEmpty) _load(); },
-                    style: const TextStyle(color: AppTheme.text, fontSize: 13),
+                    style: TextStyle(color: AppTheme.text, fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Buscar por nombre, autor, etiqueta o descripción…',
-                      hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13),
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
+                      hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
+                      prefixIcon: Icon(Icons.search_rounded, color: AppTheme.hint, size: 18),
                       suffixIcon: _searchCtrl.text.isNotEmpty
-                          ? IconButton(icon: const Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _load(); })
+                          ? IconButton(icon: Icon(Icons.close_rounded, color: AppTheme.hint, size: 16), onPressed: () { _searchCtrl.clear(); _load(); })
                           : null,
                       filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.6)),
+                      fillColor: AppTheme.card,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -532,7 +532,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   Widget _buildList(bool isTable) {
     if (_isLoading) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.symmetric(vertical: 56),
         child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
       );
@@ -594,15 +594,15 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                 ),
         ),
       ));
-      if (i < _docs.length - 1) rows.add(const Divider(height: 1, color: AppTheme.border));
+      if (i < _docs.length - 1) rows.add(Divider(height: 1, color: AppTheme.border));
     }
     rows.add(Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
+      decoration: BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
       child: Text(
         'Mostrando ${_docs.length} ${_docs.length == 1 ? 'documento' : 'documentos'}',
-        style: const TextStyle(color: AppTheme.hint, fontSize: 12),
+        style: TextStyle(color: AppTheme.hint, fontSize: 12),
       ),
     ));
     return Column(children: rows);
@@ -755,10 +755,10 @@ class _TableHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const s = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
+    final s = TextStyle(color: AppTheme.hint, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.8);
     return Container(
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 12),
-      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
+      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: const Row(children: [
         Expanded(flex: 5, child: Text('DOCUMENTO', style: s)),
         Expanded(flex: 2, child: Text('CATEGORÍA', style: s)),
@@ -780,7 +780,7 @@ class _DocRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const cell = TextStyle(color: AppTheme.text, fontSize: 14);
+    final cell = TextStyle(color: AppTheme.text, fontSize: 14);
     return InkWell(
       onTap: onTap,
       hoverColor: BSColors.selected.withOpacity(0.7),
@@ -795,12 +795,12 @@ class _DocRow extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(info.title, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
                   const SizedBox(height: 3),
                   info.aiDesc != null
                       ? Text(info.aiDesc!, maxLines: 1, overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: AppTheme.hint, fontSize: 12))
-                      : const Row(children: [
+                          style: TextStyle(color: AppTheme.hint, fontSize: 12))
+                      : Row(children: [
                           Icon(Icons.hourglass_empty_rounded, color: AppTheme.hint, size: 12),
                           SizedBox(width: 4),
                           Text('Análisis pendiente…', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
@@ -809,7 +809,7 @@ class _DocRow extends StatelessWidget {
               ),
             ]),
           ),
-          Expanded(flex: 2, child: Text(info.category, style: const TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
+          Expanded(flex: 2, child: Text(info.category, style: TextStyle(color: AppTheme.hint, fontSize: 13.5, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis)),
           Expanded(flex: 2, child: Text(info.sizeStr, style: cell)),
           Expanded(flex: 2, child: Text(info.dateStr, style: cell)),
           Expanded(flex: 2, child: Align(alignment: Alignment.centerLeft, child: BSPill.docStatus(info.status))),
@@ -868,7 +868,7 @@ class _DocTile extends StatelessWidget {
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
             foregroundColor: AppTheme.primary,
-            side: const BorderSide(color: AppTheme.border),
+            side: BorderSide(color: AppTheme.border),
             minimumSize: const Size(0, 42),
             padding: const EdgeInsets.symmetric(horizontal: 6),
             shape: btnShape,
@@ -887,10 +887,10 @@ class _DocTile extends StatelessWidget {
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(info.title, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800, height: 1.25)),
+                    style: TextStyle(color: AppTheme.text, fontSize: 14.5, fontWeight: FontWeight.w800, height: 1.25)),
                 const SizedBox(height: 4),
                 Text(meta, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 12)),
               ]),
             ),
             menu,
@@ -907,7 +907,7 @@ class _DocTile extends StatelessWidget {
               if (info.aiDesc != null) ...[
                 const SizedBox(height: 10),
                 Text(info.aiDesc!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
+                    style: TextStyle(color: AppTheme.hint, fontSize: 12.5, height: 1.4)),
               ],
               const SizedBox(height: 12),
               // Ver el archivo · Ver la ficha · Acción principal
@@ -943,8 +943,8 @@ class _DocActions extends StatelessWidget {
         child: Tooltip(
           message: tip,
           child: Material(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: const BorderSide(color: AppTheme.border)),
+            color: AppTheme.card,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8), side: BorderSide(color: AppTheme.border)),
             child: InkWell(
               onTap: onTap,
               borderRadius: BorderRadius.circular(8),
@@ -987,7 +987,7 @@ class _DocActions extends StatelessWidget {
         tooltip: 'Más acciones',
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        icon: const Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
+        icon: Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
         onSelected: (v) {
           if (v == 'open') onOpen();
           if (v == 'detail') onDetail();
@@ -996,7 +996,7 @@ class _DocActions extends StatelessWidget {
           if (v == 'ai') onReanalyze();
           if (v == 'delete') onDelete();
         },
-        itemBuilder: (_) => const [
+        itemBuilder: (_) => [
           PopupMenuItem(value: 'open', child: _MenuItem(Icons.visibility_outlined, 'Ver documento', AppTheme.text)),
           PopupMenuItem(value: 'detail', child: _MenuItem(Icons.info_outline_rounded, 'Ver detalles', AppTheme.text)),
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar datos', AppTheme.text)),
@@ -1064,16 +1064,16 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
               width: 22,
               height: 22,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(color: BSColors.selected, shape: BoxShape.circle),
-              child: Text('$n', style: const TextStyle(color: AppTheme.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
+              decoration: BoxDecoration(color: BSColors.selected, shape: BoxShape.circle),
+              child: Text('$n', style: TextStyle(color: AppTheme.primary, fontSize: 11.5, fontWeight: FontWeight.w800)),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Text(text, style: const TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.4))),
+            Expanded(child: Text(text, style: TextStyle(color: AppTheme.text, fontSize: 13.5, height: 1.4))),
           ]),
         );
 
     return Dialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.card,
       insetPadding: const EdgeInsets.all(20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       clipBehavior: Clip.antiAlias,
@@ -1089,10 +1089,10 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
+                  child: Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
                 ),
                 const SizedBox(width: 14),
-                const Expanded(
+                Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('Confirmar firma', style: TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w800)),
                     SizedBox(height: 2),
@@ -1102,7 +1102,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 IconButton(
                   tooltip: 'Cerrar',
                   onPressed: () => Navigator.pop(context, false),
-                  icon: const Icon(Icons.close_rounded, color: AppTheme.hint),
+                  icon: Icon(Icons.close_rounded, color: AppTheme.hint),
                 ),
               ]),
             ),
@@ -1125,17 +1125,17 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text(widget.docTitle, maxLines: 2, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                            style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 3),
-                        Text(info, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+                        Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12.5)),
                         if (hash != null) ...[
                           const SizedBox(height: 4),
                           Row(children: [
-                            const Icon(Icons.fingerprint_rounded, size: 14, color: AppTheme.primary),
+                            Icon(Icons.fingerprint_rounded, size: 14, color: AppTheme.primary),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text('Huella ${fmtHuella(hash)}',
-                                  style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                                  style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                             ),
                           ]),
                         ],
@@ -1147,7 +1147,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
 
                 // Firma
                 Row(children: [
-                  const Text('Tu firma', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                  Text('Tu firma', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                   const Spacer(),
                   if (hasSig) const BSPill(label: 'Registrada en tu perfil', color: BSColors.success),
                 ]),
@@ -1155,7 +1155,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 Container(
                   height: narrow ? 110 : 130,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.card,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: hasSig ? AppTheme.border : BSColors.warning, width: hasSig ? 1 : 1.4),
                   ),
@@ -1195,7 +1195,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 const SizedBox(height: 16),
 
                 // Qué va a pasar
-                const Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                Text('Qué va a pasar', style: TextStyle(color: AppTheme.text, fontSize: 13.5, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 6),
                 step(1, 'Tu firma une la huella del archivo con tu identidad y la hora exacta.'),
                 step(2, 'La firma se registra en la blockchain de Ethereum; verás cada paso en vivo.'),
@@ -1220,7 +1220,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Expanded(
+                      Expanded(
                         child: Text('Revisé el documento y estoy de acuerdo con su contenido. Entiendo que la firma queda registrada de forma permanente.',
                             style: TextStyle(color: AppTheme.text, fontSize: 13, height: 1.4)),
                       ),
@@ -1234,7 +1234,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
             Container(
               margin: const EdgeInsets.only(top: 16),
               padding: const EdgeInsets.fromLTRB(22, 14, 22, 18),
-              decoration: const BoxDecoration(color: BSColors.page, border: Border(top: BorderSide(color: AppTheme.border))),
+              decoration: BoxDecoration(color: BSColors.page, border: Border(top: BorderSide(color: AppTheme.border))),
               child: narrow
                   ? Row(children: [
                       Expanded(
@@ -1269,7 +1269,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
 class _NoSignature extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.draw_outlined, color: AppTheme.hint, size: 24),
         SizedBox(height: 4),
@@ -1310,10 +1310,10 @@ class _EmptyState extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       Text(filtered ? 'Sin resultados' : 'Sin documentos aún',
-          style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700)),
+          style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w700)),
       const SizedBox(height: 6),
       Text(filtered ? 'Ningún documento coincide con la búsqueda o los filtros.' : 'Sube tu primer PDF o Word para analizarlo y firmarlo.',
-          textAlign: TextAlign.center, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+          textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       const SizedBox(height: 20),
       filtered
           ? BSOutlineButton(label: 'Limpiar filtros', icon: Icons.close_rounded, onPressed: onClear)

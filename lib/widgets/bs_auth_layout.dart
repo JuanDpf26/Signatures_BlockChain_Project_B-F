@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'accessibility_menu.dart';
 import 'brand.dart';
 import '../theme/app_theme.dart';
 import 'bs_ui.dart';
@@ -62,7 +63,7 @@ class BSAuthLayout extends StatelessWidget {
               ),
               if (subtitle != null) ...[
                 const SizedBox(height: 8),
-                Text(subtitle!, style: const TextStyle(color: AppTheme.hint, fontSize: 14.5, height: 1.5)),
+                Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 14.5, height: 1.5)),
               ],
               const SizedBox(height: 28),
               child,
@@ -75,13 +76,17 @@ class BSAuthLayout extends StatelessWidget {
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: wide
-          ? Row(children: [
-              const Expanded(flex: 9, child: _BrandPanel()),
-              Expanded(flex: 11, child: form),
-            ])
-          : SafeArea(child: form),
+      backgroundColor: AppTheme.card,
+      body: Stack(children: [
+        wide
+            ? Row(children: [
+                const Expanded(flex: 9, child: _BrandPanel()),
+                Expanded(flex: 11, child: form),
+              ])
+            : SafeArea(child: form),
+        // Apariencia y accesibilidad, disponible desde antes de iniciar sesión
+        const Positioned(top: 8, right: 8, child: SafeArea(child: AccessibilityButton())),
+      ]),
     );
   }
 }
@@ -156,11 +161,11 @@ class _EnvPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFFF4F6FA), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(20)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFD99A00), shape: BoxShape.circle)),
         const SizedBox(width: 8),
-        const Text('Red: Sepolia Testnet · datos de prueba',
+        Text('Red: Sepolia Testnet · datos de prueba',
             style: TextStyle(color: AppTheme.text, fontSize: 12.5, fontWeight: FontWeight.w700)),
       ]),
     );
@@ -228,7 +233,7 @@ class _BackLink extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: const Padding(
+      child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.arrow_back_rounded, color: AppTheme.hint, size: 18),
@@ -287,13 +292,13 @@ class BSAuthSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
-        Text('$question ', style: const TextStyle(color: AppTheme.hint, fontSize: 14)),
+        Text('$question ', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
         InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-            child: Text(action, style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 14)),
+            child: Text(action, style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800, fontSize: 14)),
           ),
         ),
       ]),
@@ -309,12 +314,12 @@ class BSAuthDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      const Expanded(child: Divider(color: AppTheme.border)),
+      Expanded(child: Divider(color: AppTheme.border)),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14),
-        child: Text(text, style: const TextStyle(color: AppTheme.hint, fontSize: 13)),
+        child: Text(text, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
       ),
-      const Expanded(child: Divider(color: AppTheme.border)),
+      Expanded(child: Divider(color: AppTheme.border)),
     ]);
   }
 }
@@ -322,8 +327,9 @@ class BSAuthDivider extends StatelessWidget {
 /// Ícono grande en cuadro redondeado (para encabezados de recuperar/verificar)
 class BSAuthIcon extends StatelessWidget {
   final IconData icon;
-  final Color color;
-  const BSAuthIcon({super.key, required this.icon, this.color = AppTheme.primary});
+  final Color? _color;
+  Color get color => _color ?? AppTheme.primary;
+  const BSAuthIcon({super.key, required this.icon, Color? color}) : _color = color;
 
   @override
   Widget build(BuildContext context) {
