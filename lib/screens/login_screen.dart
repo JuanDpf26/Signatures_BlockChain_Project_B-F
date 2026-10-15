@@ -35,6 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
           title: '¡Cuenta verificada!',
           text: 'Ya puedes iniciar sesión.',
         );
+      } else if (AuthService.pendingRoute?.startsWith('/verify') == true) {
+        SweetAlert.info(
+          context,
+          title: 'Inicia sesión para verificar',
+          text: 'Por seguridad, la verificación de documentos solo está disponible para usuarios con cuenta.',
+        );
       } else if (verified == 'error') {
         SweetAlert.error(
           context,
@@ -68,7 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
           text: '${bsSaludo(now)} · ${bsFechaLarga(now)}, ${bsHora(now)}',
           autoClose: const Duration(milliseconds: 2000),
         );
-        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
       } else {
         final msg = (res['error'] ?? 'Error al iniciar sesión').toString();
         // Cuenta sin verificar → advertencia; credenciales u otro error → error
@@ -106,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
           text: 'Sesión iniciada con Google\n${bsFechaLarga(now)}, ${bsHora(now)}',
           autoClose: const Duration(milliseconds: 2000),
         );
-        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+        if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
       } else {
         await SweetAlert.error(
           context,

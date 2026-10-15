@@ -85,16 +85,18 @@ class CollabService {
 
   static Future<Map<String, dynamic>> team(String id) => _send((h) => http.get(Uri.parse('$_base/api/teams/$id'), headers: h));
 
-  static Future<Map<String, dynamic>> createTeam(String name, String description) => _send((h) => http.post(
-        Uri.parse('$_base/api/teams'),
-        headers: h,
-        body: jsonEncode({'name': name, 'description': description}),
-      ));
+  /// Crea el equipo con color y miembros iniciales [{email, role}] en un solo paso
+  static Future<Map<String, dynamic>> createTeam(String name, String description, {String? color, List<Map<String, dynamic>> members = const []}) =>
+      _send((h) => http.post(
+            Uri.parse('$_base/api/teams'),
+            headers: h,
+            body: jsonEncode({'name': name, 'description': description, if (color != null) 'color': color, 'members': members}),
+          ));
 
-  static Future<Map<String, dynamic>> updateTeam(String id, {String? name, String? description}) => _send((h) => http.patch(
+  static Future<Map<String, dynamic>> updateTeam(String id, {String? name, String? description, String? color}) => _send((h) => http.patch(
         Uri.parse('$_base/api/teams/$id'),
         headers: h,
-        body: jsonEncode({if (name != null) 'name': name, if (description != null) 'description': description}),
+        body: jsonEncode({if (name != null) 'name': name, if (description != null) 'description': description, if (color != null) 'color': color}),
       ));
 
   static Future<Map<String, dynamic>> deleteTeam(String id) => _send((h) => http.delete(Uri.parse('$_base/api/teams/$id'), headers: h));

@@ -238,9 +238,9 @@ class _VerifyScreenState extends State<VerifyScreen> {
       const _HowItWorksCard(),
       const SizedBox(height: 16),
       const BSInfoBanner(
-        title: 'Verificación pública',
-        text: 'Quien recibe un documento por correo puede verificarlo con este mismo flujo, sin crear una cuenta.',
-        icon: Icons.public_rounded,
+        title: 'Solo para usuarios registrados',
+        text: 'Quien recibe un documento por correo inicia sesión en DocBlockSign y lo verifica con este mismo flujo.',
+        icon: Icons.lock_outline_rounded,
       ),
     ]);
 

@@ -52,7 +52,23 @@ class _TeamsScreenState extends State<TeamsScreen> {
     if (created == null || !mounted) return;
     await _load();
     if (!mounted) return;
-    SweetAlert.success(context, title: 'Equipo creado', text: 'Ahora agrega a las personas que lo conforman.', autoClose: const Duration(milliseconds: 1600));
+    final added = created['_added'] as int? ?? 0;
+    final missing = (created['_missing'] as List?)?.cast<String>() ?? const <String>[];
+    if (missing.isNotEmpty) {
+      await SweetAlert.warning(
+        context,
+        title: 'Equipo creado',
+        text: 'Estos correos aún no tienen cuenta y no se agregaron: ${missing.join(', ')}. Pídeles que se registren y agrégalos desde el equipo.',
+      );
+    } else {
+      SweetAlert.success(
+        context,
+        title: 'Equipo creado',
+        text: added == 0 ? 'Ahora agrega a las personas que lo conforman.' : 'Agregaste a $added ${added == 1 ? 'persona' : 'personas'}.',
+        autoClose: const Duration(milliseconds: 1600),
+      );
+    }
+    if (!mounted) return;
     _openTeam(created['id'].toString());
   }
 
@@ -333,7 +349,11 @@ class _EmptyTeams extends StatelessWidget {
 
 // ─────────────────────────────────────────
 // CREAR / EDITAR EQUIPO
+// Un solo paso: nombre, color y miembros, con vista previa de la tarjeta.
 // ─────────────────────────────────────────
+const _teamColors = ['#0B45B5', '#1565C0', '#00838F', '#2E7D32', '#D99A00', '#D84315', '#AD1457', '#7A4FD6', '#5D4037', '#455A64'];
+const _nameIdeas = ['Comité directivo', 'Jurídica', 'Compras', 'Talento humano', 'Proyecto de grado'];
+
 class _TeamFormDialog extends StatefulWidget {
   final Map<String, dynamic>? team;
   const _TeamFormDialog({this.team});
@@ -345,83 +365,367 @@ class _TeamFormDialog extends StatefulWidget {
 class _TeamFormDialogState extends State<_TeamFormDialog> {
   late final _name = TextEditingController(text: widget.team?['name']?.toString() ?? '');
   late final _desc = TextEditingController(text: widget.team?['description']?.toString() ?? '');
+  final _search = TextEditingController();
+  late String _color = (widget.team?['color']?.toString().toUpperCase()) ?? _teamColors.first;
+  final List<Map<String, dynamic>> _members = []; // {name, email, admin}
+  List<Map<String, dynamic>> _results = [];
+  bool _searching = false;
   bool _saving = false;
+  String? _nameError;
+  Timer? _debounce;
+
+  bool get _editing => widget.team != null;
+  static final _emailRe = RegExp(r'^[^\s@<>()\[\]\\,;:"]+@[^\s@<>()\[\]\\,;:"]+\.[^\s@<>()\[\]\\,;:"]{2,}$');
+
+  @override
+  void initState() {
+    super.initState();
+    _name.addListener(() => setState(() => _nameError = null));
+  }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _name.dispose();
     _desc.dispose();
+    _search.dispose();
     super.dispose();
   }
 
-  InputDecoration _dec(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
-      );
+  void _onSearch(String v) {
+    _debounce?.cancel();
+    final q = v.trim();
+    if (q.length < 3) {
+      setState(() {
+        _results = [];
+        _searching = false;
+      });
+      return;
+    }
+    setState(() => _searching = true);
+    _debounce = Timer(const Duration(milliseconds: 300), () async {
+      final r = await CollabService.searchUsers(q);
+      if (!mounted || _search.text.trim() != q) return;
+      setState(() {
+        _searching = false;
+        _results = ((r['users'] as List?) ?? [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .where((u) => !_members.any((m) => m['email'] == u['email']))
+            .toList();
+      });
+    });
+  }
+
+  void _addPerson(Map<String, dynamic> u) {
+    final email = u['email'].toString().toLowerCase();
+    if (_members.any((m) => m['email'] == email)) return;
+    setState(() {
+      _members.add({'name': u['name'], 'email': email, 'admin': false});
+      _search.clear();
+      _results = [];
+    });
+  }
+
+  void _addTyped() {
+    final e = _search.text.trim().toLowerCase();
+    if (_results.isNotEmpty) return _addPerson(_results.first);
+    if (_emailRe.hasMatch(e)) _addPerson({'name': null, 'email': e});
+  }
 
   Future<void> _save() async {
     if (_name.text.trim().length < 2) {
-      await SweetAlert.warning(context, title: 'Falta el nombre', text: 'Ponle un nombre de al menos 2 letras.');
+      setState(() => _nameError = 'Ponle un nombre de al menos 2 letras');
       return;
     }
     setState(() => _saving = true);
-    final r = widget.team == null
-        ? await CollabService.createTeam(_name.text.trim(), _desc.text.trim())
-        : await CollabService.updateTeam(widget.team!['id'].toString(), name: _name.text.trim(), description: _desc.text.trim());
+    final r = _editing
+        ? await CollabService.updateTeam(widget.team!['id'].toString(), name: _name.text.trim(), description: _desc.text.trim(), color: _color)
+        : await CollabService.createTeam(
+            _name.text.trim(),
+            _desc.text.trim(),
+            color: _color,
+            members: [for (final m in _members) {'email': m['email'], 'role': m['admin'] == true ? 'admin' : 'member'}],
+          );
     if (!mounted) return;
     setState(() => _saving = false);
     if (r['error'] != null) {
       await SweetAlert.error(context, title: 'No se pudo guardar', text: r['error'].toString());
       return;
     }
-    Navigator.of(context).pop(Map<String, dynamic>.from((r['team'] as Map?) ?? {}));
+    Navigator.of(context).pop({
+      ...Map<String, dynamic>.from((r['team'] as Map?) ?? {}),
+      '_added': (r['added'] as List?)?.length ?? 0,
+      '_missing': ((r['missing'] as List?) ?? []).map((e) => e.toString()).toList(),
+    });
   }
+
+  InputDecoration _dec(String hint, {Widget? prefix, String? error}) => InputDecoration(
+        hintText: hint,
+        errorText: error,
+        hintStyle: const TextStyle(color: AppTheme.hint, fontSize: 13.5),
+        prefixIcon: prefix,
+        filled: true,
+        fillColor: Colors.white,
+        counterText: '',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppTheme.primary, width: 1.5)),
+      );
+
+  Widget _label(String t, [String? hint]) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(children: [
+          Text(t, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
+          if (hint != null) ...[
+            const SizedBox(width: 6),
+            Text(hint, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+          ],
+        ]),
+      );
 
   @override
   Widget build(BuildContext context) {
-    final editing = widget.team != null;
-    return Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: const EdgeInsets.all(22),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                child: const Icon(Icons.groups_rounded, color: AppTheme.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(editing ? 'Editar equipo' : 'Nuevo equipo', style: const TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
-              ),
-            ]),
-            const SizedBox(height: 18),
-            const Text('Nombre', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
-            const SizedBox(height: 6),
-            TextField(controller: _name, maxLength: 60, autofocus: true, decoration: _dec('Ej.: Comité de contratación').copyWith(counterText: '')),
-            const SizedBox(height: 14),
-            const Text('Descripción (opcional)', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
-            const SizedBox(height: 6),
-            TextField(controller: _desc, minLines: 2, maxLines: 4, maxLength: 300, decoration: _dec('¿Para qué usan este equipo?')),
-            const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-              TextButton(onPressed: _saving ? null : () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-              const SizedBox(width: 8),
-              BSPrimaryButton(label: editing ? 'Guardar' : 'Crear equipo', icon: Icons.check_rounded, loading: _saving, onPressed: _save),
-            ]),
+    final narrow = MediaQuery.of(context).size.width < 600;
+    final color = parseHexColor(_color) ?? AppTheme.primary;
+    final name = _name.text.trim().isEmpty ? 'Nombre del equipo' : _name.text.trim();
+
+    // Vista previa: así se verá la tarjeta del equipo
+    final preview = AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(colors: [color, Color.lerp(color, Colors.black, 0.25)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
+      ),
+      child: Row(children: [
+        Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(13)),
+          child: Text(bsIniciales(name), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 17)),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 3),
+            Text(
+              _editing ? 'Editando el equipo' : '${_members.length + 1} ${_members.isEmpty ? 'miembro (tú)' : 'miembros contándote a ti'}',
+              style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
           ]),
         ),
+      ]),
+    );
+
+    final form = Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(children: [
+        Expanded(
+          child: Text(_editing ? 'Editar equipo' : 'Nuevo equipo', style: const TextStyle(color: AppTheme.text, fontSize: 19, fontWeight: FontWeight.w900)),
+        ),
+        IconButton(onPressed: _saving ? null : () => Navigator.of(context).pop(), icon: const Icon(Icons.close_rounded, color: AppTheme.hint)),
+      ]),
+      if (!_editing)
+        const Text('Agrupa a las personas con las que trabajas para enviarles documentos y pedir revisiones a todas a la vez.',
+            style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4)),
+      const SizedBox(height: 16),
+      preview,
+      const SizedBox(height: 18),
+      _label('Nombre'),
+      TextField(controller: _name, maxLength: 60, autofocus: !narrow, decoration: _dec('Ej.: Comité de contratación', error: _nameError)),
+      if (!_editing) ...[
+        const SizedBox(height: 8),
+        Wrap(spacing: 6, runSpacing: 6, children: [
+          for (final idea in _nameIdeas)
+            ActionChip(
+              label: Text(idea, style: const TextStyle(fontSize: 12, color: AppTheme.text)),
+              backgroundColor: BSColors.page,
+              side: const BorderSide(color: AppTheme.border),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              visualDensity: VisualDensity.compact,
+              onPressed: () => _name.text = idea,
+            ),
+        ]),
+      ],
+      const SizedBox(height: 14),
+      _label('Descripción', '(opcional)'),
+      TextField(controller: _desc, minLines: 2, maxLines: 3, maxLength: 300, decoration: _dec('¿Para qué usan este equipo?')),
+      const SizedBox(height: 14),
+      _label('Color'),
+      Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final c in _teamColors)
+          Tooltip(
+            message: 'Usar este color',
+            child: InkWell(
+              onTap: () => setState(() => _color = c),
+              customBorder: const CircleBorder(),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: parseHexColor(c),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _color == c ? AppTheme.text : Colors.white, width: 2.5),
+                  boxShadow: _color == c ? [BoxShadow(color: parseHexColor(c)!.withOpacity(0.45), blurRadius: 8)] : null,
+                ),
+                child: _color == c ? const Icon(Icons.check_rounded, color: Colors.white, size: 17) : null,
+              ),
+            ),
+          ),
+      ]),
+      if (!_editing) ...[
+        const SizedBox(height: 18),
+        _label('Miembros', '(puedes agregarlos ahora o después)'),
+        TextField(
+          controller: _search,
+          onChanged: _onSearch,
+          onSubmitted: (_) => _addTyped(),
+          textInputAction: TextInputAction.done,
+          keyboardType: TextInputType.emailAddress,
+          decoration: _dec(
+            'Busca por nombre o correo',
+            prefix: const Icon(Icons.person_search_outlined, color: AppTheme.hint, size: 20),
+          ).copyWith(
+            suffixIcon: _searching
+                ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)))
+                : null,
+          ),
+        ),
+        // Resultados de la búsqueda
+        if (_results.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.border),
+              boxShadow: AppTheme.cardShadow,
+            ),
+            child: Column(children: [
+              for (final u in _results)
+                ListTile(
+                  dense: true,
+                  leading: BSAvatar(name: (u['name'] ?? u['email'])?.toString(), radius: 15),
+                  title: Text((u['name'] ?? u['email']).toString(), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  subtitle: Text(u['email'].toString(), style: const TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.add_circle_outline_rounded, color: AppTheme.primary),
+                  onTap: () => _addPerson(u),
+                ),
+            ]),
+          )
+        else if (_search.text.trim().length >= 3 && !_searching)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 4),
+            child: Text(
+              _emailRe.hasMatch(_search.text.trim())
+                  ? 'No encontramos esa cuenta. Pulsa Enter para agregarla igual; si no se registra, te avisaremos.'
+                  : 'Sin resultados. Escribe el correo completo de la persona.',
+              style: const TextStyle(color: AppTheme.hint, fontSize: 12),
+            ),
+          ),
+        const SizedBox(height: 10),
+        // Tú siempre eres el dueño
+        _MemberChipRow(name: 'Tú', email: 'Dueño del equipo', owner: true),
+        for (final m in _members)
+          _MemberChipRow(
+            name: (m['name'] ?? m['email']).toString(),
+            email: m['email'].toString(),
+            admin: m['admin'] == true,
+            onToggleAdmin: () => setState(() => m['admin'] = !(m['admin'] == true)),
+            onRemove: () => setState(() => _members.remove(m)),
+          ),
+      ],
+    ]);
+
+    final actions = Row(children: [
+      if (!narrow)
+        Expanded(
+          child: Text(
+            _editing ? '' : 'Podrás cambiar los miembros y sus roles cuando quieras.',
+            style: const TextStyle(color: AppTheme.hint, fontSize: 12),
+          ),
+        ),
+      if (narrow) ...[
+        Expanded(child: BSOutlineButton(label: 'Cancelar', onPressed: _saving ? null : () => Navigator.of(context).pop())),
+        const SizedBox(width: 10),
+        Expanded(
+          child: BSPrimaryButton(label: _editing ? 'Guardar' : 'Crear', icon: Icons.check_rounded, loading: _saving, onPressed: _save),
+        ),
+      ] else ...[
+        TextButton(onPressed: _saving ? null : () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+        const SizedBox(width: 8),
+        BSPrimaryButton(
+          label: _editing ? 'Guardar cambios' : (_members.isEmpty ? 'Crear equipo' : 'Crear con ${_members.length + 1} miembros'),
+          icon: Icons.check_rounded,
+          loading: _saving,
+          onPressed: _save,
+        ),
+      ],
+    ]);
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: EdgeInsets.symmetric(horizontal: narrow ? 12 : 40, vertical: 24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 540, maxHeight: MediaQuery.of(context).size.height * 0.9),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Flexible(child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(22, 14, 14, 8), child: Padding(padding: const EdgeInsets.only(right: 8), child: form))),
+          Container(
+            padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
+            decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppTheme.border))),
+            child: actions,
+          ),
+        ]),
       ),
+    );
+  }
+}
+
+/// Persona elegida para el equipo, con su rol
+class _MemberChipRow extends StatelessWidget {
+  final String name, email;
+  final bool owner, admin;
+  final VoidCallback? onToggleAdmin, onRemove;
+  const _MemberChipRow({required this.name, required this.email, this.owner = false, this.admin = false, this.onToggleAdmin, this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
+      child: Row(children: [
+        BSAvatar(name: owner ? null : name, radius: 15),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13.5)),
+            Text(email, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+          ]),
+        ),
+        if (owner)
+          BSPill(label: 'Dueño', color: AppTheme.primary, dot: false)
+        else ...[
+          Tooltip(
+            message: 'Los administradores pueden agregar y quitar miembros',
+            child: InkWell(
+              onTap: onToggleAdmin,
+              borderRadius: BorderRadius.circular(20),
+              child: BSPill(label: admin ? 'Administrador' : 'Miembro', color: admin ? AppTheme.featureCyan : BSColors.neutral, dot: false),
+            ),
+          ),
+          IconButton(
+            tooltip: 'Quitar',
+            onPressed: onRemove,
+            icon: const Icon(Icons.close_rounded, size: 18, color: AppTheme.hint),
+          ),
+        ],
+      ]),
     );
   }
 }

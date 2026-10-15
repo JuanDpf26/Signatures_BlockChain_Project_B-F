@@ -7,6 +7,7 @@ import '../widgets/proof_ui.dart';
 import '../widgets/chain_steps.dart';
 import '../widgets/sweet_alert.dart';
 import 'document_viewer_screen.dart';
+import 'verify_screen.dart';
 
 /// Bandeja de entrada al estilo de un cliente de correo: carpetas, mensajes
 /// agrupados por fecha, panel de lectura y acciones (responder, reenviar,
@@ -1575,7 +1576,18 @@ class _DocumentCard extends StatelessWidget {
             BSOutlineButton(
               label: MediaQuery.of(context).size.width < 600 ? 'Verificar' : 'Verificar autenticidad',
               icon: Icons.verified_outlined,
-              onPressed: () => Navigator.of(context).pushNamed('/verify?hash=$hash'),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  backgroundColor: BSColors.page,
+                  appBar: AppBar(
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.transparent,
+                    foregroundColor: AppTheme.text,
+                    title: const Text('Verificar documento', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
+                  ),
+                  body: VerifyScreen(initialHash: hash),
+                ),
+              )),
             ),
           if (hash.isNotEmpty)
             BSOutlineButton(

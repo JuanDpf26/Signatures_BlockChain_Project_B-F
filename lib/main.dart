@@ -9,8 +9,7 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/email_verified_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/verify_screen.dart';
-import 'widgets/bs_ui.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -85,26 +84,18 @@ class MyApp extends StatelessWidget {
           );
         }
 
-        // /verify?hash=xxx → verificación pública (sin iniciar sesión), enlace de los correos
+        // /verify?hash=xxx (enlace de los correos): exige sesión; sin sesión pide iniciarla y vuelve aquí
         if (uri.path == '/verify') {
+          final hash = uri.queryParameters['hash'];
           return MaterialPageRoute(
-            builder: (ctx) => Scaffold(
-              backgroundColor: BSColors.page,
-              appBar: AppBar(
-                backgroundColor: Colors.white,
-                surfaceTintColor: Colors.transparent,
-                elevation: 0,
-                foregroundColor: AppTheme.text,
-                title: const Text('Verificar documento · DocBlockSign', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(ctx).pushReplacementNamed('/login'),
-                    child: const Text('Iniciar sesión'),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-              body: VerifyScreen(initialHash: uri.queryParameters['hash']),
+            builder: (_) => FutureBuilder<bool>(
+              future: AuthService.isLoggedIn(),
+              builder: (ctx, snap) {
+                if (!snap.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+                if (snap.data == true) return HomeScreen(initialIndex: 2, verifyHash: hash);
+                AuthService.pendingRoute = '/verify?hash=${hash ?? ''}';
+                return const LoginScreen();
+              },
             ),
             settings: settings,
           );

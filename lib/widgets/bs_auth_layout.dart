@@ -129,7 +129,7 @@ class _BrandPanel extends StatelessWidget {
                   'Huella SHA-256 única por documento',
                   'Registro inmutable en Ethereum Sepolia',
                   'Análisis inteligente con IA',
-                  'Verificación pública sin subir el archivo',
+                  'Verificación sin subir el archivo',
                 ].indexed) ...[
                   BSEntrance(delay: Duration(milliseconds: 160 + i * 70), child: _Feature(text: t)),
                   const SizedBox(height: 20),

@@ -18,13 +18,15 @@ import 'inbox_screen.dart';
 import 'teams_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final int initialIndex;
+  final String? verifyHash; // huella que llega desde un enlace de verificación
+  const HomeScreen({super.key, this.initialIndex = 0, this.verifyHash});
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  late int _selectedIndex = widget.initialIndex;
   String? _docSearch; // búsqueda que viene del buscador de la barra superior
   String? _docStatus; // estado con el que se abre Documentos (campana)
   int _docKey = 0;
@@ -32,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _recentDocs = [];
   bool _loading = true;
   int _unread = 0; // mensajes sin leer en la bandeja
+  int _pendingReviews = 0; // solicitudes de revisión sin responder
 
   // Usuario (para el saludo de la barra superior)
   String _userName = '';
@@ -64,7 +67,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final s = await CollabService.inboxSummary();
     if (!mounted || s['error'] != null) return;
     final n = int.tryParse('${s['unread'] ?? 0}') ?? 0;
-    if (n != _unread) setState(() => _unread = n);
+    final r = int.tryParse('${s['pending_reviews'] ?? 0}') ?? 0;
+    if (n != _unread || r != _pendingReviews) {
+      setState(() {
+        _unread = n;
+        _pendingReviews = r;
+      });
+    }
   }
 
   Future<void> _loadData() async {
@@ -99,10 +108,13 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _showPending() {
+  void _showPending() => _openDocs('pending');
+
+  /// Abre Documentos con un filtro de estado (null = todos)
+  void _openDocs(String? status) {
     setState(() {
       _docSearch = null;
-      _docStatus = 'pending';
+      _docStatus = status;
       _docKey++;
       _selectedIndex = 1;
     });
@@ -143,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return DocumentsScreen(key: ValueKey('docs-$_docKey'), initialSearch: _docSearch, initialStatus: _docStatus);
       case 2:
-        return const VerifyScreen();
+        return VerifyScreen(initialHash: widget.verifyHash);
       case 3:
         return const ProfileScreen();
       case 4:
@@ -156,8 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
         return _DashboardContent(
           stats: _stats,
           recentDocs: _recentDocs,
+          pendingDocs: _pending,
           loading: _loading,
+          unread: _unread,
+          pendingReviews: _pendingReviews,
+          userName: _userName,
           onNavTap: _goTo,
+          onOpenDocs: _openDocs,
+          onOpenDoc: _searchDocs,
           onRefresh: _loadData,
         );
     }
@@ -1007,11 +1025,28 @@ class _MobileShell extends StatelessWidget {
 class _DashboardContent extends StatelessWidget {
   final Map<String, dynamic> stats;
   final List<Map<String, dynamic>> recentDocs;
+  final List<Map<String, dynamic>> pendingDocs;
   final bool loading;
+  final int unread, pendingReviews;
+  final String userName;
   final ValueChanged<int> onNavTap;
+  final ValueChanged<String?> onOpenDocs; // abre Documentos filtrado por estado
+  final ValueChanged<String> onOpenDoc; // abre Documentos buscando ese documento
   final Future<void> Function() onRefresh;
 
-  const _DashboardContent({required this.stats, required this.recentDocs, required this.loading, required this.onNavTap, required this.onRefresh});
+  const _DashboardContent({
+    required this.stats,
+    required this.recentDocs,
+    required this.pendingDocs,
+    required this.loading,
+    required this.unread,
+    required this.pendingReviews,
+    required this.userName,
+    required this.onNavTap,
+    required this.onOpenDocs,
+    required this.onOpenDoc,
+    required this.onRefresh,
+  });
 
   static String hoursLabel(dynamic h) {
     final x = double.tryParse('${h ?? ''}');
@@ -1031,11 +1066,67 @@ class _DashboardContent extends StatelessWidget {
     int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
     String v(String x) => loading ? '–' : x;
 
+    final hero = _HeroCard(
+      stats: stats,
+      loading: loading,
+      pendingReviews: pendingReviews,
+      unread: unread,
+      userName: userName,
+      showGreeting: isWeb,
+      onOpenDocs: onOpenDocs,
+      onRefresh: onRefresh,
+    );
+    final todo = _TodoCard(
+      loading: loading,
+      pendingDocs: pendingDocs,
+      pendingCount: (n('pending') - n('in_chain') - n('revoked')).clamp(0, 1 << 30),
+      inChain: n('in_chain'),
+      pendingReviews: pendingReviews,
+      unread: unread,
+      onOpenDocs: onOpenDocs,
+      onOpenDoc: onOpenDoc,
+      onNavTap: onNavTap,
+    );
+    final quick = _QuickLinks(onNavTap: onNavTap, unread: unread, wide: width >= 760);
+    final kpis = BSKpiRow(items: [
+      BSKpiCard(
+        label: 'Firmas este mes',
+        value: v('${n('signed_month')}'),
+        caption: '${n('signed') + n('verified')} firmas en total',
+        color: AppTheme.primary,
+        icon: Icons.draw_outlined,
+        onTap: () => onOpenDocs('signed'),
+      ),
+      BSKpiCard(
+        label: 'Tiempo promedio de firma',
+        value: v(hoursLabel(stats['avg_hours_to_sign'])),
+        caption: 'De la carga al registro en blockchain',
+        color: BSColors.warning,
+        icon: Icons.timer_outlined,
+      ),
+      BSKpiCard(
+        label: 'Analizados con IA',
+        value: v('${n('analyzed_pct')} %'),
+        caption: n('ai_errors') > 0 ? '${n('ai_errors')} con error' : '${n('analyzed')} de ${n('total')} documentos',
+        color: BSColors.success,
+        icon: Icons.auto_awesome_outlined,
+      ),
+      BSKpiCard(
+        label: 'Mensajes sin leer',
+        value: v('$unread'),
+        caption: unread == 0 ? 'Bandeja al día' : 'En tu bandeja de entrada',
+        color: AppTheme.featureCyan,
+        icon: Icons.mark_email_unread_outlined,
+        onTap: () => onNavTap(5),
+      ),
+    ]);
+
     final activity7 = _WeekChartCard(days: ((stats['activity'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
-    final statusCard = _StatusMixCard(stats: stats, loading: loading, onNavTap: onNavTap);
+    final statusCard = _StatusMixCard(stats: stats, loading: loading, onOpenDocs: onOpenDocs);
     final confCard = _ConfidentialityCard(rows: ((stats['confidentiality'] as List?) ?? []).whereType<Map>().toList(), loading: loading);
-    final recent = _RecentTableCard(docs: recentDocs.take(6).toList(), loading: loading, onNavTap: onNavTap);
+    final recent = _RecentTableCard(docs: recentDocs.take(6).toList(), loading: loading, onNavTap: onNavTap, onOpenDoc: onOpenDoc);
     final feed = _ActivityCard(docs: recentDocs, loading: loading);
+    const gap = SizedBox(height: 20);
 
     return Container(
       color: BSColors.page,
@@ -1045,96 +1136,70 @@ class _DashboardContent extends StatelessWidget {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           // En celular deja espacio para el botón flotante de Sign IA
-          padding: EdgeInsets.fromLTRB(pad, isWeb ? 24 : 18, pad, isWeb ? 32 : 96),
+          padding: EdgeInsets.fromLTRB(pad, isWeb ? 24 : 16, pad, isWeb ? 32 : 96),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            BSPageHeader(
-              breadcrumb: const ['Inicio', 'Tablero'],
-              title: 'Tablero general',
-              subtitle: 'Cómo va tu actividad de firma, análisis y registro en blockchain.',
-              actions: [
-                BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: loading ? null : () => onRefresh()),
-                BSPrimaryButton(label: 'Subir documento', icon: Icons.add_rounded, onPressed: () => onNavTap(1)),
-              ],
-            ),
-            const SizedBox(height: 22),
-            BSKpiRow(items: [
-              BSKpiCard(
-                label: 'Firmas este mes',
-                value: v('${n('signed_month')}'),
-                caption: '${n('signed') + n('verified')} firmas en total',
-                color: AppTheme.primary,
-                icon: Icons.draw_outlined,
-                onTap: () => onNavTap(1),
-              ),
-              BSKpiCard(
-                label: 'Tiempo promedio de firma',
-                value: v(hoursLabel(stats['avg_hours_to_sign'])),
-                caption: 'Desde la carga hasta el bloque',
-                color: BSColors.warning,
-                icon: Icons.timer_outlined,
-              ),
-              BSKpiCard(
-                label: 'Analizados con IA',
-                value: v('${n('analyzed_pct')} %'),
-                caption: n('ai_errors') > 0 ? '${n('ai_errors')} con error' : '${n('analyzed')} de ${n('total')} documentos',
-                color: BSColors.success,
-                icon: Icons.auto_awesome_outlined,
-              ),
-              BSKpiCard(
-                label: 'Pendientes de firma',
-                value: v('${n('pending')}'),
-                caption: n('in_chain') > 0
-                    ? '${n('in_chain')} registrándose en blockchain'
-                    : n('pending') == 0
-                        ? 'Todo está firmado'
-                        : 'Listos para firmar y registrar',
-                color: AppTheme.featureCyan,
-                icon: Icons.pending_actions_outlined,
-                onTap: () => onNavTap(1),
-              ),
-            ]),
-            const SizedBox(height: 20),
-            // Dos columnas independientes: cada una apila sus tarjetas sin dejar huecos
+            BSEntrance(child: hero),
+            gap,
             if (isWide)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(
                   flex: 13,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                    BSEntrance(delay: const Duration(milliseconds: 120), child: activity7),
-                    const SizedBox(height: 20),
-                    BSEntrance(delay: const Duration(milliseconds: 220), child: recent),
+                    BSEntrance(delay: const Duration(milliseconds: 80), child: todo),
+                    gap,
+                    BSEntrance(delay: const Duration(milliseconds: 140), child: kpis),
+                    gap,
+                    BSEntrance(delay: const Duration(milliseconds: 200), child: activity7),
+                    gap,
+                    BSEntrance(delay: const Duration(milliseconds: 260), child: recent),
                   ]),
                 ),
                 const SizedBox(width: 20),
                 Expanded(
                   flex: 7,
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    BSEntrance(delay: const Duration(milliseconds: 110), child: quick),
+                    gap,
                     BSEntrance(delay: const Duration(milliseconds: 170), child: statusCard),
-                    const SizedBox(height: 20),
-                    BSEntrance(delay: const Duration(milliseconds: 260), child: confCard),
-                    const SizedBox(height: 20),
-                    BSEntrance(delay: const Duration(milliseconds: 320), child: feed),
+                    gap,
+                    BSEntrance(delay: const Duration(milliseconds: 230), child: confCard),
+                    gap,
+                    BSEntrance(delay: const Duration(milliseconds: 290), child: feed),
                   ]),
                 ),
               ])
             else if (width >= 760) ...[
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Expanded(flex: 3, child: todo),
+                const SizedBox(width: 16),
+                Expanded(flex: 2, child: quick),
+              ]),
+              gap,
+              kpis,
+              gap,
+              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(child: statusCard),
                 const SizedBox(width: 16),
                 Expanded(child: confCard),
               ]),
-              const SizedBox(height: 16),
+              gap,
               activity7,
-              const SizedBox(height: 16),
+              gap,
               recent,
-              const SizedBox(height: 16),
+              gap,
               feed,
             ] else ...[
+              todo,
+              const SizedBox(height: 16),
+              quick,
+              const SizedBox(height: 16),
+              kpis,
+              const SizedBox(height: 16),
               statusCard,
               const SizedBox(height: 16),
-              activity7,
-              const SizedBox(height: 16),
               recent,
+              const SizedBox(height: 16),
+              activity7,
               const SizedBox(height: 16),
               confCard,
               const SizedBox(height: 16),
@@ -1143,6 +1208,475 @@ class _DashboardContent extends StatelessWidget {
           ]),
         ),
       ),
+    );
+  }
+}
+
+// ── Encabezado destacado: saludo, resumen en una frase y el flujo del documento ──
+class _HeroCard extends StatelessWidget {
+  final Map<String, dynamic> stats;
+  final bool loading, showGreeting;
+  final int pendingReviews, unread;
+  final String userName;
+  final ValueChanged<String?> onOpenDocs;
+  final Future<void> Function() onRefresh;
+  const _HeroCard({
+    required this.stats,
+    required this.loading,
+    required this.pendingReviews,
+    required this.unread,
+    required this.userName,
+    required this.showGreeting,
+    required this.onOpenDocs,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    int n(String k) => int.tryParse(stats[k]?.toString() ?? '0') ?? 0;
+    final total = n('total');
+    final porFirmar = (n('pending') - n('in_chain') - n('revoked')).clamp(0, 1 << 30);
+    final firmados = n('signed') + n('verified');
+    final pct = total == 0 ? 0.0 : firmados / total;
+    final narrow = MediaQuery.of(context).size.width < 700;
+
+    String plural(int x, String uno, String varios) => '$x ${x == 1 ? uno : varios}';
+    final tareas = [
+      if (porFirmar > 0) plural(porFirmar, 'documento por firmar', 'documentos por firmar'),
+      if (pendingReviews > 0) plural(pendingReviews, 'revisión esperando tu respuesta', 'revisiones esperando tu respuesta'),
+    ];
+    final resumen = loading
+        ? 'Cargando tu resumen…'
+        : total == 0
+            ? 'Aún no tienes documentos. Ve a Documentos para subir el primero y empezar el flujo.'
+            : tareas.isEmpty
+                ? 'Estás al día: no tienes firmas ni revisiones pendientes.'
+                : 'Tienes ${tareas.join(' y ')}.';
+
+    final first = bsPrimerNombre(userName);
+    final steps = [
+      ('Subidos', total, Icons.upload_file_rounded, null as String?),
+      ('Analizados con IA', n('analyzed'), Icons.auto_awesome_rounded, null),
+      ('Firmados en blockchain', firmados, Icons.draw_rounded, 'signed'),
+      ('Verificados', n('verified'), Icons.verified_rounded, 'verified'),
+    ];
+
+    final ring = SizedBox(
+      width: narrow ? 74 : 104,
+      height: narrow ? 74 : 104,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: loading ? 0 : pct),
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeOutCubic,
+        builder: (_, x, __) => Stack(alignment: Alignment.center, children: [
+          SizedBox.expand(
+            child: CircularProgressIndicator(
+              value: x,
+              strokeWidth: narrow ? 7 : 9,
+              backgroundColor: Colors.white.withOpacity(0.18),
+              valueColor: const AlwaysStoppedAnimation(Colors.white),
+              strokeCap: StrokeCap.round,
+            ),
+          ),
+          Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('${(x * 100).round()} %', style: TextStyle(color: Colors.white, fontSize: narrow ? 17 : 22, fontWeight: FontWeight.w900)),
+            Text('firmado', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: narrow ? 10.5 : 12, fontWeight: FontWeight.w600)),
+          ]),
+        ]),
+      ),
+    );
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF0B45B5), Color(0xFF08368F), Color(0xFF062A6E)],
+        ),
+        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
+      ),
+      child: Stack(children: [
+        // Círculos decorativos
+        Positioned(right: -60, top: -70, child: _HeroRing(size: 220)),
+        Positioned(right: 120, bottom: -90, child: _HeroRing(size: 160)),
+        Padding(
+          padding: EdgeInsets.all(narrow ? 18 : 26),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(
+                    showGreeting ? (first.isEmpty ? '${bsSaludo(DateTime.now())}' : '${bsSaludo(DateTime.now())}, $first') : 'Tu resumen de hoy',
+                    style: TextStyle(color: Colors.white, fontSize: narrow ? 20 : 26, fontWeight: FontWeight.w900, height: 1.15),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(resumen, style: TextStyle(color: Colors.white.withOpacity(0.88), fontSize: narrow ? 13.5 : 15, height: 1.45)),
+                  if (!narrow) ...[
+                    const SizedBox(height: 14),
+                    _HeroButton(label: 'Actualizar', icon: Icons.refresh_rounded, onTap: loading ? null : () => onRefresh()),
+                  ],
+                ]),
+              ),
+              const SizedBox(width: 16),
+              ring,
+            ]),
+            SizedBox(height: narrow ? 16 : 22),
+            Text('EL RECORRIDO DE TUS DOCUMENTOS',
+                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
+            const SizedBox(height: 10),
+            LayoutBuilder(builder: (context, c) {
+              final cols = c.maxWidth < 520 ? 2 : 4;
+              final w = (c.maxWidth - (cols - 1) * (cols == 4 ? 26 : 10)) / cols;
+              return Wrap(
+                spacing: cols == 4 ? 0 : 10,
+                runSpacing: 10,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  for (var i = 0; i < steps.length; i++) ...[
+                    SizedBox(
+                      width: w,
+                      child: _HeroStep(
+                        n: i + 1,
+                        label: steps[i].$1,
+                        value: loading ? null : steps[i].$2,
+                        icon: steps[i].$3,
+                        onTap: () => onOpenDocs(steps[i].$4),
+                      ),
+                    ),
+                    if (cols == 4 && i < steps.length - 1)
+                      SizedBox(width: 26, child: Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.55))),
+                  ],
+                ],
+              );
+            }),
+          ]),
+        ),
+      ]),
+    );
+  }
+}
+
+class _HeroRing extends StatelessWidget {
+  final double size;
+  const _HeroRing({required this.size});
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.08), width: 26)),
+        ),
+      );
+}
+
+class _HeroButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _HeroButton({required this.label, required this.icon, this.onTap});
+  @override
+  Widget build(BuildContext context) => BSPressable(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.14),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white.withOpacity(0.25)),
+          ),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, color: Colors.white, size: 17),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700)),
+          ]),
+        ),
+      );
+}
+
+class _HeroStep extends StatelessWidget {
+  final int n;
+  final String label;
+  final int? value;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _HeroStep({required this.n, required this.label, required this.value, required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Ver en Documentos',
+      child: BSPressable(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.11),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withOpacity(0.18)),
+          ),
+          child: Row(children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(9)),
+              child: Icon(icon, color: AppTheme.primary, size: 19),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: (value ?? 0).toDouble()),
+                  duration: const Duration(milliseconds: 700),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, x, __) => Text(value == null ? '–' : '${x.round()}',
+                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, height: 1.1)),
+                ),
+                Text('$n. $label', maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11.5, fontWeight: FontWeight.w600)),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Pendientes para ti: lo que necesita una acción ────────────────────────
+class _TodoCard extends StatelessWidget {
+  final bool loading;
+  final List<Map<String, dynamic>> pendingDocs;
+  final int pendingCount, inChain, pendingReviews, unread;
+  final ValueChanged<String?> onOpenDocs;
+  final ValueChanged<String> onOpenDoc;
+  final ValueChanged<int> onNavTap;
+  const _TodoCard({
+    required this.loading,
+    required this.pendingDocs,
+    required this.pendingCount,
+    required this.inChain,
+    required this.pendingReviews,
+    required this.unread,
+    required this.onOpenDocs,
+    required this.onOpenDoc,
+    required this.onNavTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = <Widget>[];
+    if (pendingReviews > 0) {
+      items.add(_TodoItem(
+        icon: Icons.fact_check_outlined,
+        color: BSColors.warning,
+        title: pendingReviews == 1 ? 'Te pidieron revisar un documento' : 'Te pidieron revisar $pendingReviews documentos',
+        subtitle: 'Apruébalo o recházalo desde la bandeja',
+        action: 'Revisar',
+        onTap: () => onNavTap(5),
+      ));
+    }
+    for (final d in pendingDocs.take(3)) {
+      final m = _metaOf(d);
+      items.add(_TodoItem(
+        icon: _isPdf(d) ? Icons.picture_as_pdf_outlined : Icons.article_outlined,
+        color: _isPdf(d) ? BSColors.danger : AppTheme.primary,
+        title: d['title']?.toString() ?? 'Documento',
+        subtitle: 'Por firmar · ${_categoryOf(m)}',
+        action: 'Firmar',
+        onTap: () => onOpenDoc(d['title']?.toString() ?? ''),
+      ));
+    }
+    if (pendingCount > 3) {
+      items.add(_TodoItem(
+        icon: Icons.more_horiz_rounded,
+        color: BSColors.neutral,
+        title: 'Y ${pendingCount - 3} documentos más por firmar',
+        subtitle: 'Míralos todos en Documentos',
+        action: 'Ver',
+        onTap: () => onOpenDocs('pending'),
+      ));
+    }
+    if (inChain > 0) {
+      items.add(_TodoItem(
+        icon: Icons.sync_rounded,
+        color: AppTheme.featureBlue,
+        title: inChain == 1 ? '1 firma registrándose en blockchain' : '$inChain firmas registrándose en blockchain',
+        subtitle: 'No tienes que hacer nada: se confirma sola en unos segundos',
+        onTap: () => onOpenDocs(null),
+      ));
+    }
+    if (unread > 0) {
+      items.add(_TodoItem(
+        icon: Icons.mark_email_unread_outlined,
+        color: AppTheme.featureCyan,
+        title: unread == 1 ? '1 mensaje sin leer' : '$unread mensajes sin leer',
+        subtitle: 'Documentos que te compartieron',
+        action: 'Abrir',
+        onTap: () => onNavTap(5),
+      ));
+    }
+
+    final total = pendingCount + pendingReviews;
+    return BSCard(
+      title: 'Pendientes para ti',
+      trailing: total > 0 ? BSPill(label: '$total por atender', color: BSColors.warning) : null,
+      child: loading
+          ? _loadingBox(160)
+          : items.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  child: Row(children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(color: BSColors.success.withOpacity(0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.task_alt_rounded, color: BSColors.success),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('¡Todo al día!', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w800)),
+                        SizedBox(height: 2),
+                        Text('No tienes firmas, revisiones ni mensajes pendientes.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+                      ]),
+                    ),
+                  ]),
+                )
+              : Column(children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    if (i > 0) const Divider(height: 1, color: Color(0xFFEDF0F5)),
+                    items[i],
+                  ],
+                ]),
+    );
+  }
+}
+
+class _TodoItem extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final String title, subtitle;
+  final String? action;
+  final VoidCallback onTap;
+  const _TodoItem({required this.icon, required this.color, required this.title, required this.subtitle, this.action, required this.onTap});
+
+  @override
+  State<_TodoItem> createState() => _TodoItemState();
+}
+
+class _TodoItemState extends State<_TodoItem> {
+  bool _hover = false;
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.color;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
+          decoration: BoxDecoration(color: _hover ? BSColors.page : Colors.transparent, borderRadius: BorderRadius.circular(10)),
+          child: Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: Icon(widget.icon, color: c, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 2),
+                Text(widget.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12.5)),
+              ]),
+            ),
+            const SizedBox(width: 10),
+            if (widget.action != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: _hover ? AppTheme.primary : AppTheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Text(widget.action!,
+                    style: TextStyle(color: _hover ? Colors.white : AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w800)),
+              )
+            else
+              const Icon(Icons.chevron_right_rounded, color: AppTheme.hint),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Accesos rápidos ───────────────────────────────────────────────────────
+class _QuickLinks extends StatelessWidget {
+  final ValueChanged<int> onNavTap;
+  final int unread;
+  final bool wide;
+  const _QuickLinks({required this.onNavTap, required this.unread, required this.wide});
+
+  @override
+  Widget build(BuildContext context) {
+    final links = [
+      (5, 'Bandeja', 'Lo que te compartieron', Icons.inbox_rounded, AppTheme.primary, unread),
+      (2, 'Verificar', 'Comprueba un documento', Icons.verified_rounded, BSColors.success, 0),
+      (6, 'Equipos', 'Comparte con tu grupo', Icons.groups_rounded, const Color(0xFF8E24AA), 0),
+      (4, 'Auditoría', 'Historial de acciones', Icons.receipt_long_rounded, BSColors.warning, 0),
+    ];
+    return BSCard(
+      title: 'Accesos rápidos',
+      child: LayoutBuilder(builder: (context, c) {
+        final w = (c.maxWidth - 10) / 2;
+        return Wrap(spacing: 10, runSpacing: 10, children: [
+          for (final l in links)
+            SizedBox(
+              width: w,
+              child: BSPressable(
+                onTap: () => onNavTap(l.$1),
+                glowColor: l.$5,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: l.$5.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: l.$5.withOpacity(0.16)),
+                  ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(color: l.$5, borderRadius: BorderRadius.circular(10)),
+                        child: Icon(l.$4, color: Colors.white, size: 19),
+                      ),
+                      const Spacer(),
+                      if (l.$6 > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(color: BSColors.danger, borderRadius: BorderRadius.circular(10)),
+                          child: Text('${l.$6}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                        ),
+                    ]),
+                    const SizedBox(height: 10),
+                    Text(l.$2, style: const TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text(l.$3, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppTheme.hint, fontSize: 12)),
+                  ]),
+                ),
+              ),
+            ),
+        ]);
+      }),
     );
   }
 }
@@ -1219,8 +1753,8 @@ class _WeekChartCard extends StatelessWidget {
 class _StatusMixCard extends StatelessWidget {
   final Map<String, dynamic> stats;
   final bool loading;
-  final ValueChanged<int> onNavTap;
-  const _StatusMixCard({required this.stats, required this.loading, required this.onNavTap});
+  final ValueChanged<String?> onOpenDocs;
+  const _StatusMixCard({required this.stats, required this.loading, required this.onOpenDocs});
 
   @override
   Widget build(BuildContext context) {
@@ -1228,11 +1762,11 @@ class _StatusMixCard extends StatelessWidget {
     final total = n('total');
     final pend = n('pending') - n('in_chain') - n('revoked');
     final parts = [
-      ('Por firmar', pend < 0 ? 0 : pend, BSColors.warning, Icons.edit_document),
-      ('En registro', n('in_chain'), AppTheme.featureBlue, Icons.sync_rounded),
-      ('Firmados', n('signed'), AppTheme.primary, Icons.draw_rounded),
-      ('Verificados', n('verified'), BSColors.success, Icons.verified_rounded),
-      ('Revocados', n('revoked'), BSColors.danger, Icons.block_rounded),
+      ('Por firmar', pend < 0 ? 0 : pend, BSColors.warning, Icons.edit_document, 'pending'),
+      ('En registro', n('in_chain'), AppTheme.featureBlue, Icons.sync_rounded, null),
+      ('Firmados', n('signed'), AppTheme.primary, Icons.draw_rounded, 'signed'),
+      ('Verificados', n('verified'), BSColors.success, Icons.verified_rounded, 'verified'),
+      ('Revocados', n('revoked'), BSColors.danger, Icons.block_rounded, null),
     ].where((p) => p.$2 > 0 || (p.$1 != 'En registro' && p.$1 != 'Revocados')).toList();
 
     return BSCard(
@@ -1251,7 +1785,7 @@ class _StatusMixCard extends StatelessWidget {
                       for (final p in parts)
                         SizedBox(
                           width: w,
-                          child: _CountTile(label: p.$1, value: p.$2, color: p.$3, icon: p.$4, onTap: () => onNavTap(1)),
+                          child: _CountTile(label: p.$1, value: p.$2, color: p.$3, icon: p.$4, onTap: () => onOpenDocs(p.$5)),
                         ),
                     ]);
                   }),
@@ -1523,7 +2057,8 @@ class _RecentTableCard extends StatelessWidget {
   final List<Map<String, dynamic>> docs;
   final bool loading;
   final ValueChanged<int> onNavTap;
-  const _RecentTableCard({required this.docs, required this.loading, required this.onNavTap});
+  final ValueChanged<String> onOpenDoc;
+  const _RecentTableCard({required this.docs, required this.loading, required this.onNavTap, required this.onOpenDoc});
 
   @override
   Widget build(BuildContext context) {
@@ -1539,9 +2074,9 @@ class _RecentTableCard extends StatelessWidget {
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('Sin documentos aún', style: TextStyle(color: AppTheme.text, fontSize: 15, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
-            const Text('Sube tu primer PDF o Word para empezar.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            const Text('Sube tu primer PDF o Word desde la sección Documentos.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
             const SizedBox(height: 14),
-            BSPrimaryButton(label: 'Subir documento', icon: Icons.add_rounded, onPressed: () => onNavTap(1)),
+            BSOutlineButton(label: 'Ir a Documentos', icon: Icons.arrow_forward_rounded, onPressed: () => onNavTap(1)),
           ]),
         ),
       );
@@ -1552,7 +2087,7 @@ class _RecentTableCard extends StatelessWidget {
             delay: Duration(milliseconds: 50 * i),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _RecentRow(doc: docs[i], wide: wide, onTap: () => onNavTap(1)),
+              child: _RecentRow(doc: docs[i], wide: wide, onTap: () => onOpenDoc(docs[i]['title']?.toString() ?? '')),
             ),
           ),
       ]);

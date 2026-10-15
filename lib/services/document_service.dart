@@ -102,10 +102,12 @@ class DocumentService {
     }
   }
 
-  /// Verificación pública por huella SHA-256 (no necesita sesión; el archivo no se sube)
+  /// Verificación por huella SHA-256 (requiere sesión; el archivo no se sube)
   static Future<Map<String, dynamic>> verifyByHash(String hash) async {
     try {
-      final res = await http.get(Uri.parse('$signingUrl/public/${hash.trim().toLowerCase()}')).timeout(const Duration(seconds: 30));
+      final res = await http
+          .get(Uri.parse('$signingUrl/hash/${hash.trim().toLowerCase()}'), headers: await _authHeaders())
+          .timeout(const Duration(seconds: 30));
       if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
       return jsonDecode(res.body);
     } catch (e) {

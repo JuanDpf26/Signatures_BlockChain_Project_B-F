@@ -73,7 +73,7 @@ class WelcomeScreen extends StatelessWidget {
 
           const BSInfoBanner(
             title: 'Red blockchain activa',
-            text: 'Ethereum Sepolia Testnet — verificación pública e instantánea de cada firma.',
+            text: 'Ethereum Sepolia Testnet — verificación instantánea de cada firma.',
             color: BSColors.success,
             icon: Icons.sensors_rounded,
           ),
