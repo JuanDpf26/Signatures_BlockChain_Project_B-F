@@ -165,45 +165,75 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           );
         }
 
-        // Rutas normales
+        // Rutas normales. La dirección del navegador no decide a dónde se entra:
+        // sin sesión válida todo lleva al inicio de sesión, y con sesión las
+        // pantallas de acceso llevan a la aplicación.
+        final Widget Function() page;
+        bool needsSession = false; // solo con sesión
+        bool guestOnly = false; // solo sin sesión (con sesión → aplicación)
         switch (uri.path) {
           case '/':
-            // En la app móvil, pantalla de carga (despierta el servidor y revisa la sesión)
-            return MaterialPageRoute(
-              builder: (_) => kIsWeb ? const WelcomeScreen() : const SplashScreen(),
-              settings: settings,
-            );
           case '/welcome':
-            return MaterialPageRoute(
-              builder: (_) => const WelcomeScreen(),
-              settings: settings,
-            );
+            page = () => (uri.path == '/' && !kIsWeb) ? const SplashScreen() : const WelcomeScreen();
+            guestOnly = kIsWeb;
+            break;
           case '/login':
-            return MaterialPageRoute(
-              builder: (_) => const LoginScreen(),
-              settings: settings,
-            );
+            page = () => const LoginScreen();
+            guestOnly = true;
+            break;
           case '/register':
-            return MaterialPageRoute(
-              builder: (_) => const RegisterScreen(),
-              settings: settings,
-            );
+            page = () => const RegisterScreen();
+            guestOnly = true;
+            break;
           case '/forgot':
-            return MaterialPageRoute(
-              builder: (_) => const ForgotPasswordScreen(),
-              settings: settings,
-            );
+            page = () => const ForgotPasswordScreen();
+            guestOnly = true;
+            break;
           case '/home':
-            return MaterialPageRoute(
-              builder: (_) => const HomeScreen(),
-              settings: settings,
-            );
+            page = () => const HomeScreen();
+            needsSession = true;
+            break;
           default:
-            return MaterialPageRoute(
-              builder: (_) => const WelcomeScreen(),
-              settings: settings,
-            );
+            // Cualquier otra dirección escrita a mano: a la entrada que corresponda
+            page = () => const LoginScreen();
+            guestOnly = true;
         }
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => _RouteGuard(needsSession: needsSession, guestOnly: guestOnly, page: page),
+        );
+      },
+    );
+  }
+}
+
+/// Revisa la sesión antes de mostrar una pantalla abierta desde la dirección del navegador
+class _RouteGuard extends StatelessWidget {
+  final bool needsSession, guestOnly;
+  final Widget Function() page;
+  const _RouteGuard({required this.needsSession, required this.guestOnly, required this.page});
+
+  static Future<bool> _hasSession() async {
+    final t = await AuthService.getToken();
+    if (t == null || t.isEmpty) return false;
+    if (AuthService.isExpired(t)) {
+      await AuthService.deleteToken();
+      return false;
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!needsSession && !guestOnly) return page();
+    return FutureBuilder<bool>(
+      future: _hasSession(),
+      builder: (ctx, snap) {
+        if (!snap.hasData) return const Scaffold(body: Center(child: CircularProgressIndicator(strokeWidth: 2.4)));
+        final logged = snap.data!;
+        if (needsSession && !logged) return const LoginScreen();
+        if (guestOnly && logged) return const HomeScreen();
+        return page();
       },
     );
   }
