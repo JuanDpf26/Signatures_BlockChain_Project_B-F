@@ -180,8 +180,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       showToast(context, title: 'Solo PDF o Word', text: '"$name" no es un archivo que se pueda firmar.', type: SweetAlertType.warning);
       return;
     }
-    if (bytes.length > 20 * 1024 * 1024) {
-      showToast(context, title: 'Archivo muy grande', text: 'El límite es 20 MB.', type: SweetAlertType.warning);
+    if (bytes.length > 10 * 1024 * 1024) {
+      showToast(context, title: 'Archivo muy grande', text: 'El límite es 10 MB.', type: SweetAlertType.warning);
       return;
     }
     try {
@@ -967,7 +967,7 @@ class _DropOverlay extends StatelessWidget {
             const SizedBox(height: 10),
             Text('Suelta el archivo para subirlo', style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
-            Text('PDF o Word, hasta 20 MB', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            Text('PDF o Word, hasta 10 MB', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           ]),
         ),
       ),
