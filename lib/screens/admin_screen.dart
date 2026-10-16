@@ -420,10 +420,14 @@ class _UserRow extends StatelessWidget {
           : Row(children: [
               CircleAvatar(radius: 18, backgroundColor: AppTheme.primary.withOpacity(0.12), child: Text(((u['name'] ?? u['email']).toString().trim().isEmpty ? '?' : (u['name'] ?? u['email']).toString().trim()[0]).toUpperCase(), style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800))),
               const SizedBox(width: 12),
-              Expanded(child: info),
+              Expanded(flex: 5, child: info),
               const SizedBox(width: 12),
-              SizedBox(width: 220, child: pills),
-              actions,
+              Expanded(flex: 3, child: pills),
+              const SizedBox(width: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: Align(alignment: Alignment.centerRight, widthFactor: 1, child: actions),
+              ),
             ]),
     );
   }
