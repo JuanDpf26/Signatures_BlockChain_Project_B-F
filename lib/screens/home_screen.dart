@@ -68,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (admin) return; // la consola carga sus propios datos
     _loadUser();
     _loadData();
-    PresenceService.start(section: _sectionName(_selectedIndex), onRevoked: _onRevoked);
+    PresenceService.start(owner: this, section: _sectionName(_selectedIndex), onRevoked: (_) => resetSignIa());
   }
 
   static String _sectionName(int i) => switch (i) {
@@ -81,22 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _ => 'Tablero',
       };
 
-  /// Un administrador cerró la sesión o suspendió la cuenta
-  Future<void> _onRevoked(String message) async {
-    try {
-      await AuthService.logout();
-    } catch (_) {
-      await AuthService.deleteToken();
-    }
-    resetSignIa();
-    if (!mounted) return;
-    await SweetAlert.info(context, title: 'Tu sesión se cerró', text: message);
-    if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-  }
-
   @override
   void dispose() {
-    PresenceService.stop();
+    PresenceService.stop(this);
     super.dispose();
   }
 
@@ -242,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_admin == null) return Scaffold(backgroundColor: BSColors.page);
-    if (_admin == true) return AdminConsole(onLogout: _logout, onRevoked: _onRevoked);
+    if (_admin == true) return AdminConsole(onLogout: _logout);
     final isWeb = ResponsiveLayout.isWeb(context);
     final user = _UserInfo(name: _userName, email: _userEmail, avatarUrl: _avatarUrl);
     return isWeb

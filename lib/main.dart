@@ -1,3 +1,4 @@
+import 'services/presence_service.dart';
 import 'services/server_wake.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -73,6 +74,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final settings = AppSettings.instance;
     return MaterialApp(
+      navigatorKey: PresenceService.navigatorKey,
       title: 'DocBlockSign',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(),

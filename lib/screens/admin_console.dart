@@ -12,8 +12,7 @@ import 'profile_screen.dart';
 /// no tiene documentos, bandeja ni firmas; solo administración y la cuenta.
 class AdminConsole extends StatefulWidget {
   final VoidCallback onLogout;
-  final void Function(String message) onRevoked;
-  const AdminConsole({super.key, required this.onLogout, required this.onRevoked});
+  const AdminConsole({super.key, required this.onLogout});
 
   @override
   State<AdminConsole> createState() => _AdminConsoleState();
@@ -29,12 +28,12 @@ class _AdminConsoleState extends State<AdminConsole> {
   void initState() {
     super.initState();
     _loadUser();
-    PresenceService.start(section: 'Consola · Panel', onRevoked: widget.onRevoked);
+    PresenceService.start(owner: this, section: 'Consola · Panel');
   }
 
   @override
   void dispose() {
-    PresenceService.stop();
+    PresenceService.stop(this);
     super.dispose();
   }
 

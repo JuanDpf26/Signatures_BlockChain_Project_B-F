@@ -1,16 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import 'auth_service.dart';
+import '../widgets/sweet_alert.dart';
 
 /// Presencia: mientras la app está abierta envía un latido cada 45 s con la
 /// sección en la que está la persona. Así la consola de administración ve
 /// quién está conectado. Si el servidor responde que la sesión fue cerrada
-/// por un administrador (o la cuenta se suspendió), avisa con [onRevoked].
+/// por un administrador (o la cuenta se suspendió), borra la sesión local,
+/// avisa y vuelve al inicio de sesión.
 class PresenceService {
+  /// Navegador de la app: el aviso no depende de la pantalla que esté abierta
+  static final navigatorKey = GlobalKey<NavigatorState>();
+  static Object? _owner;
   static const _every = Duration(seconds: 45);
   static Timer? _timer;
   static AppLifecycleListener? _life;
@@ -31,7 +36,8 @@ class PresenceService {
   }
 
   /// Empieza (o retoma) los latidos. [onRevoked] recibe el mensaje del servidor.
-  static void start({required String section, required void Function(String message) onRevoked}) {
+  static void start({required Object owner, required String section, void Function(String message)? onRevoked}) {
+    _owner = owner;
     _section = section;
     _onRevoked = onRevoked;
     _revoked = false;
@@ -55,12 +61,28 @@ class PresenceService {
     _beat();
   }
 
-  static void stop() {
+  /// Detiene los latidos. Con [owner], solo si esa pantalla fue la que los inició.
+  static void stop([Object? owner]) {
+    if (owner != null && !identical(owner, _owner)) return;
+    _owner = null;
     _timer?.cancel();
     _timer = null;
     _life?.dispose();
     _life = null;
     _onRevoked = null;
+  }
+
+  static Future<void> _expel(String message) async {
+    try {
+      await AuthService.logout();
+    } catch (_) {
+      await AuthService.deleteToken();
+    }
+    final nav = navigatorKey.currentState;
+    final ctx = navigatorKey.currentContext;
+    if (nav == null || ctx == null) return;
+    await SweetAlert.info(ctx, title: 'Tu sesión se cerró', text: message);
+    nav.pushNamedAndRemoveUntil('/', (_) => false);
   }
 
   static Future<void> _beat() async {
@@ -86,6 +108,7 @@ class PresenceService {
         _revoked = true;
         final cb = _onRevoked;
         stop();
+        await _expel(body['error']?.toString() ?? 'Tu sesión se cerró.');
         cb?.call(body['error']?.toString() ?? 'Tu sesión se cerró.');
       }
     } catch (_) {
