@@ -6,6 +6,8 @@ import '../theme/app_theme.dart';
 import 'bs_ui.dart';
 import 'proof_ui.dart';
 import 'sweet_alert.dart';
+import 'cosign_card.dart';
+import '../services/document_service.dart';
 
 /// Detalle de un documento: resumen, análisis IA, metadatos y edición.
 /// En pantallas anchas se abre como diálogo centrado; en celular, como hoja
@@ -68,6 +70,13 @@ class DocView {
   bool get canReplaceFile => status == 'pending' && !inChain;
   int get version => int.tryParse('${meta['version'] ?? ''}') ?? 1;
   String? get id => raw['id']?.toString();
+  // Varios firmantes
+  Map<String, dynamic>? get cosign => meta['cosign'] is Map ? Map<String, dynamic>.from(meta['cosign'] as Map) : null;
+  String? get cosignStatus => cosign?['status']?.toString();
+  bool get cosignActive => cosignStatus == 'collecting' || cosignStatus == 'completed';
+  int get cosignDone => ((cosign?['signers'] as List?) ?? const []).whereType<Map>().where((x) => x['status'] == 'signed').length;
+  int get cosignTotal => ((cosign?['signers'] as List?) ?? const []).length;
+  bool get chainConfirmed => meta['blockchain_status'] == 'confirmed' || (signedOk && tx != null);
   String? get editedLabel => fmtDate(meta['last_edited_at']?.toString());
   List<Map<String, dynamic>> get versions =>
       ((meta['versions'] as List?) ?? const []).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
@@ -244,6 +253,13 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
     d = DocView(widget.doc);
   }
 
+  Future<void> _reload() async {
+    if (d.id == null) return;
+    final r = await DocumentService.getDocument(d.id!);
+    if (!mounted || r['document'] is! Map) return;
+    setState(() => d = DocView(Map<String, dynamic>.from(r['document'] as Map)));
+  }
+
   Future<bool> _save(Map<String, dynamic> changes) async {
     final updated = await widget.onUpdate(changes);
     if (updated == null || !mounted) return false;
@@ -271,6 +287,9 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
       case 'delete':
         widget.onDelete();
         break;
+      case 'signedpdf':
+        if (d.id != null) openSignedPdf(context, d.id!);
+        break;
     }
   }
 
@@ -285,6 +304,8 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
           const PopupMenuItem(value: 'edit', child: _MoreItem(Icons.edit_outlined, 'Editar datos', 'Nombre, categoría, etiquetas…')),
           if (widget.onReplaceFile != null && d.canReplaceFile)
             const PopupMenuItem(value: 'replace', child: _MoreItem(Icons.upload_file_rounded, 'Subir nueva versión', 'Reemplaza el archivo antes de firmar')),
+          if (d.chainConfirmed && d.id != null)
+            const PopupMenuItem(value: 'signedpdf', child: _MoreItem(Icons.picture_as_pdf_outlined, 'Descargar PDF firmado', 'Con sello, QR y certificado')),
           if (d.hash != null) const PopupMenuItem(value: 'hash', child: _MoreItem(Icons.fingerprint_rounded, 'Copiar huella', 'Huella SHA-256 del archivo')),
           const PopupMenuDivider(),
           const PopupMenuItem(value: 'delete', child: _MoreItem(Icons.delete_outline_rounded, 'Eliminar', 'No se puede deshacer', danger: true)),
@@ -300,7 +321,9 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
 
     // Acción principal según el estado: firmar si está pendiente; si no, enviar
     final view = BSPrimaryButton(label: 'Ver documento', icon: Icons.visibility_outlined, onPressed: widget.onOpen);
-    final main = d.canSign
+    final main = d.canSign && d.cosignActive
+        ? BSPrimaryButton(label: 'Ver firmantes', icon: Icons.groups_rounded, onPressed: () => _tabs.animateTo(1))
+        : d.canSign
         ? BSPrimaryButton(
             label: widget.isSigning ? 'Firmando…' : 'Firmar',
             icon: Icons.draw_rounded,
@@ -445,6 +468,23 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
             ]),
             // Firma y registro en blockchain + controles de integridad
             _scroll(pad, [
+              if (d.chainConfirmed && d.id != null) ...[
+                _SignedPdfCard(onDownload: () => openSignedPdf(context, d.id!)),
+                const SizedBox(height: 12),
+              ],
+              if (d.id != null && (d.cosign != null || d.canSign)) ...[
+                CosignCard(
+                  key: ValueKey('cosign-${d.cosignStatus}-${d.cosignDone}-${d.meta['blockchain_status']}'),
+                  docId: d.id!,
+                  cosign: d.cosign,
+                  isOwner: true,
+                  docPending: d.canSign && !d.inChain,
+                  chainStatus: d.meta['blockchain_status']?.toString(),
+                  chainError: d.meta['blockchain_error']?.toString(),
+                  onChanged: _reload,
+                ),
+                const SizedBox(height: 12),
+              ],
               if (wide)
                 Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Expanded(child: DocSecurityCard(d: d)),
@@ -558,6 +598,41 @@ class _MoreItem extends StatelessWidget {
 }
 
 /// "Siguiente paso": dice qué hacer con el documento según su estado
+/// Copia del documento con sello, QR y certificado
+class _SignedPdfCard extends StatelessWidget {
+  final VoidCallback onDownload;
+  const _SignedPdfCard({required this.onDownload});
+
+  @override
+  Widget build(BuildContext context) {
+    final narrow = MediaQuery.of(context).size.width < 600;
+    final btn = BSPrimaryButton(label: 'Descargar PDF firmado', icon: Icons.download_rounded, onPressed: onDownload);
+    final text = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Copia firmada para imprimir o enviar', style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w800)),
+      const SizedBox(height: 2),
+      Text('PDF con sello en cada página, código QR para verificar y certificado con los firmantes y el registro en blockchain.',
+          style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.4)),
+    ]);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      child: narrow
+          ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Row(children: [Icon(Icons.qr_code_2_rounded, color: AppTheme.primary, size: 30), const SizedBox(width: 12), Expanded(child: text)]),
+              const SizedBox(height: 12),
+              btn,
+            ])
+          : Row(children: [
+              Icon(Icons.qr_code_2_rounded, color: AppTheme.primary, size: 34),
+              const SizedBox(width: 14),
+              Expanded(child: text),
+              const SizedBox(width: 12),
+              btn,
+            ]),
+    );
+  }
+}
+
 class _NextStepCard extends StatelessWidget {
   final DocView d;
   final bool isSigning;
@@ -572,6 +647,7 @@ class _NextStepCard extends StatelessWidget {
       _ when d.inChain => (Icons.hourglass_top_rounded, BSColors.warning, 'Registrándose en blockchain', 'La red está confirmando la firma; no tienes que hacer nada.', 'Ver registro', onOpenRecord),
       _ when !d.analyzed && d.aiError != null => (Icons.error_outline_rounded, BSColors.danger, 'No se pudo analizar el contenido', 'Vuelve a intentarlo para obtener resumen, categoría y etiquetas.', 'Reintentar', onReanalyze),
       _ when !d.analyzed => (Icons.manage_search_rounded, AppTheme.primary, 'Siguiente paso: analizar el contenido', 'Se obtienen descripción, resumen, categoría, etiquetas y nivel de confidencialidad.', 'Analizar', onReanalyze),
+      _ when d.canSign && d.cosignActive => (Icons.groups_rounded, AppTheme.primary, 'Firmas en curso', d.cosignStatus == 'completed' ? 'Firmaron todos. Falta confirmar el registro en blockchain.' : 'Van ${d.cosignDone} de ${d.cosignTotal} firmas. Cuando firme la última persona se registra en blockchain.', 'Ver firmantes', onOpenRecord),
       _ when d.canSign => (Icons.draw_rounded, BSColors.success, 'Siguiente paso: firmar', 'Tu firma y la huella del archivo quedarán registradas en Ethereum.', isSigning ? 'Firmando…' : 'Firmar ahora', isSigning ? null : onSign),
       _ => (Icons.verified_rounded, BSColors.success, 'Documento firmado y registrado', 'Ya puedes enviarlo o pedir que lo revisen; cualquiera con cuenta puede verificarlo.', onSend != null ? 'Enviar' : 'Ver registro', onSend ?? onOpenRecord),
     };

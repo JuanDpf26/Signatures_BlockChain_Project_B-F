@@ -303,6 +303,13 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   Future<void> _sign(String docId, String docTitle) async {
+    // Si tiene firmantes, la firma se hace desde la pestaña de firmas
+    final d0 = _docs.cast<Map<String, dynamic>?>().firstWhere((d) => d?['id']?.toString() == docId, orElse: () => null);
+    final cs = ((d0?['metadata'] as Map?)?['cosign'] as Map?)?['status'];
+    if (d0 != null && (cs == 'collecting' || cs == 'completed')) {
+      _showDetail(d0, tab: 1);
+      return;
+    }
     // Obtener firma guardada del usuario
     final sigRes = await ProfileService.getSignature();
     if (!mounted) return;

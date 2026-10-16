@@ -50,6 +50,28 @@ class AuthService {
     await _storage.delete(key: _tokenKey);
   }
 
+  /// Lee un dato del token de sesión (sin validarlo: eso lo hace el servidor)
+  static Map<String, dynamic>? _payload(String? token) {
+    if (token == null) return null;
+    final parts = token.split('.');
+    if (parts.length != 3) return null;
+    try {
+      return jsonDecode(utf8.decode(base64Url.decode(base64Url.normalize(parts[1])))) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Id del usuario con sesión iniciada
+  static Future<String?> currentUserId() async => _payload(await getToken())?['id']?.toString();
+
+  /// true si el token ya venció (o no se puede leer)
+  static bool isExpired(String? token) {
+    final exp = _payload(token)?['exp'];
+    if (exp is! num) return true;
+    return DateTime.fromMillisecondsSinceEpoch(exp.toInt() * 1000).isBefore(DateTime.now().add(const Duration(minutes: 5)));
+  }
+
   static Future<bool> isLoggedIn() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;

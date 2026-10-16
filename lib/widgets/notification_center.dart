@@ -376,6 +376,7 @@ class _RowState extends State<_Row> {
 
   static (IconData, Color) _look(String? type) => switch (type) {
         'review' => (Icons.fact_check_rounded, BSColors.warning),
+        'sign' => (Icons.draw_rounded, BSColors.success),
         'share' => (Icons.description_rounded, AppTheme.primary),
         'approved' => (Icons.check_circle_rounded, BSColors.success),
         'rejected' => (Icons.cancel_rounded, BSColors.danger),

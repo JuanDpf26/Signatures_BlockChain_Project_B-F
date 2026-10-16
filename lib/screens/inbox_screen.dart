@@ -12,6 +12,7 @@ import 'verify_screen.dart';
 import '../services/document_service.dart';
 import '../widgets/send_document_dialog.dart';
 import '../widgets/notification_center.dart';
+import '../widgets/cosign_card.dart';
 
 /// Bandeja de entrada al estilo de un cliente de correo: carpetas, mensajes
 /// agrupados por fecha, panel de lectura y acciones (responder, reenviar,
@@ -79,7 +80,7 @@ class _InboxScreenState extends State<InboxScreen> {
 
   /// Prioritarios: solicitudes de revisión, marcados y mensajes de tus equipos
   static bool _isPriority(Map<String, dynamic> it) =>
-      it['kind'] == 'review' || it['flagged'] == true || it['team_name'] != null;
+      it['kind'] == 'review' || it['kind'] == 'sign' || it['flagged'] == true || it['team_name'] != null;
 
   List<Map<String, dynamic>> get _visible {
     var list = _items;
@@ -778,6 +779,7 @@ class _MessageRowState extends State<_MessageRow> {
   Widget build(BuildContext context) {
     final it = widget.item;
     final review = it['kind'] == 'review';
+    final signReq = it['kind'] == 'sign';
     final status = it['status']?.toString();
     final unread = !widget.sent && status == 'sent';
     final flagged = it['flagged'] == true;
@@ -791,11 +793,16 @@ class _MessageRowState extends State<_MessageRow> {
     final msg = it['message']?.toString().trim();
     final preview = (msg != null && msg.isNotEmpty)
         ? msg
-        : '${it['doc_title'] ?? 'Documento'} · ${review ? 'te piden revisarlo y aprobarlo' : 'compartido para tu conocimiento'}';
+        : '${it['doc_title'] ?? 'Documento'} · ${signReq ? 'te piden firmarlo' : review ? 'te piden revisarlo y aprobarlo' : 'compartido para tu conocimiento'}';
     final desktop = MediaQuery.of(context).size.width >= 900;
     final showActions = desktop && _hover && !widget.sent;
 
-    final reviewPill = review
+    final reviewPill = signReq
+        ? _MiniPill(
+            text: status == 'approved' ? 'Firmado' : status == 'rejected' ? 'No firmado' : status == 'cancelled' ? 'Cancelado' : 'Firma requerida',
+            color: status == 'approved' ? BSColors.success : status == 'rejected' ? BSColors.danger : status == 'cancelled' ? BSColors.neutral : BSColors.success,
+          )
+        : review
         ? Builder(builder: (_) {
             if (widget.sent) {
               final done = recipients.where((r) => r['status'] == 'approved' || r['status'] == 'rejected').length;
@@ -1151,6 +1158,7 @@ class _ReadingState extends State<_Reading> {
     final share = _share;
     final doc = Map<String, dynamic>.from((_data!['document'] as Map?) ?? {});
     final review = share['kind'] == 'review';
+    final signReq = share['kind'] == 'sign';
     final subject = share['subject']?.toString().trim();
     final title = (subject != null && subject.isNotEmpty)
         ? subject
@@ -1192,12 +1200,30 @@ class _ReadingState extends State<_Reading> {
           ]),
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: [
-            BSPill(label: review ? 'Para revisión y aprobación' : 'Para conocimiento', color: review ? AppTheme.featureCyan : BSColors.neutral, dot: false),
+            BSPill(
+              label: signReq ? 'Firma requerida' : review ? 'Para revisión y aprobación' : 'Para conocimiento',
+              color: signReq ? BSColors.success : review ? AppTheme.featureCyan : BSColors.neutral,
+              dot: false,
+            ),
             if (share['team_name'] != null)
               _MiniPill(text: 'Equipo ${share['team_name']}', color: AppTheme.primary, icon: Icons.groups_rounded),
           ]),
           const SizedBox(height: 16),
           if (review && !_isSender) ...[_reviewPrompt(share), const SizedBox(height: 16)],
+          if (signReq && doc['id'] != null && doc['cosign'] is Map) ...[
+            CosignCard(
+              key: ValueKey('cosign-${(doc['cosign'] as Map)['status']}-${share['status']}'),
+              docId: doc['id'].toString(),
+              cosign: Map<String, dynamic>.from(doc['cosign'] as Map),
+              isOwner: false,
+              docPending: doc['status'] == 'pending',
+              onChanged: () {
+                _load();
+                NotificationBell.refresh.value++;
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
           if (review && _isSender && recipients.isNotEmpty) ...[_reviewProgress(recipients), const SizedBox(height: 16)],
           // De / Para / fecha
           Container(
@@ -1228,7 +1254,9 @@ class _ReadingState extends State<_Reading> {
           SelectableText(
             (share['message']?.toString().trim().isNotEmpty == true)
                 ? share['message'].toString()
-                : (review
+                : (signReq
+                    ? '$senderName te pide firmar este documento. Revísalo con “Ver documento” y firma cuando te toque.'
+                    : review
                     ? '$senderName te pide revisar este documento y aprobarlo o rechazarlo.'
                     : '$senderName compartió este documento contigo para tu conocimiento.'),
             style: TextStyle(color: AppTheme.text, fontSize: 14, height: 1.6),
