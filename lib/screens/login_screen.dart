@@ -6,6 +6,7 @@ import '../widgets/sweet_alert.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/bs_auth_layout.dart';
 import '../services/auth_service.dart';
+import '../services/biometric_service.dart';
 import '../utils/validators.dart';
 import '../theme/google_auth_theme.dart';
 
@@ -22,10 +23,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pass = TextEditingController();
   bool _isLoading = false;
   bool _isGoogleLoading = false;
+  // Ingreso con huella o rostro (celular)
+  bool _bioEnabled = false;
+  String _bioLabel = 'huella o rostro';
 
   @override
   void initState() {
     super.initState();
+    _checkBio();
     // Android: avisa si hay una versión nueva para instalarla desde la app
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) UpdateService.checkAndPrompt(context);
@@ -63,6 +68,50 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _checkBio() async {
+    final on = await BiometricService.enabled() && await BiometricService.available();
+    if (!on || !mounted) return;
+    final label = await BiometricService.label();
+    if (!mounted) return;
+    setState(() { _bioEnabled = true; _bioLabel = label; });
+    // Si no viene de otra pantalla, propone entrar de una vez
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && Uri.base.queryParameters['verified'] == null) _loginBio();
+    });
+  }
+
+  Future<void> _loginBio() async {
+    final err = await BiometricService.login();
+    if (!mounted) return;
+    if (err == null) {
+      Navigator.pushReplacementNamed(context, AuthService.takeRoute());
+      return;
+    }
+    if (err == 'cancelado') return;
+    setState(() => _bioEnabled = false);
+    await SweetAlert.info(context, title: 'Entra con tu contraseña', text: err);
+  }
+
+  /// Después de entrar con contraseña o Google: renueva o propone el ingreso rápido
+  Future<void> _afterLogin() async {
+    await BiometricService.refreshSavedSession();
+    if (!mounted || !await BiometricService.shouldOffer() || !mounted) return;
+    final label = await BiometricService.label();
+    if (!mounted) return;
+    await BiometricService.markOffered();
+    final yes = await SweetAlert.confirm(
+      context,
+      title: 'Entrar con $label',
+      text: 'La próxima vez puedes entrar con tu $label, sin escribir la contraseña. Puedes cambiarlo en Configuración → Seguridad.',
+      confirmText: 'Activar',
+      cancelText: 'Ahora no',
+    );
+    if (yes && mounted) {
+      final ok = await BiometricService.enable();
+      if (mounted && ok) showToast(context, title: 'Ingreso con $label activado');
+    }
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -79,6 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
           text: '${bsSaludo(now)} · ${bsFechaLarga(now)}, ${bsHora(now)}',
           autoClose: const Duration(milliseconds: 2000),
         );
+        await _afterLogin();
         if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
       } else {
         final msg = (res['error'] ?? 'Error al iniciar sesión').toString();
@@ -117,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
           text: 'Sesión iniciada con Google\n${bsFechaLarga(now)}, ${bsHora(now)}',
           autoClose: const Duration(milliseconds: 2000),
         );
+        await _afterLogin();
         if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
       } else {
         await SweetAlert.error(
@@ -174,6 +225,24 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
             BSAuthButton(label: 'Iniciar sesión', loading: _isLoading, onPressed: _login),
+            if (_bioEnabled) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: _loginBio,
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: GoogleAuthTheme.primary, width: 1.2),
+                    foregroundColor: GoogleAuthTheme.primary,
+                    minimumSize: const Size(0, 52),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: Icon(_bioLabel == 'rostro' ? Icons.face_rounded : Icons.fingerprint_rounded, size: 22),
+                  label: Text('Entrar con $_bioLabel', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
             const BSAuthDivider(),
             const SizedBox(height: 22),

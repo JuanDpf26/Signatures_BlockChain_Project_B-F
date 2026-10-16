@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../services/biometric_service.dart';
 import '../widgets/skeleton.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
@@ -519,6 +520,61 @@ class _InfoTabState extends State<_InfoTab> {
 // ─────────────────────────────────────────
 // TAB 2: SEGURIDAD
 // ─────────────────────────────────────────
+/// Ingreso con huella o rostro (solo aparece en celulares que lo tienen)
+class _BiometricCard extends StatefulWidget {
+  const _BiometricCard();
+
+  @override
+  State<_BiometricCard> createState() => _BiometricCardState();
+}
+
+class _BiometricCardState extends State<_BiometricCard> {
+  bool? _available;
+  bool _on = false;
+  String _label = 'huella o rostro';
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _check();
+  }
+
+  Future<void> _check() async {
+    final a = await BiometricService.available();
+    final on = await BiometricService.enabled();
+    final l = a ? await BiometricService.label() : _label;
+    if (mounted) setState(() { _available = a; _on = on; _label = l; });
+  }
+
+  Future<void> _toggle(bool v) async {
+    setState(() => _busy = true);
+    if (v) {
+      final ok = await BiometricService.enable();
+      if (mounted && ok) showToast(context, title: 'Ingreso con $_label activado');
+    } else {
+      await BiometricService.disable();
+      if (mounted) showToast(context, title: 'Ingreso con $_label desactivado');
+    }
+    await _check();
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_available != true) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: _SettingsCard(
+        title: 'Entrar con $_label',
+        description: 'Entra a DocBlockSign sin escribir tu contraseña. Tu sesión se guarda cifrada en este teléfono y solo se abre con tu $_label.',
+        footer: 'Solo aplica a este teléfono. La sesión guardada dura 7 días; después te pedimos la contraseña otra vez.',
+        trailing: Switch(value: _on, onChanged: _busy ? null : _toggle, activeColor: AppTheme.primary),
+      ),
+    );
+  }
+}
+
 class _SecurityTab extends StatefulWidget {
   final Map<String, dynamic> user;
   const _SecurityTab({super.key, required this.user});
@@ -616,6 +672,7 @@ class _SecurityTabState extends State<_SecurityTab> {
           child: Text(t, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w700)),
         );
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const _BiometricCard(),
       if (!isGoogle)
         _SettingsCard(
           title: 'Contraseña',
@@ -699,6 +756,7 @@ class _AccountSectionState extends State<_AccountSection> {
     if (res.containsKey('error')) {
       await SweetAlert.error(context, title: 'No se pudo eliminar', text: res['error'].toString());
     } else {
+      await BiometricService.disable();
       await AuthService.logout();
       if (!mounted) return;
       await SweetAlert.success(context, title: 'Cuenta eliminada', text: 'Lamentamos verte partir.', autoClose: const Duration(seconds: 2));

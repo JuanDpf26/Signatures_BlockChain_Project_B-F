@@ -68,6 +68,8 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>DocBlockSign usa tus fotos para subir la imagen de tu firma o tu foto de perfil.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>DocBlockSign usa Face ID para que entres sin escribir tu contraseña.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>DocBlockSign usa la cámara para tomar la foto de tu firma o de tu perfil.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

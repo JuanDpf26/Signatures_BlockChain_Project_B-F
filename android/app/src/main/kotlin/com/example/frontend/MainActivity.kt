@@ -1,5 +1,6 @@
 package com.example.frontend
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// FlutterFragmentActivity: la necesita el ingreso con huella o rostro (local_auth)
+class MainActivity : FlutterFragmentActivity()
