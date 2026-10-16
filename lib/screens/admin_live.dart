@@ -187,7 +187,7 @@ class _AdminLiveTabState extends State<AdminLiveTab> with AutomaticKeepAliveClie
       _LiveKpi('Conectados ahora', _n(d['online']), '${_n(d['onlineUsers'])} usuarios · ${_n(d['onlineAdmins'])} superusuarios', Icons.wifi_tethering_rounded, BSColors.success, live: true),
       _LiveKpi('Activos (15 min)', _n(d['recent']), 'Con actividad en el último cuarto de hora', Icons.timelapse_rounded, AppTheme.primary),
       _LiveKpi('Ingresos hoy', _n(today['logins']), '${_n(today['people'])} personas con actividad hoy', Icons.login_rounded, AppTheme.featureCyan),
-      _LiveKpi('Denegados hoy', _n(today['denied']), 'Intentos rechazados por permisos', Icons.gpp_maybe_outlined, _n(today['denied']) > 0 ? BSColors.danger : BSColors.success),
+      _LiveKpi('Denegados hoy', _n(today['denied']), 'Ingresos fallidos o acciones sin permiso', Icons.gpp_maybe_outlined, _n(today['denied']) > 0 ? BSColors.danger : BSColors.success),
     ];
 
     final peopleCard = BSCard(
@@ -361,11 +361,12 @@ class _PersonRow extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 Flexible(child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 14, fontWeight: FontWeight.w700))),
-                if (admin) ...[const SizedBox(width: 6), BSPill(label: 'Superusuario', color: AppTheme.primary, dot: false)],
+                if (admin && !narrow) ...[const SizedBox(width: 6), BSPill(label: 'Superusuario', color: AppTheme.primary, dot: false)],
               ]),
               const SizedBox(height: 2),
               Text(
                 [
+                  if (admin && narrow) 'Superusuario',
                   if ((p['section'] ?? '').toString().isNotEmpty) 'En ${p['section']}',
                   plat.$2,
                   if (!narrow && p['ip'] != null) 'IP ${p['ip']}',
