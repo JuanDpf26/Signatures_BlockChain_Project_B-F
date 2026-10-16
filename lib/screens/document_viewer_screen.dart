@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../config/app_config.dart';
+import '../services/document_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/document_detail.dart';
@@ -33,6 +34,31 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   /// 0 = visor propio (pdf.js) / Office para Word, 1 = visor de Google
   int _engine = 0;
 
+  /// Los archivos son privados: los enlaces vencen. Al abrir se pide uno nuevo
+  /// para que nunca falle por haber dejado la lista abierta mucho tiempo.
+  late String _url = widget.fileUrl;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshUrl();
+  }
+
+  Future<void> _refreshUrl() async {
+    final id = widget.metadata['id']?.toString();
+    if (id != null && id.isNotEmpty) {
+      try {
+        final res = await DocumentService.getDocument(id).timeout(const Duration(seconds: 8));
+        final fresh = (res['document'] as Map?)?['file_url']?.toString();
+        if (fresh != null && fresh.isNotEmpty) _url = fresh;
+      } catch (_) {
+        // Sin conexión o documento ajeno (bandeja): se usa el enlace recibido
+      }
+    }
+    if (mounted) setState(() => _ready = true);
+  }
+
   late final DocView _d = DocView.fromMeta({
     ...widget.metadata,
     'title': widget.metadata['title'] ?? widget.title,
@@ -42,12 +68,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   bool get _isPdf => widget.extension.toLowerCase() == 'pdf';
 
   String get _frameUrl {
-    if (_engine == 1) return AppConfig.visorGoogle(widget.fileUrl);
-    return _isPdf ? AppConfig.visorPdf(widget.fileUrl) : AppConfig.visorOffice(widget.fileUrl);
+    if (_engine == 1) return AppConfig.visorGoogle(_url);
+    return _isPdf ? AppConfig.visorPdf(_url) : AppConfig.visorOffice(_url);
   }
 
   Future<void> _openExternal() async {
-    final uri = Uri.parse(widget.fileUrl);
+    final uri = Uri.parse(_url);
     if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
@@ -159,7 +185,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       Expanded(
         child: Container(
           color: const Color(0xFFE5E7EB),
-          child: DocFrame(key: ValueKey(_frameUrl), url: _frameUrl),
+          child: _ready
+              ? DocFrame(key: ValueKey(_frameUrl), url: _frameUrl)
+              : Center(child: CircularProgressIndicator(color: AppTheme.primary)),
         ),
       ),
     ]);
