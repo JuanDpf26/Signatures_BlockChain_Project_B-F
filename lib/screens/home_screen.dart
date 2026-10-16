@@ -83,7 +83,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Un administrador cerró la sesión o suspendió la cuenta
   Future<void> _onRevoked(String message) async {
-    await AuthService.logout();
+    try {
+      await AuthService.logout();
+    } catch (_) {
+      await AuthService.deleteToken();
+    }
     resetSignIa();
     if (!mounted) return;
     await SweetAlert.info(context, title: 'Tu sesión se cerró', text: message);

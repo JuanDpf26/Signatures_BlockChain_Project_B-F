@@ -278,6 +278,10 @@ class AuthService {
       }
     } catch (_) {}
     await deleteToken();
-    await _googleSignIn.signOut();
+    try {
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // en la web puede fallar si Google no se inició; la sesión ya quedó cerrada
+    }
   }
 }
