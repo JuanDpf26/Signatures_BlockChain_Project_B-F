@@ -73,11 +73,9 @@ class PresenceService {
   }
 
   static Future<void> _expel(String message) async {
-    try {
-      await AuthService.logout();
-    } catch (_) {
-      await AuthService.deleteToken();
-    }
+    // La sesión ya no sirve en el servidor: basta con borrarla aquí
+    await AuthService.deleteToken();
+    AuthService.logout().catchError((_) {}); // limpia Google sin esperar
     final nav = navigatorKey.currentState;
     if (nav == null) return;
     // Primero al inicio de sesión (la pantalla anterior ya no sirve) y ahí el aviso

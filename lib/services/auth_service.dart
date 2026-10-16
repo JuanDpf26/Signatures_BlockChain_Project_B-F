@@ -279,7 +279,8 @@ class AuthService {
     } catch (_) {}
     await deleteToken();
     try {
-      await _googleSignIn.signOut();
+      // En la web, si Google no se inició, signOut puede quedarse esperando para siempre
+      await _googleSignIn.signOut().timeout(const Duration(seconds: 3));
     } catch (_) {
       // en la web puede fallar si Google no se inició; la sesión ya quedó cerrada
     }
