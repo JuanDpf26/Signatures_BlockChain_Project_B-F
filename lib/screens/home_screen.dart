@@ -20,6 +20,7 @@ import 'verify_screen.dart';
 import 'audit_screen.dart';
 import '../widgets/sign_ia_assistant.dart';
 import '../services/collab_service.dart';
+import '../services/presence_service.dart';
 import 'inbox_screen.dart';
 import 'teams_screen.dart';
 
@@ -67,6 +68,32 @@ class _HomeScreenState extends State<HomeScreen> {
     if (admin) return; // la consola carga sus propios datos
     _loadUser();
     _loadData();
+    PresenceService.start(section: _sectionName(_selectedIndex), onRevoked: _onRevoked);
+  }
+
+  static String _sectionName(int i) => switch (i) {
+        1 => 'Documentos',
+        2 => 'Verificar',
+        3 => 'Mi perfil',
+        4 => 'Auditoría',
+        5 => 'Bandeja',
+        6 => 'Equipos',
+        _ => 'Tablero',
+      };
+
+  /// Un administrador cerró la sesión o suspendió la cuenta
+  Future<void> _onRevoked(String message) async {
+    await AuthService.logout();
+    resetSignIa();
+    if (!mounted) return;
+    await SweetAlert.info(context, title: 'Tu sesión se cerró', text: message);
+    if (mounted) Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+  }
+
+  @override
+  void dispose() {
+    PresenceService.stop();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -129,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _docKey++;
       _selectedIndex = 1;
     });
+    PresenceService.section('Documentos');
   }
 
   void _showPending() => _openDocs('pending');
@@ -141,6 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _docKey++;
       _selectedIndex = 1;
     });
+    PresenceService.section('Documentos');
   }
 
   void _goTo(int i) {
@@ -153,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       _selectedIndex = i;
     });
+    PresenceService.section(_sectionName(i));
     if (leavingProfile) _loadUser(); // por si cambió el nombre o la foto
     _refreshInbox();
     if (i == 0) _loadData();
@@ -167,6 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
       type: SweetAlertType.question,
     );
     if (ok) {
+      PresenceService.stop();
       await AuthService.logout();
       resetSignIa();
       if (mounted) Navigator.pushReplacementNamed(context, '/');
@@ -207,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     if (_admin == null) return Scaffold(backgroundColor: BSColors.page);
-    if (_admin == true) return AdminConsole(onLogout: _logout);
+    if (_admin == true) return AdminConsole(onLogout: _logout, onRevoked: _onRevoked);
     final isWeb = ResponsiveLayout.isWeb(context);
     final user = _UserInfo(name: _userName, email: _userEmail, avatarUrl: _avatarUrl);
     return isWeb

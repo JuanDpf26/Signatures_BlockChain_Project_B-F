@@ -44,6 +44,16 @@ class CollabService {
       _send((h) => http.post(Uri.parse('$_base/api/signing/receipt'), headers: h, body: jsonEncode({'hash': hash, if (fileName != null) 'fileName': fileName})));
 
   // ── Administración ───────────────────────────────────────
+  static Future<Map<String, dynamic>> adminLive() => _send((h) => http.get(Uri.parse('$_base/api/admin/live'), headers: h));
+
+  static Future<Map<String, dynamic>> adminUserDetail(String id) => _send((h) => http.get(Uri.parse('$_base/api/admin/users/$id'), headers: h));
+
+  static Future<Map<String, dynamic>> adminForceLogout(String id, {String? reason}) => _send((h) => http.post(
+        Uri.parse('$_base/api/admin/users/$id/logout'),
+        headers: h,
+        body: jsonEncode({if (reason != null) 'reason': reason}),
+      ));
+
   static Future<Map<String, dynamic>> adminOverview() => _send((h) => http.get(Uri.parse('$_base/api/admin/overview'), headers: h));
 
   static Future<Map<String, dynamic>> adminUsers({String q = '', String filter = 'all', int page = 1}) => _send((h) => http.get(

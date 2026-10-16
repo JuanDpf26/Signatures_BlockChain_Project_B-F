@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/collab_service.dart';
+import 'admin_live.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/proof_ui.dart' show fmtFechaHora;
@@ -18,7 +19,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabs = TabController(length: 4, vsync: this);
+  late final TabController _tabs = TabController(length: 5, vsync: this);
 
   @override
   void dispose() {
@@ -54,6 +55,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             dividerColor: Colors.transparent,
             labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
             tabs: const [
+              Tab(text: 'En vivo'),
               Tab(text: 'Resumen'),
               Tab(text: 'Usuarios'),
               Tab(text: 'Auditoría global'),
@@ -63,6 +65,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         ),
         Expanded(
           child: TabBarView(controller: _tabs, children: [
+            AdminLiveTab(pad: pad),
             _Overview(pad: pad),
             _Users(pad: pad),
             _GlobalAudit(pad: pad),
@@ -359,7 +362,14 @@ class _UsersState extends State<_Users> with AutomaticKeepAliveClientMixin {
             : _rows!.isEmpty
                 ? Padding(padding: const EdgeInsets.all(28), child: Center(child: Text('No hay usuarios con ese filtro.', style: TextStyle(color: AppTheme.hint))))
                 : Column(children: [
-                    for (final u in _rows!) _UserRow(user: u, busy: _busy == u['id'].toString(), onSuspend: () => _suspend(u), onResend: () => _resend(u)),
+                    for (final u in _rows!)
+                      _UserRow(
+                        user: u,
+                        busy: _busy == u['id'].toString(),
+                        onSuspend: () => _suspend(u),
+                        onResend: () => _resend(u),
+                        onOpen: () => showAdminUserDetail(context, u['id'].toString(), onChanged: _load),
+                      ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(18, 8, 8, 8),
                       child: Row(children: [
@@ -378,15 +388,16 @@ class _UsersState extends State<_Users> with AutomaticKeepAliveClientMixin {
 class _UserRow extends StatelessWidget {
   final Map<String, dynamic> user;
   final bool busy;
-  final VoidCallback onSuspend, onResend;
-  const _UserRow({required this.user, required this.busy, required this.onSuspend, required this.onResend});
+  final VoidCallback onSuspend, onResend, onOpen;
+  const _UserRow({required this.user, required this.busy, required this.onSuspend, required this.onResend, required this.onOpen});
 
   @override
   Widget build(BuildContext context) {
     final u = user;
     final narrow = MediaQuery.of(context).size.width < 760;
     final pills = Wrap(spacing: 6, runSpacing: 4, children: [
-      if (u['role'] == 'admin') BSPill(label: 'Administrador', color: AppTheme.primary, dot: false),
+      if (u['online'] == true) BSPill(label: 'En línea', color: BSColors.success),
+      if (u['role'] == 'admin') BSPill(label: 'Superusuario', color: AppTheme.primary, dot: false),
       if (u['suspended'] == true) BSPill(label: 'Suspendida', color: BSColors.danger, dot: false),
       if (u['is_email_verified'] != true) BSPill(label: 'Sin verificar', color: BSColors.warning, dot: false),
       if (u['google'] == true) BSPill(label: 'Google', color: BSColors.neutral, dot: false),
@@ -412,13 +423,15 @@ class _UserRow extends StatelessWidget {
           label: Text(u['suspended'] == true ? 'Reactivar' : 'Suspender'),
         ),
     ]);
-    return Container(
+    return InkWell(
+      onTap: onOpen,
+      child: Container(
       padding: const EdgeInsets.fromLTRB(18, 14, 14, 14),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
       child: narrow
           ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [info, const SizedBox(height: 8), pills, const SizedBox(height: 8), actions])
           : Row(children: [
-              CircleAvatar(radius: 18, backgroundColor: AppTheme.primary.withOpacity(0.12), child: Text(((u['name'] ?? u['email']).toString().trim().isEmpty ? '?' : (u['name'] ?? u['email']).toString().trim()[0]).toUpperCase(), style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w800))),
+              PresenceAvatar(name: (u['name'] ?? u['email']).toString(), online: u['online'] == true),
               const SizedBox(width: 12),
               Expanded(flex: 5, child: info),
               const SizedBox(width: 12),
@@ -429,6 +442,7 @@ class _UserRow extends StatelessWidget {
                 child: Align(alignment: Alignment.centerRight, widthFactor: 1, child: actions),
               ),
             ]),
+      ),
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/presence_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/accessibility_menu.dart';
@@ -11,7 +12,8 @@ import 'profile_screen.dart';
 /// no tiene documentos, bandeja ni firmas; solo administración y la cuenta.
 class AdminConsole extends StatefulWidget {
   final VoidCallback onLogout;
-  const AdminConsole({super.key, required this.onLogout});
+  final void Function(String message) onRevoked;
+  const AdminConsole({super.key, required this.onLogout, required this.onRevoked});
 
   @override
   State<AdminConsole> createState() => _AdminConsoleState();
@@ -27,6 +29,13 @@ class _AdminConsoleState extends State<AdminConsole> {
   void initState() {
     super.initState();
     _loadUser();
+    PresenceService.start(section: 'Consola · Panel', onRevoked: widget.onRevoked);
+  }
+
+  @override
+  void dispose() {
+    PresenceService.stop();
+    super.dispose();
   }
 
   Future<void> _loadUser() async {
@@ -45,6 +54,7 @@ class _AdminConsoleState extends State<AdminConsole> {
   void _go(int v) {
     if (v == _view) return;
     setState(() => _view = v);
+    PresenceService.section(v == 0 ? 'Consola · Panel' : 'Consola · Mi cuenta');
     if (v == 0) _loadUser(); // por si cambió el nombre o la foto
   }
 

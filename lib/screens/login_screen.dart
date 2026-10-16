@@ -112,6 +112,32 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Bienvenida según el tipo de cuenta. Un superusuario va siempre a su consola.
+  Future<void> _welcome(Map<String, dynamic> res, {bool google = false}) async {
+    final now = DateTime.now();
+    final name = bsPrimerNombre(res['user']?['name']?.toString());
+    final admin = res['user']?['role'] == 'admin';
+    if (admin) {
+      await SweetAlert.success(
+        context,
+        title: 'Consola de administración',
+        text: '${name.isEmpty ? 'Ingresaste' : '$name, ingresaste'} como superusuario.\n${bsFechaLarga(now)}, ${bsHora(now)}',
+        autoClose: const Duration(milliseconds: 2200),
+      );
+    } else {
+      await SweetAlert.success(
+        context,
+        title: name.isEmpty ? '¡Bienvenido!' : '¡Bienvenido, $name!',
+        text: google ? 'Sesión iniciada con Google\n${bsFechaLarga(now)}, ${bsHora(now)}' : '${bsSaludo(now)} · ${bsFechaLarga(now)}, ${bsHora(now)}',
+        autoClose: const Duration(milliseconds: 2000),
+      );
+    }
+    if (!mounted) return;
+    await _afterLogin();
+    final route = AuthService.takeRoute(); // se consume aunque el superusuario no la use
+    if (mounted) Navigator.pushReplacementNamed(context, admin ? '/home' : route);
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -120,16 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (res['token'] != null) {
         setState(() => _isLoading = false);
-        final now = DateTime.now();
-        final name = bsPrimerNombre(res['user']?['name']?.toString());
-        await SweetAlert.success(
-          context,
-          title: name.isEmpty ? '¡Bienvenido!' : '¡Bienvenido, $name!',
-          text: '${bsSaludo(now)} · ${bsFechaLarga(now)}, ${bsHora(now)}',
-          autoClose: const Duration(milliseconds: 2000),
-        );
-        await _afterLogin();
-        if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
+        await _welcome(res);
       } else {
         final msg = (res['error'] ?? 'Error al iniciar sesión').toString();
         // Cuenta sin verificar → advertencia; credenciales u otro error → error
@@ -159,16 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (res['token'] != null) {
         setState(() => _isGoogleLoading = false);
-        final now = DateTime.now();
-        final name = bsPrimerNombre(res['user']?['name']?.toString());
-        await SweetAlert.success(
-          context,
-          title: name.isEmpty ? '¡Bienvenido!' : '¡Bienvenido, $name!',
-          text: 'Sesión iniciada con Google\n${bsFechaLarga(now)}, ${bsHora(now)}',
-          autoClose: const Duration(milliseconds: 2000),
-        );
-        await _afterLogin();
-        if (mounted) Navigator.pushReplacementNamed(context, AuthService.takeRoute());
+        await _welcome(res, google: true);
       } else {
         await SweetAlert.error(
           context,

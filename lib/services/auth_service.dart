@@ -268,6 +268,15 @@ class AuthService {
   // LOGOUT
   // ────────────────────────────────────────────────
   static Future<void> logout() async {
+    // Avisa al servidor para dejar de aparecer como conectado (si falla, no importa)
+    try {
+      final token = await getToken();
+      if (token != null && token.isNotEmpty) {
+        await http
+            .post(Uri.parse('$baseUrl/logout'), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: '{}')
+            .timeout(const Duration(seconds: 5));
+      }
+    } catch (_) {}
     await deleteToken();
     await _googleSignIn.signOut();
   }
