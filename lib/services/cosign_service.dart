@@ -6,6 +6,23 @@ import 'server_wake.dart';
 
 /// Firma con varios firmantes y PDF firmado
 class CosignService {
+  /// Convierte la respuesta en un mapa. Si el servidor devuelve una página
+  /// (por ejemplo, porque todavía no tiene esta función), da un mensaje claro.
+  static Map<String, dynamic> _decode(http.Response res) {
+    final body = res.body.trim();
+    if (body.isEmpty) return {'error': 'Servidor sin respuesta'};
+    if (!body.startsWith('{')) {
+      return {
+        'error': res.statusCode == 404
+            ? 'El servidor todavía no tiene esta función. Se activa cuando se publique la nueva versión del backend.'
+            : 'El servidor respondió algo inesperado (código ${res.statusCode}). Intenta de nuevo en un momento.',
+      };
+    }
+    final data = jsonDecode(body) as Map<String, dynamic>;
+    if (res.statusCode >= 400 && data['error'] == null) data['error'] = 'Error ${res.statusCode}';
+    return data;
+  }
+
   static String get _signing => '${AppConfig.apiUrl}/api/signing';
   static String get _docs => '${AppConfig.apiUrl}/api/documents';
 
@@ -16,12 +33,9 @@ class CosignService {
       final res = await http
           .post(Uri.parse(url), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: jsonEncode(body ?? {}))
           .timeout(const Duration(seconds: 60));
-      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
-      final data = jsonDecode(res.body) as Map<String, dynamic>;
-      if (res.statusCode >= 400 && data['error'] == null) data['error'] = 'Error ${res.statusCode}';
-      return data;
+      return _decode(res);
     } catch (e) {
-      return {'error': 'No se pudo conectar: $e'};
+      return {'error': 'No se pudo conectar con el servidor. Revisa tu conexión.'};
     }
   }
 
@@ -43,10 +57,9 @@ class CosignService {
       await ServerWake.ready();
       final token = await AuthService.getToken();
       final res = await http.get(Uri.parse('$_docs/$docId/signed-pdf'), headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 60));
-      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
-      return jsonDecode(res.body) as Map<String, dynamic>;
+      return _decode(res);
     } catch (e) {
-      return {'error': 'No se pudo generar el PDF: $e'};
+      return {'error': 'No se pudo conectar con el servidor. Revisa tu conexión.'};
     }
   }
 }
