@@ -1057,6 +1057,21 @@ class _ReadingState extends State<_Reading> {
     super.dispose();
   }
 
+  bool _reminding = false;
+
+  /// Recuerda por correo a quienes no han respondido (una vez cada 24 h)
+  Future<void> _remind() async {
+    setState(() => _reminding = true);
+    final r = await CollabService.inboxRemind(widget.id);
+    if (!mounted) return;
+    setState(() => _reminding = false);
+    if (r['error'] != null) {
+      showToast(context, title: 'No se envió', text: r['error'].toString(), type: SweetAlertType.warning);
+    } else {
+      showToast(context, title: r['message']?.toString() ?? 'Recordatorio enviado');
+    }
+  }
+
   Future<void> _load() async {
     final r = await CollabService.inboxItem(widget.id);
     if (!mounted) return;
@@ -1225,6 +1240,17 @@ class _ReadingState extends State<_Reading> {
             const SizedBox(height: 16),
           ],
           if (review && _isSender && recipients.isNotEmpty) ...[_reviewProgress(recipients), const SizedBox(height: 16)],
+          if ((review || signReq) && _isSender && recipients.any((r) => r['status'] == 'sent' || r['status'] == 'read')) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BSOutlineButton(
+                label: _reminding ? 'Enviando…' : 'Enviar recordatorio',
+                icon: Icons.notifications_active_outlined,
+                onPressed: _reminding ? null : _remind,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           // De / Para / fecha
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),

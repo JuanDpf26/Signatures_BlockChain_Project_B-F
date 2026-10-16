@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/document_service.dart';
+import '../services/collab_service.dart';
+import '../widgets/sweet_alert.dart';
 import '../theme/app_theme.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/chain_steps.dart';
@@ -545,7 +547,13 @@ class _VerdictCard extends StatelessWidget {
             const SizedBox(height: 10),
             Wrap(alignment: WrapAlignment.end, spacing: 10, runSpacing: 10, children: [
               if (tx?['explorerUrl'] != null)
-                BSOutlineButton(label: 'Ver comprobante', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(tx!['explorerUrl'].toString())),
+                BSOutlineButton(label: 'Ver en Etherscan', icon: Icons.open_in_new_rounded, onPressed: () => openExternal(tx!['explorerUrl'].toString())),
+              if (result['hash'] != null)
+                BSOutlineButton(
+                  label: 'Descargar comprobante (PDF)',
+                  icon: Icons.picture_as_pdf_outlined,
+                  onPressed: () => _downloadReceipt(context, result['hash'].toString(), fileName),
+                ),
               BSPrimaryButton(label: 'Verificar otro', icon: Icons.refresh_rounded, onPressed: onReset),
             ]),
           ]),
@@ -553,6 +561,18 @@ class _VerdictCard extends StatelessWidget {
       ]),
     );
   }
+}
+
+/// Comprobante en PDF de esta verificación (lo arma el servidor)
+Future<void> _downloadReceipt(BuildContext context, String hash, String? fileName) async {
+  showToast(context, title: 'Preparando el comprobante…', type: SweetAlertType.info, duration: const Duration(seconds: 5));
+  final r = await CollabService.verificationReceipt(hash, fileName: fileName);
+  if (!context.mounted) return;
+  if (r['url'] == null) {
+    await SweetAlert.error(context, title: 'No se pudo generar', text: (r['error'] ?? 'Intenta de nuevo').toString());
+    return;
+  }
+  openExternal(r['url'].toString());
 }
 
 // ── Estado de la red ───────────────────────────────────────

@@ -18,6 +18,9 @@ class CollabService {
     try {
       final res = await call(await _headers()).timeout(const Duration(seconds: 25));
       if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      if (!res.body.trimLeft().startsWith('{')) {
+        return {'error': res.statusCode == 404 ? 'El servidor todavía no tiene esta función.' : 'Respuesta inesperada del servidor (${res.statusCode})'};
+      }
       final data = jsonDecode(res.body);
       if (data is! Map) return {'error': 'Respuesta inesperada del servidor'};
       final map = Map<String, dynamic>.from(data);
@@ -27,6 +30,45 @@ class CollabService {
       return {'error': 'No se pudo conectar con el servidor: $e'};
     }
   }
+
+  // ── Recordatorios y preferencias ─────────────────────────
+  /// Quien envió una revisión o firma pide recordar a los que no han respondido
+  static Future<Map<String, dynamic>> inboxRemind(String id) =>
+      _send((h) => http.post(Uri.parse('$_base/api/inbox/$id/remind'), headers: h, body: '{}'));
+
+  static Future<Map<String, dynamic>> setEmailReminders(bool on) =>
+      _send((h) => http.patch(Uri.parse('$_base/api/profile/preferences'), headers: h, body: jsonEncode({'email_reminders': on})));
+
+  /// Comprobante de verificación en PDF (devuelve un enlace temporal)
+  static Future<Map<String, dynamic>> verificationReceipt(String hash, {String? fileName}) =>
+      _send((h) => http.post(Uri.parse('$_base/api/signing/receipt'), headers: h, body: jsonEncode({'hash': hash, if (fileName != null) 'fileName': fileName})));
+
+  // ── Administración ───────────────────────────────────────
+  static Future<Map<String, dynamic>> adminOverview() => _send((h) => http.get(Uri.parse('$_base/api/admin/overview'), headers: h));
+
+  static Future<Map<String, dynamic>> adminUsers({String q = '', String filter = 'all', int page = 1}) => _send((h) => http.get(
+        Uri.parse('$_base/api/admin/users').replace(queryParameters: {'q': q, 'filter': filter, 'page': '$page'}),
+        headers: h,
+      ));
+
+  static Future<Map<String, dynamic>> adminSuspend(String id, bool suspended, {String? reason}) => _send((h) => http.post(
+        Uri.parse('$_base/api/admin/users/$id/suspend'),
+        headers: h,
+        body: jsonEncode({'suspended': suspended, if (reason != null) 'reason': reason}),
+      ));
+
+  static Future<Map<String, dynamic>> adminResendVerification(String id) =>
+      _send((h) => http.post(Uri.parse('$_base/api/admin/users/$id/resend-verification'), headers: h, body: '{}'));
+
+  static Future<Map<String, dynamic>> adminAudit({String? result, String q = '', int page = 1}) => _send((h) => http.get(
+        Uri.parse('$_base/api/admin/audit').replace(queryParameters: {if (result != null) 'result': result, 'q': q, 'page': '$page'}),
+        headers: h,
+      ));
+
+  static Future<Map<String, dynamic>> adminHealth() => _send((h) => http.get(Uri.parse('$_base/api/admin/health'), headers: h));
+
+  static Future<Map<String, dynamic>> adminRunReminders() =>
+      _send((h) => http.post(Uri.parse('$_base/api/admin/reminders/run'), headers: h, body: '{}'));
 
   // ── Notificaciones (campana) ─────────────────────────────
   static Future<Map<String, dynamic>> notifications({String box = 'inbox'}) =>

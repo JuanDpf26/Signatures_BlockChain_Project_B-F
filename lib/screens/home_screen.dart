@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'admin_screen.dart';
 import '../utils/doc_name.dart';
 import '../widgets/skeleton.dart';
 import '../services/update_service.dart';
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _userName = '';
   String _userEmail = '';
   String? _avatarUrl;
+  bool _isAdmin = false;
 
   @override
   void initState() {
@@ -67,6 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _userName = u['name']?.toString() ?? '';
         _userEmail = u['email']?.toString() ?? '';
         _avatarUrl = u['avatar_url']?.toString();
+        _isAdmin = u['role'] == 'admin';
       });
     } catch (_) {
       // Si el backend no responde, la barra muestra el saludo sin nombre
@@ -174,6 +177,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return InboxScreen(onChanged: _refreshInbox);
       case 6:
         return const TeamsScreen();
+      case 7:
+        return _isAdmin ? const AdminScreen() : const SizedBox.shrink();
       default:
         return _DashboardContent(
           stats: _stats,
@@ -194,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isWeb = ResponsiveLayout.isWeb(context);
-    final user = _UserInfo(name: _userName, email: _userEmail, avatarUrl: _avatarUrl);
+    final user = _UserInfo(name: _userName, email: _userEmail, avatarUrl: _avatarUrl, isAdmin: _isAdmin);
     return isWeb
         ? _WebShell(
             selectedIndex: _selectedIndex,
@@ -248,7 +253,8 @@ class _ContentSwitcher extends StatelessWidget {
 class _UserInfo {
   final String name, email;
   final String? avatarUrl;
-  const _UserInfo({required this.name, required this.email, this.avatarUrl});
+  final bool isAdmin;
+  const _UserInfo({required this.name, required this.email, this.avatarUrl, this.isAdmin = false});
 }
 
 // ── Web shell ──────────────────────────────────────────────────────────────
@@ -429,6 +435,8 @@ class _Sidebar extends StatelessWidget {
                   section('CONTROL'),
                   _NavItem(icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long_rounded, label: 'Auditoría', selected: selectedIndex == 4, collapsed: c, onTap: () => onNavTap(4)),
                   _NavItem(icon: Icons.person_outline_rounded, activeIcon: Icons.person_rounded, label: 'Mi perfil', selected: selectedIndex == 3, collapsed: c, onTap: () => onNavTap(3)),
+                  if (user.isAdmin)
+                    _NavItem(icon: Icons.admin_panel_settings_outlined, activeIcon: Icons.admin_panel_settings_rounded, label: 'Administración', selected: selectedIndex == 7, collapsed: c, onTap: () => onNavTap(7)),
                 ]),
               ),
 
@@ -857,6 +865,8 @@ class _MobileShell extends StatelessWidget {
             ),
             item(ctx, Icons.groups_rounded, 'Equipos', 'Comparte documentos con tu grupo', () => onNavTap(6), selected: selectedIndex == 6),
             item(ctx, Icons.receipt_long_rounded, 'Auditoría', 'Historial de acciones de tu cuenta', () => onNavTap(4), selected: selectedIndex == 4),
+            if (user.isAdmin)
+              item(ctx, Icons.admin_panel_settings_rounded, 'Administración', 'Usuarios, auditoría global y estado del sistema', () => onNavTap(7), selected: selectedIndex == 7),
             item(ctx, Icons.manage_accounts_rounded, 'Configuración de la cuenta', 'Perfil, seguridad y firma', () => onNavTap(3), selected: selectedIndex == 3),
             item(ctx, Icons.accessibility_new_rounded, 'Apariencia y accesibilidad', 'Tema, tamaño de letra y movimiento', () => showAccessibilityMenu(context)),
             Divider(height: 16, color: AppTheme.border),

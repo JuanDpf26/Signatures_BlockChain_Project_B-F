@@ -86,10 +86,10 @@ class _AuditScreenState extends State<AuditScreen> {
     if (!mounted) return;
     SweetAlert.success(
       context,
-      title: opts.$1 == 'csv' ? 'Descargando registro' : 'Informe abierto',
+      title: opts.$1 == 'csv' ? 'Descargando registro' : 'Descargando informe en PDF',
       text: opts.$1 == 'csv'
           ? 'El archivo CSV se abre en Excel. La descarga también queda registrada en la auditoría.'
-          : 'Usa “Imprimir o guardar como PDF” en la pestaña que se abrió.',
+          : 'El PDF incluye la huella del registro. La descarga también queda registrada en la auditoría.',
       autoClose: const Duration(milliseconds: 2200),
     );
   }
@@ -450,7 +450,7 @@ class _ExportDialogState extends State<_ExportDialog> {
             const SizedBox(height: 18),
             _formatOption('csv', Icons.table_chart_outlined, 'Excel (CSV)', 'Para filtrar y analizar en Excel o Google Sheets.'),
             const SizedBox(height: 10),
-            _formatOption('html', Icons.picture_as_pdf_outlined, 'Informe para PDF', 'Con resumen y tabla; se imprime o guarda como PDF.'),
+            _formatOption('pdf', Icons.picture_as_pdf_outlined, 'Informe en PDF', 'Con resumen, tabla y la huella del registro. Listo para imprimir o enviar.'),
             const SizedBox(height: 18),
             Text('Periodo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 13)),
             const SizedBox(height: 8),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../services/collab_service.dart';
 import '../services/biometric_service.dart';
 import '../widgets/skeleton.dart';
 import 'package:flutter/services.dart';
@@ -488,6 +489,7 @@ class _InfoTabState extends State<_InfoTab> {
         footer: 'El correo identifica tu firma en los documentos registrados en blockchain, por eso no se puede cambiar.',
         action: readOnly,
       ),
+      _RemindersCard(initial: u['email_reminders'] != false),
       _SettingsCard(
         title: 'Número de documento',
         description: 'Tu cédula queda asociada a cada firma que haces.',
@@ -520,6 +522,41 @@ class _InfoTabState extends State<_InfoTab> {
 // ─────────────────────────────────────────
 // TAB 2: SEGURIDAD
 // ─────────────────────────────────────────
+/// Recordatorios por correo de revisiones y firmas pendientes
+class _RemindersCard extends StatefulWidget {
+  final bool initial;
+  const _RemindersCard({required this.initial});
+
+  @override
+  State<_RemindersCard> createState() => _RemindersCardState();
+}
+
+class _RemindersCardState extends State<_RemindersCard> {
+  late bool _on = widget.initial;
+  bool _busy = false;
+
+  Future<void> _toggle(bool v) async {
+    setState(() { _busy = true; _on = v; });
+    final r = await CollabService.setEmailReminders(v);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (r['error'] != null) {
+      setState(() => _on = !v);
+      showToast(context, title: 'No se guardó', text: r['error'].toString(), type: SweetAlertType.warning);
+    } else {
+      showToast(context, title: r['message']?.toString() ?? 'Guardado');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => _SettingsCard(
+        title: 'Recordatorios por correo',
+        description: 'Si una revisión o una firma que te pidieron lleva 2 días sin respuesta, te enviamos un recordatorio (máximo 3).',
+        footer: 'Los avisos importantes, como la confirmación de una firma, se envían siempre.',
+        trailing: Switch(value: _on, onChanged: _busy ? null : _toggle, activeColor: AppTheme.primary),
+      );
+}
+
 /// Ingreso con huella o rostro (solo aparece en celulares que lo tienen)
 class _BiometricCard extends StatefulWidget {
   const _BiometricCard();
