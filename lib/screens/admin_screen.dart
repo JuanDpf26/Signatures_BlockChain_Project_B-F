@@ -403,11 +403,11 @@ class _UserRow extends StatelessWidget {
     ]);
     final actions = Wrap(spacing: 6, runSpacing: 6, children: [
       if (u['is_email_verified'] != true)
-        OutlinedButton.icon(onPressed: busy ? null : onResend, icon: const Icon(Icons.mark_email_read_outlined, size: 16), label: const Text('Reenviar verificación')),
+        OutlinedButton.icon(onPressed: busy ? null : onResend, style: OutlinedButton.styleFrom(minimumSize: const Size(0, 38), padding: const EdgeInsets.symmetric(horizontal: 14)), icon: const Icon(Icons.mark_email_read_outlined, size: 16), label: const Text('Reenviar verificación')),
       if (u['role'] != 'admin')
         OutlinedButton.icon(
           onPressed: busy ? null : onSuspend,
-          style: OutlinedButton.styleFrom(foregroundColor: u['suspended'] == true ? BSColors.success : BSColors.danger),
+          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 38), padding: const EdgeInsets.symmetric(horizontal: 14), foregroundColor: u['suspended'] == true ? BSColors.success : BSColors.danger),
           icon: Icon(u['suspended'] == true ? Icons.lock_open_rounded : Icons.block_rounded, size: 16),
           label: Text(u['suspended'] == true ? 'Reactivar' : 'Suspender'),
         ),
