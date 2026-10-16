@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Text('Configuración de la cuenta', style: TextStyle(color: AppTheme.text, fontSize: isWeb ? 28 : 22, fontWeight: FontWeight.w800, letterSpacing: -0.4)),
             const SizedBox(height: 4),
-            Text('Tu información, la seguridad, la firma y cómo se ve la aplicación.', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
+            Text(widget.adminMode ? 'Tu información, la seguridad y cómo se ve la consola.' : 'Tu información, la seguridad, la firma y cómo se ve la aplicación.', style: TextStyle(color: AppTheme.hint, fontSize: 14)),
             const SizedBox(height: 24),
             if (wide)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
