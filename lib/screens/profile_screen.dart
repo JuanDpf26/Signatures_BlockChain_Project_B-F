@@ -21,7 +21,9 @@ import '../theme/app_theme.dart';
 import '../widgets/accessibility_menu.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  /// Cuenta de superusuario: solo datos básicos, seguridad y apariencia
+  final bool adminMode;
+  const ProfileScreen({super.key, this.adminMode = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -33,7 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int _section = 0;
 
   // Secciones (como la configuración de cuenta de Vercel)
-  static const _sections = [
+  static const _all = [
     (Icons.person_outline_rounded, 'General'),
     (Icons.lock_outline_rounded, 'Seguridad'),
     (Icons.key_outlined, 'Llaves de firma'),
@@ -41,6 +43,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     (Icons.accessibility_new_rounded, 'Apariencia y accesibilidad'),
     (Icons.warning_amber_rounded, 'Eliminar cuenta'),
   ];
+  // Posiciones de _all que ve cada tipo de cuenta
+  List<int> get _ids => widget.adminMode ? const [0, 1, 4] : const [0, 1, 2, 3, 4, 5];
+  List<(IconData, String)> get _sections => [for (final i in _ids) _all[i]];
 
   @override
   void initState() {
@@ -58,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Widget _content() => switch (_section) {
+  Widget _content() => switch (_ids[_section]) {
         0 => _InfoTab(key: const ValueKey('info'), user: _user, onUpdated: _loadProfile),
         1 => _SecurityTab(key: const ValueKey('sec'), user: _user),
         2 => const _KeysSection(),
@@ -144,12 +149,12 @@ class _SectionNav extends StatelessWidget {
                 ),
                 child: Row(children: [
                   Icon(sections[i].$1, size: 18,
-                      color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint)),
+                      color: sections[i].$2 == 'Eliminar cuenta' ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(sections[i].$2,
                         style: TextStyle(
-                          color: i == sections.length - 1 ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint),
+                          color: sections[i].$2 == 'Eliminar cuenta' ? BSColors.danger : (i == selected ? AppTheme.primary : AppTheme.hint),
                           fontSize: 14,
                           fontWeight: i == selected ? FontWeight.w700 : FontWeight.w500,
                         )),
@@ -489,7 +494,7 @@ class _InfoTabState extends State<_InfoTab> {
         footer: 'El correo identifica tu firma en los documentos registrados en blockchain, por eso no se puede cambiar.',
         action: readOnly,
       ),
-      _RemindersCard(initial: u['email_reminders'] != false),
+      if (u['role'] != 'admin') _RemindersCard(initial: u['email_reminders'] != false),
       _SettingsCard(
         title: 'Número de documento',
         description: 'Tu cédula queda asociada a cada firma que haces.',

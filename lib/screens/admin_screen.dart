@@ -36,7 +36,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
         Padding(
           padding: EdgeInsets.fromLTRB(pad, 20, pad, 8),
           child: const BSPageHeader(
-            breadcrumb: ['Inicio', 'Administración'],
+            breadcrumb: ['Consola', 'Administración'],
             title: 'Administración',
             subtitle: 'Cuentas, actividad y estado de los servicios. El contenido de los documentos de cada usuario no es visible aquí.',
           ),
@@ -121,7 +121,7 @@ class _OverviewState extends State<_Overview> with AutomaticKeepAliveClientMixin
     final daily = ((_d!['daily'] as List?) ?? const []).whereType<Map>().toList();
     final tiles = <Widget>[
       _Kpi('Usuarios', _i(u['total']), '${_i(u['verified'])} verificados · ${_i(u['new7d'])} nuevos en 7 días', Icons.people_alt_outlined, AppTheme.primary),
-      _Kpi('Activos (7 días)', _i(u['active7d']), '${_i(u['suspended'])} suspendidos · ${_i(u['admins'])} administradores', Icons.bolt_rounded, AppTheme.featureCyan),
+      _Kpi('Activos (7 días)', _i(u['active7d']), '${_i(u['suspended'])} suspendidos · ${_i(u['admins'])} superusuarios', Icons.bolt_rounded, AppTheme.featureCyan),
       _Kpi('Documentos', _i(d['total']), '${_i(d['pending'])} pendientes · ${_i(d['new7d'])} nuevos en 7 días', Icons.description_outlined, AppTheme.primary),
       _Kpi('Firmados', _i(d['signed']) + _i(d['verified']), '${_i(d['verified'])} verificados · ${_i(d['revoked'])} revocados', Icons.verified_outlined, BSColors.success),
       _Kpi('Solicitudes abiertas', _i(q['pending']), '${_i(q['cosignCollecting'])} firmas de varias personas en curso', Icons.pending_actions_rounded, BSColors.warning),
@@ -250,7 +250,7 @@ class _UsersState extends State<_Users> with AutomaticKeepAliveClientMixin {
   List<Map<String, dynamic>>? _rows;
   String? _busy;
 
-  static const _filters = {'all': 'Todos', 'unverified': 'Sin verificar', 'suspended': 'Suspendidos', 'admins': 'Administradores'};
+  static const _filters = {'all': 'Todos', 'unverified': 'Sin verificar', 'suspended': 'Suspendidos', 'admins': 'Superusuarios'};
 
   @override
   bool get wantKeepAlive => true;

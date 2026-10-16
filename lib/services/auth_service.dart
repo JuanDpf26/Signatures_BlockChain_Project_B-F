@@ -65,6 +65,10 @@ class AuthService {
   /// Id del usuario con sesión iniciada
   static Future<String?> currentUserId() async => _payload(await getToken())?['id']?.toString();
 
+  /// Rol de la sesión ('user' o 'admin'). Solo decide qué interfaz se abre;
+  /// los permisos los revisa siempre el servidor.
+  static Future<String> currentRole() async => _payload(await getToken())?['role']?.toString() ?? 'user';
+
   /// true si el token ya venció (o no se puede leer)
   static bool isExpired(String? token) {
     final exp = _payload(token)?['exp'];
