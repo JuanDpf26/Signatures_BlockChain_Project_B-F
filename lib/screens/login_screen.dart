@@ -5,6 +5,7 @@ import '../widgets/widgets.dart';
 import '../widgets/sweet_alert.dart';
 import '../widgets/bs_ui.dart';
 import '../widgets/bs_auth_layout.dart';
+import '../widgets/superuser_entry.dart';
 import '../services/auth_service.dart';
 import '../services/biometric_service.dart';
 import '../utils/validators.dart';
@@ -118,12 +119,16 @@ class _LoginScreenState extends State<LoginScreen> {
     final name = bsPrimerNombre(res['user']?['name']?.toString());
     final admin = res['user']?['role'] == 'admin';
     if (admin) {
-      await SweetAlert.success(
-        context,
-        title: 'Consola de administración',
-        text: '${name.isEmpty ? 'Ingresaste' : '$name, ingresaste'} como superusuario.\n${bsFechaLarga(now)}, ${bsHora(now)}',
-        autoClose: const Duration(milliseconds: 2200),
-      );
+      // Anuncio de superusuario y, si la contraseña es temporal, cambio obligatorio
+      final go = await showSuperuserNotice(context, name: res['user']?['name']?.toString() ?? '', email: res['user']?['email']?.toString() ?? '');
+      if (!mounted) return;
+      final mustChange = res['user']?['must_change_password'] == true;
+      final ok = go && (!mustChange || await showForcedPasswordChange(context, currentPassword: _pass.text));
+      if (!ok) {
+        await AuthService.deleteToken();
+        if (mounted) showToast(context, title: 'No se inició la sesión');
+        return;
+      }
     } else {
       await SweetAlert.success(
         context,
