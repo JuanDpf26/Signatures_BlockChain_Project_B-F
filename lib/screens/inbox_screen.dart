@@ -245,7 +245,7 @@ class _InboxScreenState extends State<InboxScreen> {
               subtitle: 'Documentos que te compartieron y los que enviaste, con sus revisiones y respuestas.',
               badges: [
                 if (unread > 0) BSPill(label: '$unread sin leer', color: AppTheme.primary),
-                if (pending > 0) BSPill(label: '$pending por revisar', color: BSColors.warning),
+                if (pending > 0) BSPill(label: '$pending por responder', color: BSColors.warning),
               ],
               actions: [
                 BSOutlineButton(label: 'Actualizar', icon: Icons.refresh_rounded, onPressed: _loading ? null : () => _load(keepSelection: true)),
@@ -346,7 +346,7 @@ class _FolderRail extends StatelessWidget {
               const Icon(Icons.fact_check_outlined, color: BSColors.warning, size: 18),
               const SizedBox(width: 8),
               Expanded(
-                child: Text('$pending ${pending == 1 ? 'documento espera' : 'documentos esperan'} tu revisión',
+                child: Text('$pending ${pending == 1 ? 'documento espera' : 'documentos esperan'} tu respuesta',
                     style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w600)),
               ),
             ]),
