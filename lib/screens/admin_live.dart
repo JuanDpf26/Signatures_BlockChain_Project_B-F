@@ -239,9 +239,10 @@ class _AdminLiveTabState extends State<AdminLiveTab> with AutomaticKeepAliveClie
         ]),
         const SizedBox(height: 8),
         LayoutBuilder(builder: (_, c) {
-          final cols = c.maxWidth > 1000 ? 4 : (c.maxWidth > 560 ? 2 : 1);
-          final cw = (c.maxWidth - (cols - 1) * 12) / cols;
-          return Wrap(spacing: 12, runSpacing: 12, children: [for (final k in kpis) SizedBox(width: cw, child: k)]);
+          final cols = c.maxWidth > 1000 ? 4 : 2;
+          final gap = c.maxWidth > 560 ? 12.0 : 10.0;
+          final cw = (c.maxWidth - (cols - 1) * gap) / cols;
+          return Wrap(spacing: gap, runSpacing: gap, children: [for (final k in kpis) SizedBox(width: cw, child: k)]);
         }),
         const SizedBox(height: 16),
         if (wide)
@@ -306,20 +307,24 @@ class _LiveKpi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.of(context).size.width < 560;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
       child: Row(children: [
-        Container(
+        if (!compact) Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, color: color, size: 22),
         ),
-        const SizedBox(width: 12),
+        if (!compact) const SizedBox(width: 12),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
+            Row(children: [
+              if (compact) ...[Icon(icon, color: color, size: 15), const SizedBox(width: 5)],
+              Expanded(child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600))),
+            ]),
             Row(children: [
               Text('$value', style: TextStyle(color: AppTheme.text, fontSize: 24, fontWeight: FontWeight.w800)),
               if (live && value > 0) ...[const SizedBox(width: 4), const LiveDot(size: 8)],
@@ -458,6 +463,7 @@ class _UserDetailState extends State<_UserDetail> {
   Map<String, dynamic>? _d;
   String? _error;
   bool _busy = false;
+  double _statW = 180;
 
   @override
   void initState() {
@@ -509,7 +515,6 @@ class _UserDetailState extends State<_UserDetail> {
     final suspended = u['suspended'] == true;
     final online = p?['online'] == true;
     final name = (u['name'] ?? u['email']).toString();
-    final narrow = MediaQuery.of(context).size.width < 600;
 
     String status;
     Color statusColor;
@@ -528,7 +533,7 @@ class _UserDetailState extends State<_UserDetail> {
     }
 
     Widget stat(String label, int v, {Color? color}) => Container(
-          width: narrow ? (MediaQuery.of(context).size.width - 24 - 40 - 20) / 3 : 190,
+          width: _statW,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -578,14 +583,19 @@ class _UserDetailState extends State<_UserDetail> {
               if (u['email_reminders'] == false) BSPill(label: 'Recordatorios apagados', color: BSColors.neutral, dot: false),
             ]),
             const SizedBox(height: 14),
-            Wrap(spacing: 10, runSpacing: 10, children: [
-              stat('Documentos', _n(u['documents'])),
-              stat('Firmados', _n(u['signed']), color: BSColors.success),
-              stat('Pendientes', _n(u['pending']), color: BSColors.warning),
+            LayoutBuilder(builder: (_, c) {
+              _statW = (c.maxWidth - 20) / 3;
+              return Wrap(spacing: 10, runSpacing: 10, children: [
+              if (!admin) ...[
+                stat('Documentos', _n(u['documents'])),
+                stat('Firmados', _n(u['signed']), color: BSColors.success),
+                stat('Pendientes', _n(u['pending']), color: BSColors.warning),
+              ],
               stat('Ingresos (30 días)', _n(st['logins30'])),
               stat('Denegados (30 días)', _n(st['denied30']), color: _n(st['denied30']) > 0 ? BSColors.danger : null),
               stat('IP distintas (30 días)', _n(st['ips30'])),
-            ]),
+            ]);
+            }),
             const SizedBox(height: 16),
             info('Cuenta creada', fmtFechaHora(u['created_at']?.toString())),
             info('Último ingreso', u['last_login'] == null ? 'Nunca' : fmtFechaHora(u['last_login'].toString())),
