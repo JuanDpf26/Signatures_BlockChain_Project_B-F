@@ -79,10 +79,17 @@ class PresenceService {
       await AuthService.deleteToken();
     }
     final nav = navigatorKey.currentState;
-    final ctx = navigatorKey.currentContext;
-    if (nav == null || ctx == null) return;
-    await SweetAlert.info(ctx, title: 'Tu sesión se cerró', text: message);
-    nav.pushNamedAndRemoveUntil('/', (_) => false);
+    if (nav == null) return;
+    // Primero al inicio de sesión (la pantalla anterior ya no sirve) y ahí el aviso
+    nav.pushNamedAndRemoveUntil('/login', (_) => false);
+    await Future.delayed(const Duration(milliseconds: 600));
+    final ctx = nav.overlay?.context; // contexto debajo del navegador
+    if (ctx == null) return;
+    try {
+      await SweetAlert.info(ctx, title: 'Tu sesión se cerró', text: message);
+    } catch (e) {
+      debugPrint('[presencia] aviso: $e');
+    }
   }
 
   static Future<void> _beat() async {
@@ -111,8 +118,8 @@ class PresenceService {
         await _expel(body['error']?.toString() ?? 'Tu sesión se cerró.');
         cb?.call(body['error']?.toString() ?? 'Tu sesión se cerró.');
       }
-    } catch (_) {
-      // sin conexión: se intenta en el siguiente latido
+    } catch (e) {
+      debugPrint('[presencia] $e'); // sin conexión: se intenta en el siguiente latido
     }
   }
 }
