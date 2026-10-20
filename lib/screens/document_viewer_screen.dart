@@ -31,7 +31,7 @@ class DocumentViewerScreen extends StatefulWidget {
 
 class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   bool _showPanel = true;
-  /// 0 = visor propio (pdf.js) / Office para Word, 1 = visor de Google
+  /// PDF: 0 = visor propio (pdf.js), 1 = Google.  Word: 0 = visor propio, 1 = Office, 2 = Google
   int _engine = 0;
 
   /// Los archivos son privados: los enlaces vencen. Al abrir se pide uno nuevo
@@ -68,8 +68,12 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   bool get _isPdf => widget.extension.toLowerCase() == 'pdf';
 
   String get _frameUrl {
-    if (_engine == 1) return AppConfig.visorGoogle(_url);
-    return _isPdf ? AppConfig.visorPdf(_url) : AppConfig.visorOffice(_url);
+    if (_isPdf) return _engine == 1 ? AppConfig.visorGoogle(_url) : AppConfig.visorPdf(_url);
+    return switch (_engine) {
+      1 => AppConfig.visorOffice(_url),
+      2 => AppConfig.visorGoogle(_url),
+      _ => AppConfig.visorWord(_url),
+    };
   }
 
   Future<void> _openExternal() async {
@@ -166,10 +170,13 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   }
 
   Widget _buildViewer() {
-    final labels = _isPdf ? const ['Visor', 'Google'] : const ['Office', 'Google'];
-    final hint = _engine == 1
+    final labels = _isPdf ? const ['Visor', 'Google'] : const ['Visor', 'Office', 'Google'];
+    final google = _engine == (_isPdf ? 1 : 2);
+    final hint = google
         ? 'Visor de Google: puede tardar unos segundos'
-        : (_isPdf ? 'Pellizca o usa + y − para hacer zoom' : 'Vista de Word con el visor de Microsoft Office');
+        : (!_isPdf && _engine == 1)
+            ? 'Visor de Microsoft Office: si no carga, usa el visor propio'
+            : 'Pellizca o usa + y − para hacer zoom';
     return Column(children: [
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

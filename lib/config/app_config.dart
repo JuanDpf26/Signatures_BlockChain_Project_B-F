@@ -28,6 +28,9 @@ class AppConfig {
   /// Visor de PDF propio (pdf.js): nítido, con zoom, funciona igual en celular y computador
   static String visorPdf(String fileUrl) => '${kIsWeb ? '' : webUrl}/visor/index.html?file=${Uri.encodeComponent(fileUrl)}';
 
+  /// Visor de Word propio (docx-preview): lee el archivo en el navegador, sin servicios externos
+  static String visorWord(String fileUrl) => '${kIsWeb ? '' : webUrl}/visor/word.html?file=${Uri.encodeComponent(fileUrl)}';
+
   /// Visor de Word de Microsoft Office (el archivo debe ser público)
   static String visorOffice(String fileUrl) => 'https://view.officeapps.live.com/op/embed.aspx?src=${Uri.encodeComponent(fileUrl)}';
 
