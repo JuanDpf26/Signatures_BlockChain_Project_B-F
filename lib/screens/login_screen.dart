@@ -196,6 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Computador: espacios más cortos para que todo quepa sin desplazar
+    final wide = BSAuthLayout.isWide(context);
+    final gap = wide ? 16.0 : 22.0;
     return BSAuthLayout(
       title: 'Iniciar sesión',
       subtitle: 'Ingresa tus credenciales para continuar.',
@@ -236,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: wide ? 10 : 16),
             BSAuthButton(label: 'Iniciar sesión', loading: _isLoading, onPressed: _login),
             if (_bioEnabled) ...[
               const SizedBox(height: 12),
@@ -256,9 +259,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 22),
+            SizedBox(height: gap),
             const BSAuthDivider(),
-            const SizedBox(height: 22),
+            SizedBox(height: gap),
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -282,15 +285,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
               ),
             ),
-            const SizedBox(height: 22),
-            const BSInfoBanner(
-              title: 'Tu información está protegida.',
-              text: 'Las contraseñas se guardan cifradas y la sesión usa un token seguro con vencimiento.',
-              icon: Icons.info_rounded,
-            ),
-            const SizedBox(height: 24),
+            if (!wide) ...[
+              const SizedBox(height: 22),
+              const BSInfoBanner(
+                title: 'Tu información está protegida.',
+                text: 'Las contraseñas se guardan cifradas y la sesión usa un token seguro con vencimiento.',
+                icon: Icons.info_rounded,
+              ),
+            ],
+            SizedBox(height: wide ? 18 : 24),
             Divider(height: 1, color: AppTheme.border),
-            const SizedBox(height: 20),
+            SizedBox(height: wide ? 14 : 20),
             BSAuthSwitch(
               question: '¿No tienes cuenta?',
               action: 'Regístrate',

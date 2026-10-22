@@ -143,7 +143,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final twoCols = MediaQuery.of(context).size.width > 1200;
+    final wide = BSAuthLayout.isWide(context);
+    final twoCols = MediaQuery.of(context).size.width > 1100;
 
     Widget pair(Widget a, Widget b) => twoCols
         ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -212,7 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
             ]),
-            const SizedBox(height: 26),
+            SizedBox(height: wide ? 18 : 26),
             _SectionLabel('SEGURIDAD'),
             const SizedBox(height: 12),
             pair(
@@ -235,7 +236,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 light: true,
               ),
             ),
-            const SizedBox(height: 26),
+            SizedBox(height: wide ? 18 : 26),
             _SectionLabel('VERIFICACIÓN'),
             const SizedBox(height: 12),
             _CaptchaWidget(
@@ -243,7 +244,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               checking: _captchaChecking,
               onTap: _captchaVerified ? _resetCaptcha : _checkCaptcha,
             ),
-            const SizedBox(height: 26),
+            SizedBox(height: wide ? 18 : 26),
             BSAuthButton(label: 'Crear cuenta', loading: _isLoading, onPressed: _register),
             const SizedBox(height: 14),
             Center(

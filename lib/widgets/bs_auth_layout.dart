@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'accessibility_menu.dart';
 import 'brand.dart';
@@ -29,51 +30,75 @@ class BSAuthLayout extends StatelessWidget {
     this.leading,
   });
 
+  /// Pantalla ancha (computador): diseño fijo, sin desplazamiento.
+  static bool isWide(BuildContext context) => MediaQuery.of(context).size.width > 900;
+
   @override
   Widget build(BuildContext context) {
-    final wide = MediaQuery.of(context).size.width > 900;
+    final wide = isWide(context);
 
-    final form = Center(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.symmetric(horizontal: wide ? 48 : 24, vertical: 32),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: maxFormWidth),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (showBack) ...[
-                _BackLink(onTap: onBack ?? () => Navigator.maybePop(context)),
-                const SizedBox(height: 20),
-              ],
-              _BrandMark(dark: false, big: wide),
-              SizedBox(height: wide ? 40 : 28),
-              if (leading != null) ...[
-                leading!,
-                const SizedBox(height: 18),
-              ],
-              Text(
-                title,
-                style: TextStyle(
-                  color: AppTheme.text,
-                  fontSize: wide ? 34 : 26,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.6,
-                ),
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 8),
-                Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.5)),
-              ],
-              const SizedBox(height: 28),
-              child,
-              const SizedBox(height: 32),
-              const _EnvPill(),
-            ],
+    final content = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showBack) ...[
+          _BackLink(onTap: onBack ?? () => Navigator.maybePop(context)),
+          SizedBox(height: wide ? 12 : 20),
+        ],
+        const _BrandMark(dark: false),
+        SizedBox(height: wide ? 24 : 28),
+        if (leading != null) ...[
+          leading!,
+          SizedBox(height: wide ? 14 : 18),
+        ],
+        Text(
+          title,
+          style: TextStyle(
+            color: AppTheme.text,
+            fontSize: wide ? 30 : 26,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.6,
           ),
         ),
+        if (subtitle != null) ...[
+          const SizedBox(height: 6),
+          Text(subtitle!, style: TextStyle(color: AppTheme.hint, fontSize: 14, height: 1.5)),
+        ],
+        SizedBox(height: wide ? 22 : 28),
+        child,
+        // En computador la red de prueba se indica en el panel azul
+        if (!wide) ...[
+          const SizedBox(height: 32),
+          const _EnvPill(),
+        ],
+      ],
+    );
+
+    // Celular: desplazable (el teclado ocupa media pantalla)
+    final mobileForm = Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: ConstrainedBox(constraints: BoxConstraints(maxWidth: maxFormWidth), child: content),
       ),
     );
+
+    // Computador: fijo. Si la ventana es baja, el formulario se reduce para
+    // caber completo en lugar de mostrar barra de desplazamiento.
+    final desktopForm = LayoutBuilder(builder: (context, box) {
+      final width = math.min(maxFormWidth, math.max(0.0, box.maxWidth - 96));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 28),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: width, maxHeight: math.max(0.0, box.maxHeight - 56)),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: SizedBox(width: width, child: content),
+            ),
+          ),
+        ),
+      );
+    });
 
     return Scaffold(
       backgroundColor: AppTheme.card,
@@ -81,9 +106,9 @@ class BSAuthLayout extends StatelessWidget {
         wide
             ? Row(children: [
                 const Expanded(flex: 9, child: _BrandPanel()),
-                Expanded(flex: 11, child: form),
+                Expanded(flex: 11, child: desktopForm),
               ])
-            : SafeArea(child: form),
+            : SafeArea(child: mobileForm),
         // Apariencia y accesibilidad, disponible desde antes de iniciar sesión
         const Positioned(top: 8, right: 8, child: SafeArea(child: AccessibilityButton())),
       ]),
@@ -104,13 +129,18 @@ class _BrandPanel extends StatelessWidget {
         // Círculos decorativos (como en el mockup institucional)
         Positioned(top: -90, right: -40, child: _Bubble(size: 320, opacity: 0.06)),
         Positioned(bottom: -140, left: -110, child: _Bubble(size: 360, opacity: 0.06)),
-        // Desplazable y con altura mínima de pantalla: en pantallas bajas no se desborda
-        SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 72, vertical: 48),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: (MediaQuery.of(context).size.height - 96).clamp(0, double.infinity).toDouble()),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+        // Fijo: si la ventana es baja, el contenido se reduce en lugar de desplazarse
+        LayoutBuilder(builder: (context, box) {
+          final width = math.max(0.0, box.maxWidth - 144);
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 72, vertical: 40),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: width,
+                child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const BSEntrance(
@@ -141,14 +171,18 @@ class _BrandPanel extends StatelessWidget {
                   const SizedBox(height: 20),
                 ],
                 const SizedBox(height: 28),
+                const _EnvPill(onDark: true),
+                const SizedBox(height: 16),
                 Text(
                   'Universidad Manuela Beltrán · IS25133 · 2026',
                   style: TextStyle(color: Colors.white.withOpacity(0.65), fontSize: 12),
                 ),
               ],
             ),
-          ),
-        ),
+              ),
+            ),
+          );
+        }),
       ]),
     );
   }
@@ -156,18 +190,22 @@ class _BrandPanel extends StatelessWidget {
 
 /// Píldora de ambiente (como "Ambiente: Desarrollo" del mockup)
 class _EnvPill extends StatelessWidget {
-  const _EnvPill();
+  final bool onDark;
+  const _EnvPill({this.onDark = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: onDark ? Colors.white.withOpacity(0.12) : BSColors.page,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFD99A00), shape: BoxShape.circle)),
         const SizedBox(width: 8),
         Text('Red: Sepolia Testnet · datos de prueba',
-            style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
+            style: TextStyle(color: onDark ? Colors.white : AppTheme.text, fontSize: 12, fontWeight: FontWeight.w700)),
       ]),
     );
   }
@@ -206,20 +244,19 @@ class _Feature extends StatelessWidget {
 /// Logo + nombre. dark=true → sobre fondo de color (texto blanco). big → tamaño grande del panel de acceso.
 class _BrandMark extends StatelessWidget {
   final bool dark;
-  final bool big;
-  const _BrandMark({required this.dark, this.big = false});
+  const _BrandMark({required this.dark});
 
   @override
   Widget build(BuildContext context) {
-    final logo = big ? 76.0 : 46.0;
+    const logo = 46.0;
     return Row(mainAxisSize: MainAxisSize.min, children: [
       BrandSymbol(size: logo, onDark: dark),
-      SizedBox(width: big ? 16 : 12),
+      const SizedBox(width: 12),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        BrandWordmark(fontSize: big ? 38 : 22, onDark: dark),
+        BrandWordmark(fontSize: 22, onDark: dark),
         const SizedBox(height: 3),
         Text('Firma digital con blockchain',
-            style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: big ? 14 : 11.5)),
+            style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: 11.5)),
       ]),
     ]);
   }
