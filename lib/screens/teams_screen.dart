@@ -962,7 +962,6 @@ class _TeamDetailState extends State<_TeamDetail> {
               for (final t in [
                 (Icons.people_alt_outlined, '${_members.length} ${_members.length == 1 ? 'miembro' : 'miembros'}'),
                 (Icons.send_outlined, '${_docs.length} ${_docs.length == 1 ? 'envío' : 'envíos'}'),
-                (Icons.badge_outlined, 'Tu rol: ${roleLabel(_myRole)}'),
               ])
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
