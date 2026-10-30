@@ -24,6 +24,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
   List<Map<String, dynamic>> _teams = [];
   bool _loading = true;
   String? _error;
+  String _q = '';
 
   @override
   void initState() {
@@ -112,16 +113,49 @@ class _TeamsScreenState extends State<TeamsScreen> {
     } else if (_teams.isEmpty) {
       body = _EmptyTeams(onCreate: _create);
     } else {
+      final shown = _teams.where((t) => _q.isEmpty || (t['name']?.toString().toLowerCase().contains(_q) ?? false)).toList();
       body = LayoutBuilder(builder: (context, c) {
         final cols = c.maxWidth > 1100 ? 3 : c.maxWidth > 680 ? 2 : 1;
         final cw = (c.maxWidth - (cols - 1) * 16) / cols;
-        return Wrap(spacing: 16, runSpacing: 16, children: [
-          for (var i = 0; i < _teams.length; i++)
-            SizedBox(
-              width: cw,
-              child: BSEntrance(delay: Duration(milliseconds: 40 * (i < 9 ? i : 9)), child: _TeamCard(team: _teams[i], onTap: () => _openTeam(_teams[i]['id'].toString()))),
+        return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (_teams.length >= 4) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SizedBox(
+                width: c.maxWidth > 560 ? 360 : c.maxWidth,
+                height: 42,
+                child: TextField(
+                  onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
+                  style: TextStyle(color: AppTheme.text, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar equipo',
+                    hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
+                    prefixIcon: Icon(Icons.search_rounded, size: 19, color: AppTheme.hint),
+                    filled: true,
+                    fillColor: AppTheme.card,
+                    contentPadding: EdgeInsets.zero,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+                  ),
+                ),
+              ),
             ),
-          SizedBox(width: cw, child: _NewTeamCard(onTap: _create)),
+            const SizedBox(height: 14),
+          ],
+          Wrap(spacing: 16, runSpacing: 16, children: [
+            for (var i = 0; i < shown.length; i++)
+              SizedBox(
+                width: cw,
+                child: BSEntrance(delay: Duration(milliseconds: 40 * (i < 9 ? i : 9)), child: _TeamCard(team: shown[i], onTap: () => _openTeam(shown[i]['id'].toString()))),
+              ),
+            if (_q.isEmpty) SizedBox(width: cw, child: _NewTeamCard(onTap: _create)),
+          ]),
+          if (shown.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 24),
+              child: Center(child: Text('Ningún equipo coincide con “$_q”.', style: TextStyle(color: AppTheme.hint, fontSize: 13))),
+            ),
         ]);
       });
     }
@@ -224,18 +258,32 @@ class _TeamCardState extends State<_TeamCard> {
                   BSPill(label: roleLabel(t['my_role']?.toString()), color: roleColor(t['my_role']?.toString()), dot: false),
                 ]),
                 const SizedBox(height: 10),
-                Text(
-                  (t['description']?.toString().trim().isNotEmpty == true) ? t['description'].toString() : 'Sin descripción',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4),
+                SizedBox(
+                  height: 38,
+                  child: Text(
+                    (t['description']?.toString().trim().isNotEmpty == true) ? t['description'].toString() : 'Sin descripción',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.4),
+                  ),
                 ),
                 const SizedBox(height: 14),
                 Row(children: [
                   SizedBox(
                     height: 30,
-                    width: preview.isEmpty ? 0 : 22.0 * preview.length + 10,
+                    width: preview.isEmpty ? 0 : 22.0 * (preview.length + (members > preview.length ? 1 : 0)) + 10,
                     child: Stack(children: [
+                      if (members > preview.length)
+                        Positioned(
+                          left: preview.length * 22.0,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(color: color.withOpacity(0.12), shape: BoxShape.circle, border: Border.all(color: AppTheme.card, width: 2)),
+                            alignment: Alignment.center,
+                            child: Text('+${members - preview.length}', style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w800)),
+                          ),
+                        ),
                       for (var i = 0; i < preview.length; i++)
                         Positioned(
                           left: i * 22.0,
@@ -904,11 +952,28 @@ class _TeamDetailState extends State<_TeamDetail> {
             Text(_team!['name']?.toString() ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
             const SizedBox(height: 2),
             Text(
-              (_team!['description']?.toString().trim().isNotEmpty == true) ? _team!['description'].toString() : '${_members.length} miembros',
+              (_team!['description']?.toString().trim().isNotEmpty == true) ? _team!['description'].toString() : 'Sin descripción',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 13),
             ),
+            const SizedBox(height: 8),
+            Wrap(spacing: 8, runSpacing: 6, children: [
+              for (final t in [
+                (Icons.people_alt_outlined, '${_members.length} ${_members.length == 1 ? 'miembro' : 'miembros'}'),
+                (Icons.send_outlined, '${_docs.length} ${_docs.length == 1 ? 'envío' : 'envíos'}'),
+                (Icons.badge_outlined, 'Tu rol: ${roleLabel(_myRole)}'),
+              ])
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.16), borderRadius: BorderRadius.circular(20)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(t.$1, size: 13, color: Colors.white),
+                    const SizedBox(width: 5),
+                    Text(t.$2, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700)),
+                  ]),
+                ),
+            ]),
           ]),
         ),
         if (_canManage) IconButton(tooltip: 'Editar', onPressed: _edit, icon: const Icon(Icons.edit_outlined, color: Colors.white)),
@@ -971,7 +1036,10 @@ class _TeamDetailState extends State<_TeamDetail> {
             ),
           const SizedBox(height: 10),
         ],
-        for (final m in _members)
+        for (final m in ([..._members]..sort((a, b) {
+          int rank(Map x) => x['role'] == 'owner' ? 0 : x['role'] == 'admin' ? 1 : 2;
+          return rank(a).compareTo(rank(b));
+        })))
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border))),
@@ -980,8 +1048,8 @@ class _TeamDetailState extends State<_TeamDetail> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text((m['name'] ?? m['email']).toString(), style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
-                  Text(m['email']?.toString() ?? '', style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+                  Text((m['name'] ?? m['email']).toString(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text(m['email']?.toString() ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                 ]),
               ),
               BSPill(label: roleLabel(m['role']?.toString()), color: roleColor(m['role']?.toString()), dot: false),
@@ -1001,6 +1069,27 @@ class _TeamDetailState extends State<_TeamDetail> {
                 const SizedBox(width: 12),
             ]),
           ),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('¿Qué puede hacer cada rol?', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            for (final r in const [
+              ('owner', 'Administra el equipo, nombra administradores y puede eliminarlo.'),
+              ('admin', 'Agrega y quita miembros.'),
+              ('member', 'Recibe en su bandeja lo que se envía al equipo.'),
+            ])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SizedBox(width: 96, child: Text(roleLabel(r.$1), style: TextStyle(color: roleColor(r.$1), fontSize: 12, fontWeight: FontWeight.w800))),
+                  Expanded(child: Text(r.$2, style: TextStyle(color: AppTheme.hint, fontSize: 12, height: 1.35))),
+                ]),
+              ),
+          ]),
+        ),
       ]),
     );
 
@@ -1028,13 +1117,18 @@ class _TeamDetailState extends State<_TeamDetail> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(d['title']?.toString() ?? 'Documento', maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
+                        Tooltip(
+                          message: d['title']?.toString() ?? 'Documento',
+                          child: Text(d['title']?.toString() ?? 'Documento', maxLines: 2, overflow: TextOverflow.ellipsis,
+                              style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w700, fontSize: 13)),
+                        ),
+                        const SizedBox(height: 2),
                         Text('${d['sender_name'] ?? d['sender_email'] ?? ''} · ${inboxAgo(d['created_at']?.toString())}',
-                            style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+                            maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+                        const SizedBox(height: 5),
+                        BSPill(label: d['kind'] == 'review' ? 'Revisión' : 'Conocimiento', color: d['kind'] == 'review' ? AppTheme.featureCyan : BSColors.neutral, dot: false),
                       ]),
                     ),
-                    BSPill(label: d['kind'] == 'review' ? 'Revisión' : 'Conocimiento', color: d['kind'] == 'review' ? AppTheme.featureCyan : BSColors.neutral, dot: false),
                   ]),
                 ),
             ]),

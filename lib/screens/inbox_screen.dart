@@ -259,8 +259,8 @@ class _InboxScreenState extends State<InboxScreen> {
                 ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     if (showRail) ...[
                       SizedBox(
-                        width: 220,
-                        child: _FolderRail(folder: _folder, unread: unread, flagged: flagged, pending: pending, onFolder: _setFolder),
+                        width: w >= 1500 ? 220 : 64,
+                        child: _FolderRail(folder: _folder, unread: unread, flagged: flagged, pending: pending, onFolder: _setFolder, compact: w < 1500),
                       ),
                       const SizedBox(width: 14),
                     ],
@@ -268,7 +268,17 @@ class _InboxScreenState extends State<InboxScreen> {
                     const SizedBox(width: 14),
                     Expanded(
                       child: _selectedId == null
-                          ? const _EmptyReading()
+                          ? _EmptyReading(
+                              unread: unread,
+                              pending: pending,
+                              onOpenFirst: () {
+                                final first = _visible.cast<Map<String, dynamic>?>().firstWhere(
+                                      (e) => e != null && e['status']?.toString() == 'sent',
+                                      orElse: () => _visible.isEmpty ? null : _visible.first,
+                                    );
+                                if (first != null) _open(first);
+                              },
+                            )
                           : _Panel(
                               child: _Reading(
                                 key: ValueKey(_selectedId),
@@ -315,10 +325,47 @@ class _FolderRail extends StatelessWidget {
   final _Folder folder;
   final int unread, flagged, pending;
   final ValueChanged<_Folder> onFolder;
-  const _FolderRail({required this.folder, required this.unread, required this.flagged, required this.pending, required this.onFolder});
+  final bool compact;
+  const _FolderRail({required this.folder, required this.unread, required this.flagged, required this.pending, required this.onFolder, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
+    if (compact) {
+      return _Panel(
+        child: ListView(padding: const EdgeInsets.fromLTRB(8, 14, 8, 14), children: [
+          for (final f in _Folder.values)
+            _FolderTile(
+              folder: f,
+              selected: f == folder,
+              compact: true,
+              count: switch (f) { _Folder.received => unread, _Folder.flagged => flagged, _ => 0 },
+              onTap: () => onFolder(f),
+            ),
+          if (pending > 0) ...[
+            const SizedBox(height: 10),
+            Tooltip(
+              message: '$pending ${pending == 1 ? 'documento espera' : 'documentos esperan'} tu respuesta',
+              child: Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: BSColors.warning.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: BSColors.warning.withOpacity(0.3)),
+                ),
+                child: Stack(alignment: Alignment.center, children: [
+                  const Icon(Icons.fact_check_outlined, color: BSColors.warning, size: 20),
+                  Positioned(
+                    right: 4,
+                    top: 3,
+                    child: Text('$pending', style: const TextStyle(color: BSColors.warning, fontSize: 10, fontWeight: FontWeight.w900)),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+        ]),
+      );
+    }
     return _Panel(
       child: ListView(padding: const EdgeInsets.fromLTRB(10, 14, 10, 14), children: [
         Padding(
@@ -361,8 +408,9 @@ class _FolderTile extends StatefulWidget {
   final _Folder folder;
   final bool selected;
   final int count;
+  final bool compact;
   final VoidCallback onTap;
-  const _FolderTile({required this.folder, required this.selected, required this.count, required this.onTap});
+  const _FolderTile({required this.folder, required this.selected, required this.count, required this.onTap, this.compact = false});
 
   @override
   State<_FolderTile> createState() => _FolderTileState();
@@ -373,6 +421,41 @@ class _FolderTileState extends State<_FolderTile> {
   @override
   Widget build(BuildContext context) {
     final sel = widget.selected;
+    if (widget.compact) {
+      return Tooltip(
+        message: widget.folder.label,
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hover = true),
+          onExit: (_) => setState(() => _hover = false),
+          child: BSFocusable(onTap: widget.onTap, child: GestureDetector(
+            onTap: widget.onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              height: 44,
+              margin: const EdgeInsets.only(bottom: 4),
+              decoration: BoxDecoration(
+                color: sel ? BSColors.selected : (_hover ? BSColors.page : Colors.transparent),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Stack(alignment: Alignment.center, children: [
+                Icon(widget.folder.icon, size: 21, color: sel ? AppTheme.primary : AppTheme.hint),
+                if (widget.count > 0)
+                  Positioned(
+                    right: 5,
+                    top: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(8)),
+                      child: Text('${widget.count}', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800)),
+                    ),
+                  ),
+              ]),
+            ),
+          )),
+        ),
+      );
+    }
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
@@ -987,7 +1070,9 @@ class _EmptyList extends StatelessWidget {
 }
 
 class _EmptyReading extends StatelessWidget {
-  const _EmptyReading();
+  final int unread, pending;
+  final VoidCallback? onOpenFirst;
+  const _EmptyReading({this.unread = 0, this.pending = 0, this.onOpenFirst});
   @override
   Widget build(BuildContext context) => _Panel(
         child: Center(
@@ -1002,6 +1087,17 @@ class _EmptyReading extends StatelessWidget {
             Text('Selecciona un mensaje para leerlo', style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.w800, fontSize: 16)),
             const SizedBox(height: 4),
             Text('Desde aquí puedes responder, reenviar, aprobar o rechazar.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
+            if (unread > 0 || pending > 0) ...[
+              const SizedBox(height: 18),
+              Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
+                if (unread > 0) _MiniPill(text: '$unread sin leer', color: AppTheme.primary, icon: Icons.mark_email_unread_outlined),
+                if (pending > 0) _MiniPill(text: '$pending por responder', color: BSColors.warning, icon: Icons.fact_check_outlined),
+              ]),
+              if (onOpenFirst != null) ...[
+                const SizedBox(height: 14),
+                BSOutlineButton(label: unread > 0 ? 'Abrir el primero sin leer' : 'Abrir el primero', icon: Icons.drafts_outlined, onPressed: onOpenFirst),
+              ],
+            ],
           ]),
         ),
       );
@@ -1260,10 +1356,9 @@ class _ReadingState extends State<_Reading> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text.rich(TextSpan(children: [
-                    TextSpan(text: senderName, style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text)),
-                    if (senderEmail.isNotEmpty) TextSpan(text: '  <$senderEmail>', style: TextStyle(color: AppTheme.hint)),
-                  ]), style: const TextStyle(fontSize: 14)),
+                  Text(senderName, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.w800, color: AppTheme.text, fontSize: 14)),
+                  if (senderEmail.isNotEmpty)
+                    Text(senderEmail, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   const SizedBox(height: 3),
                   Text('Para: $toLine', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
                   if (narrow) ...[
@@ -1272,7 +1367,7 @@ class _ReadingState extends State<_Reading> {
                   ],
                 ]),
               ),
-              if (!narrow) Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+              if (!narrow) Padding(padding: const EdgeInsets.only(left: 10), child: Text(_fullDate(share['created_at']?.toString()), style: TextStyle(color: AppTheme.hint, fontSize: 12))),
             ]),
           ),
           // Mensaje
@@ -1840,6 +1935,10 @@ class _DocumentCard extends StatelessWidget {
       if (doc['owner_name'] != null) 'de ${doc['owner_name']}',
     ].whereType<Object>().join(' · ');
 
+    final docTitle = doc['title']?.toString() ?? 'Documento';
+    final statePill = BSPill(label: signed ? 'Firmado' : 'Sin firmar', color: signed ? BSColors.success : BSColors.warning);
+    return LayoutBuilder(builder: (context, box) {
+    final tight = box.maxWidth < 460;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1859,14 +1958,17 @@ class _DocumentCard extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(doc['title']?.toString() ?? 'Documento', maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
+              Tooltip(
+                message: docTitle,
+                child: Text(_midEllipsis(docTitle, tight ? 26 : 38), maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w800)),
+              ),
               const SizedBox(height: 3),
-              Text(info, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+              Text(info, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.hint, fontSize: 12)),
+              if (tight) ...[const SizedBox(height: 6), statePill],
             ]),
           ),
-          const SizedBox(width: 8),
-          BSPill(label: signed ? 'Firmado' : 'Sin firmar', color: signed ? BSColors.success : BSColors.warning),
+          if (!tight) ...[const SizedBox(width: 8), statePill],
         ]),
         if ((doc['description']?.toString() ?? '').isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -1933,6 +2035,7 @@ class _DocumentCard extends StatelessWidget {
         ]),
       ]),
     );
+    });
   }
 
   /// En celular: botón principal a todo el ancho y los demás en dos columnas iguales
@@ -1952,6 +2055,15 @@ class _DocumentCard extends StatelessWidget {
       ],
     ]);
   }
+}
+
+/// Nombres largos sin espacios (Politica_tratamiento_datos_v3.pdf): corta por el medio y conserva la extensión.
+String _midEllipsis(String t, int max) {
+  if (t.length <= max || t.contains(' ')) return t;
+  final dot = t.lastIndexOf('.');
+  final tail = dot > 0 && t.length - dot <= 5 ? t.substring(dot - (dot > 4 ? 4 : 0)) : t.substring(t.length - 6);
+  final head = t.substring(0, max - tail.length - 1);
+  return '$head…$tail';
 }
 
 // Compatibilidad con otras pantallas que usaban estas funciones
