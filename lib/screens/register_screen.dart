@@ -27,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phone = TextEditingController();
 
   bool _isLoading = false;
+  bool _acceptedTerms = false;
   bool _captchaVerified = false;
   bool _captchaChecking = false; // esperando que el usuario resuelva el reto
   String? _captchaToken;
@@ -93,6 +94,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptedTerms) {
+      await SweetAlert.warning(
+        context,
+        title: 'Falta tu autorización',
+        text: 'Acepta los términos y la política de privacidad para crear la cuenta.',
+      );
+      return;
+    }
 
     if (!_captchaVerified || _captchaToken == null) {
       await SweetAlert.warning(
@@ -243,6 +253,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               verified: _captchaVerified,
               checking: _captchaChecking,
               onTap: _captchaVerified ? _resetCaptcha : _checkCaptcha,
+            ),
+            const SizedBox(height: 14),
+            _TermsCheck(
+              value: _acceptedTerms,
+              onChanged: (v) => setState(() => _acceptedTerms = v),
             ),
             SizedBox(height: wide ? 18 : 26),
             BSAuthButton(label: 'Crear cuenta', loading: _isLoading, onPressed: _register),
@@ -404,5 +419,42 @@ class _SectionLabel extends StatelessWidget {
         letterSpacing: 0.9,
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────
+// ACEPTACIÓN DE TÉRMINOS Y PRIVACIDAD
+// ─────────────────────────────────────────
+class _TermsCheck extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _TermsCheck({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final link = TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600, decoration: TextDecoration.underline);
+    Widget a(String t, String route) => InkWell(
+          onTap: () => Navigator.pushNamed(context, route),
+          child: Text(t, style: link.copyWith(fontSize: 12.5)),
+        );
+    return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      SizedBox(
+        width: 24,
+        height: 24,
+        child: Checkbox(value: value, onChanged: (v) => onChanged(v ?? false)),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: Wrap(crossAxisAlignment: WrapCrossAlignment.center, children: [
+          Text('Acepto los ', style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5)),
+          a('términos y condiciones', '/terms'),
+          Text(', la ', style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5)),
+          a('política de privacidad', '/privacy'),
+          Text(' (tratamiento de mis datos, Ley 1581) y el ', style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5)),
+          a('aviso de cookies', '/cookies'),
+          Text('.', style: TextStyle(color: GoogleAuthTheme.textSecondary, fontSize: 12.5)),
+        ]),
+      ),
+    ]);
   }
 }

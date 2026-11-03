@@ -6,6 +6,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/legal_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/email_verified_screen.dart';
@@ -129,6 +130,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       onGenerateRoute: (settings) {
         // Parsear URI para manejar query parameters en web
         final uri = Uri.parse(settings.name ?? '/');
+
+        // Textos legales: públicos, con o sin sesión
+        if (uri.path == '/terms' || uri.path == '/privacy' || uri.path == '/cookies') {
+          final tab = uri.path == '/terms' ? 0 : uri.path == '/privacy' ? 1 : 2;
+          return MaterialPageRoute(builder: (_) => LegalScreen(initialTab: tab), settings: settings);
+        }
 
         // /reset-password?token=xxx
         if (uri.path == '/reset-password') {
