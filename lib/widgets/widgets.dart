@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import '../theme/google_auth_theme.dart';
 
 // ────────────────────────────────────────────────
 // SHOW BOTTOM SHEET (showBS)
@@ -27,7 +26,7 @@ void showBS(BuildContext context, String message, {bool isError = false}) {
       backgroundColor: AppTheme.surface,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
         side: BorderSide(
           color: isError ? AppTheme.error.withOpacity(0.3) : AppTheme.success.withOpacity(0.3),
         ),
@@ -81,8 +80,8 @@ class _BSTextFieldState extends State<BSTextField> {
   @override
   Widget build(BuildContext context) {
     final light = widget.light;
-    final textColor = light ? GoogleAuthTheme.text : AppTheme.text;
-    final hintColor = light ? GoogleAuthTheme.textSecondary : AppTheme.hint;
+    final textColor = light ? AppTheme.text : AppTheme.text;
+    final hintColor = light ? AppTheme.hint : AppTheme.hint;
 
     return TextFormField(
       controller: widget.controller,
@@ -109,40 +108,40 @@ class _BSTextFieldState extends State<BSTextField> {
               )
             : null,
         filled: light ? true : null,
-        fillColor: light ? GoogleAuthTheme.surfaceAlt : null,
-        labelStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
-        hintStyle: light ? const TextStyle(color: GoogleAuthTheme.textSecondary) : null,
+        fillColor: light ? AppTheme.surface : null,
+        labelStyle: light ? const TextStyle(color: AppTheme.hint) : null,
+        hintStyle: light ? const TextStyle(color: AppTheme.hint) : null,
         border: light
             ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                borderSide: const BorderSide(color: AppTheme.border),
               )
             : null,
         enabledBorder: light
             ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.border),
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                borderSide: const BorderSide(color: AppTheme.border),
               )
             : null,
         focusedBorder: light
             ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.borderFocus, width: 2),
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                borderSide: const BorderSide(color: AppTheme.primary, width: 2),
               )
             : null,
         errorBorder: light
             ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.error),
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                borderSide: const BorderSide(color: AppTheme.error),
               )
             : null,
         focusedErrorBorder: light
             ? OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: GoogleAuthTheme.error, width: 2),
+                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+                borderSide: const BorderSide(color: AppTheme.error, width: 2),
               )
             : null,
-        errorStyle: light ? const TextStyle(color: GoogleAuthTheme.error) : null,
+        errorStyle: light ? const TextStyle(color: AppTheme.error) : null,
       ),
     );
   }
@@ -182,7 +181,7 @@ class _BSCaptchaWidgetState extends State<BSCaptchaWidget> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
         border: Border.all(
           color: _verified ? AppTheme.success.withOpacity(0.4) : AppTheme.border,
         ),
@@ -258,14 +257,14 @@ class FeatureCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(AppTheme.radiusControl)),
             child: Icon(icon, color: iconColor, size: 22),
           ),
           const SizedBox(width: 14),

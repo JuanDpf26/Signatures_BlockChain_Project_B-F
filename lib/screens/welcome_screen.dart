@@ -42,15 +42,15 @@ class _LeftPanel extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFF8F9FA), Color(0xFFEEF3FC)],
+          colors: [AppTheme.surface, AppTheme.primarySoft],
         ),
         border: Border(right: BorderSide(color: AppTheme.border, width: 1)),
       ),
       child: Stack(
         children: [
           // Círculos decorativos
-          Positioned(top: -80, left: -80, child: _Circle(300, const Color(0xFF6366f1), 0.10)),
-          Positioned(bottom: -60, right: -60, child: _Circle(250, const Color(0xFF06b6d4), 0.09)),
+          Positioned(top: -80, left: -80, child: _Circle(300, AppTheme.primary, 0.10)),
+          Positioned(bottom: -60, right: -60, child: _Circle(250, AppTheme.featureCyan, 0.09)),
 
           SingleChildScrollView(
             padding: const EdgeInsets.all(52),
@@ -91,9 +91,9 @@ class _LeftPanel extends StatelessWidget {
                   Row(children: [
                     _StatBadge(label: 'SHA-256', sub: 'Cifrado'),
                     const SizedBox(width: 12),
-                    _StatBadge(label: 'Sepolia', sub: 'Blockchain', color: const Color(0xFF06b6d4)),
+                    _StatBadge(label: 'Sepolia', sub: 'Blockchain', color: AppTheme.featureCyan),
                     const SizedBox(width: 12),
-                    _StatBadge(label: 'TLS 1.3', sub: 'Conexión', color: Colors.green),
+                    _StatBadge(label: 'TLS 1.3', sub: 'Conexión', color: AppTheme.success),
                   ]),
                   const SizedBox(height: 36),
 
@@ -107,21 +107,21 @@ class _LeftPanel extends StatelessWidget {
                   const SizedBox(height: 20),
                   _Feature(
                     icon: Icons.link_rounded,
-                    color: const Color(0xFF06b6d4),
+                    color: AppTheme.featureCyan,
                     title: 'Registro inmutable en blockchain',
                     desc: 'La firma queda registrada en Ethereum de forma permanente y verificable.',
                   ),
                   const SizedBox(height: 20),
                   _Feature(
                     icon: Icons.verified_outlined,
-                    color: Colors.green,
+                    color: AppTheme.success,
                     title: 'Verifica la autenticidad al instante',
                     desc: 'Cualquier persona puede comprobar que un documento es auténtico y no fue alterado.',
                   ),
                   const SizedBox(height: 20),
                   _Feature(
                     icon: Icons.auto_awesome_outlined,
-                    color: Colors.orange,
+                    color: AppTheme.warning,
                     title: 'Análisis inteligente de documentos',
                     desc: 'La IA extrae metadatos, genera descripciones y clasifica tus archivos automáticamente.',
                   ),
@@ -131,15 +131,15 @@ class _LeftPanel extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green.withOpacity(0.2)),
+                      color: AppTheme.success.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppTheme.success.withOpacity(0.2)),
                     ),
                     child: const Row(children: [
-                      Icon(Icons.circle, color: Colors.green, size: 8),
+                      Icon(Icons.circle, color: AppTheme.success, size: 8),
                       SizedBox(width: 8),
                       Text('Red blockchain activa — Ethereum Sepolia Testnet',
-                          style: TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.w500)),
+                          style: TextStyle(color: AppTheme.success, fontSize: 12, fontWeight: FontWeight.w500)),
                     ]),
                   ),
                   const SizedBox(height: 32),
@@ -183,7 +183,7 @@ class _RightPanel extends StatelessWidget {
                   onPressed: () => Navigator.pushNamed(context, '/login'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary, foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusControl)),
                     elevation: 0,
                   ),
                   child: const Text('Iniciar sesión', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
@@ -199,7 +199,7 @@ class _RightPanel extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppTheme.border),
                     foregroundColor: AppTheme.text,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusControl)),
                   ),
                   icon: const Icon(Icons.person_add_outlined, size: 18),
                   label: const Text('Crear cuenta', style: TextStyle(fontSize: 15)),
@@ -212,7 +212,7 @@ class _RightPanel extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppTheme.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppTheme.border),
                 ),
                 child: const Column(children: [
@@ -262,15 +262,15 @@ class _MobileContent extends StatelessWidget {
 
           _Feature(icon: Icons.lock_outline_rounded, color: AppTheme.primary, title: 'Firma con respaldo criptográfico', desc: 'Hash único que garantiza la integridad del documento.'),
           const SizedBox(height: 16),
-          _Feature(icon: Icons.link_rounded, color: const Color(0xFF06b6d4), title: 'Registro inmutable en blockchain', desc: 'Firma registrada en Ethereum de forma permanente.'),
+          _Feature(icon: Icons.link_rounded, color: AppTheme.featureCyan, title: 'Registro inmutable en blockchain', desc: 'Firma registrada en Ethereum de forma permanente.'),
           const SizedBox(height: 16),
-          _Feature(icon: Icons.verified_outlined, color: Colors.green, title: 'Verificación al instante', desc: 'Comprueba que un documento es auténtico sin alterar.'),
+          _Feature(icon: Icons.verified_outlined, color: AppTheme.success, title: 'Verificación al instante', desc: 'Comprueba que un documento es auténtico sin alterar.'),
           const SizedBox(height: 40),
 
           SizedBox(width: double.infinity, height: 50,
             child: ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/login'),
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)), elevation: 0),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusControl)), elevation: 0),
               child: const Text('Iniciar sesión', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             ),
           ),
@@ -278,7 +278,7 @@ class _MobileContent extends StatelessWidget {
           SizedBox(width: double.infinity, height: 50,
             child: OutlinedButton(
               onPressed: () => Navigator.pushNamed(context, '/register'),
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.text, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppTheme.border), foregroundColor: AppTheme.text, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusControl))),
               child: const Text('Crear cuenta', style: TextStyle(fontSize: 15)),
             ),
           ),
@@ -306,13 +306,13 @@ class _Circle extends StatelessWidget {
 class _StatBadge extends StatelessWidget {
   final String label, sub;
   final Color color;
-  const _StatBadge({required this.label, required this.sub, this.color = const Color(0xFF6366f1)});
+  const _StatBadge({required this.label, required this.sub, this.color = AppTheme.primary});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(8), border: Border.all(color: color.withOpacity(0.15))),
+      decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(AppTheme.radiusControl), border: Border.all(color: color.withOpacity(0.15))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(label, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w600)),
         Text(sub, style: const TextStyle(color: AppTheme.hint, fontSize: 10)),

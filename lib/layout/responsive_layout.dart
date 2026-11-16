@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/google_auth_theme.dart';
+import '../theme/app_theme.dart';
 
 class ResponsiveLayout extends StatelessWidget {
   final Widget child;
@@ -27,8 +27,8 @@ class ResponsiveLayout extends StatelessWidget {
     // Cada panel ocupa exactamente el 50% de la pantalla
     final panelWidth = screenWidth * 0.50;
 
-    final titleColor = light ? GoogleAuthTheme.text : Colors.white;
-    final subtitleColor = light ? GoogleAuthTheme.textSecondary : const Color(0xFF9ca3af);
+    final titleColor = light ? AppTheme.text : Colors.white;
+    final subtitleColor = light ? AppTheme.hint : const Color(0xFF9ca3af);
     final footerColor = light ? const Color(0xFF9aa0a6) : const Color(0xFF4b5563);
     final blobOpacity = light ? 0.10 : 0.08;
 
@@ -44,7 +44,7 @@ class ResponsiveLayout extends StatelessWidget {
                   ? const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [GoogleAuthTheme.surfaceAlt, Color(0xFFEEF3FC)],
+                      colors: [AppTheme.surface, AppTheme.primarySoft],
                     )
                   : const LinearGradient(
                       begin: Alignment.topLeft,
@@ -53,7 +53,7 @@ class ResponsiveLayout extends StatelessWidget {
                     ),
               border: light
                   ? const Border(
-                      right: BorderSide(color: GoogleAuthTheme.border, width: 1),
+                      right: BorderSide(color: AppTheme.border, width: 1),
                     )
                   : null,
             ),
@@ -68,7 +68,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 380,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF6366f1).withOpacity(blobOpacity),
+                      color: AppTheme.primary.withOpacity(blobOpacity),
                     ),
                   ),
                 ),
@@ -81,7 +81,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 320,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF06b6d4).withOpacity(blobOpacity - 0.01),
+                      color: AppTheme.featureCyan.withOpacity(blobOpacity - 0.01),
                     ),
                   ),
                 ),
@@ -94,7 +94,7 @@ class ResponsiveLayout extends StatelessWidget {
                     height: 150,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF6366f1).withOpacity(blobOpacity - 0.04),
+                      color: AppTheme.primary.withOpacity(blobOpacity - 0.04),
                     ),
                   ),
                 ),
@@ -115,14 +115,14 @@ class ResponsiveLayout extends StatelessWidget {
                           height: 68,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF6366f1), Color(0xFF06b6d4)],
+                              colors: [AppTheme.primary, Color(0xFF5B9DF5)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF6366f1).withOpacity(0.35),
+                                color: AppTheme.primary.withOpacity(0.35),
                                 blurRadius: 24,
                                 offset: const Offset(0, 10),
                               ),
@@ -164,7 +164,7 @@ class ResponsiveLayout extends StatelessWidget {
                         // Features
                         _WebFeature(
                           icon: Icons.lock_rounded,
-                          color: const Color(0xFF6366f1),
+                          color: AppTheme.primary,
                           title: 'Criptografía asimétrica',
                           desc: 'PKI + SHA-256 para máxima seguridad',
                           light: light,
@@ -172,7 +172,7 @@ class ResponsiveLayout extends StatelessWidget {
                         const SizedBox(height: 24),
                         _WebFeature(
                           icon: Icons.link_rounded,
-                          color: const Color(0xFF06b6d4),
+                          color: AppTheme.featureCyan,
                           title: 'Trazabilidad blockchain',
                           desc: 'Registro inmutable de cada firma',
                           light: light,
@@ -180,7 +180,7 @@ class ResponsiveLayout extends StatelessWidget {
                         const SizedBox(height: 24),
                         _WebFeature(
                           icon: Icons.verified_rounded,
-                          color: const Color(0xFF22c55e),
+                          color: AppTheme.info,
                           title: 'Validez legal',
                           desc: 'Cumple estándares internacionales',
                           light: light,
@@ -209,7 +209,7 @@ class ResponsiveLayout extends StatelessWidget {
           width: panelWidth,
           height: screenHeight,
           child: Container(
-            color: light ? GoogleAuthTheme.background : const Color(0xFF0f0f1a),
+            color: light ? AppTheme.background : const Color(0xFF0f0f1a),
             child: child,
           ),
         ),
@@ -255,7 +255,7 @@ class _WebFeature extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: light ? GoogleAuthTheme.text : Colors.white,
+                  color: light ? AppTheme.text : Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
@@ -264,7 +264,7 @@ class _WebFeature extends StatelessWidget {
               Text(
                 desc,
                 style: TextStyle(
-                  color: light ? GoogleAuthTheme.textSecondary : const Color(0xFF6b7280),
+                  color: light ? AppTheme.hint : const Color(0xFF6b7280),
                   fontSize: 13,
                 ),
               ),
