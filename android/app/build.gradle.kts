@@ -18,13 +18,7 @@ fun signingValue(env: String, prop: String): String? =
 val releaseStoreFile = signingValue("ANDROID_KEYSTORE_PATH", "storeFile")
 val releasePassword = signingValue("ANDROID_KEY_PASSWORD", "password")
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
-extensions.configure<com.android.build.gradle.internal.dsl.BaseAppModuleExtension>("android") {
+android {
     namespace = "com.example.frontend"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -32,6 +26,10 @@ extensions.configure<com.android.build.gradle.internal.dsl.BaseAppModuleExtensio
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     defaultConfig {
