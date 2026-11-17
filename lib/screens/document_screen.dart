@@ -348,6 +348,26 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     if (mounted) await _load();
   }
 
+  Future<void> _revoke(String docId, String title) async {
+    final ok = await SweetAlert.confirm(
+      context,
+      type: SweetAlertType.warning,
+      danger: true,
+      title: 'Revocar firma',
+      text: '¿Revocar la firma de "$title"? La revocación se registra en blockchain y no se puede deshacer: para volver a firmarlo tendrás que subir una nueva versión del archivo.',
+      confirmText: 'Sí, revocar',
+    );
+    if (!ok || !mounted) return;
+    final res = await DocumentService.revokeSignature(docId);
+    if (!mounted) return;
+    if (res.containsKey('error')) {
+      await SweetAlert.error(context, title: 'No se pudo revocar', text: res['error'].toString());
+    } else {
+      SweetAlert.success(context, title: 'Firma revocada', autoClose: const Duration(milliseconds: 1500));
+      await _load();
+    }
+  }
+
   Future<void> _delete(String docId, String title) async {
     final ok = await SweetAlert.confirm(
       context,
@@ -746,6 +766,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         onSend: () => _sendByEmail(doc),
         onReanalyze: () => _reanalyze(docId),
         onDelete: () => _delete(docId, info.title),
+        onRevoke: () => _revoke(docId, info.title),
         quick: isTable,
       );
       // Cada fila aparece con un pequeño escalonado
@@ -778,6 +799,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                       onSend: () => _sendByEmail(doc),
                       onReanalyze: () => _reanalyze(docId),
                       onDelete: () => _delete(docId, info.title),
+                      onRevoke: () => _revoke(docId, info.title),
                       menuOnly: true,
                     ),
                     isSigning: _signingDocId == docId,
@@ -1373,12 +1395,14 @@ class _DocActions extends StatelessWidget {
   final _DocInfo info;
   final bool isSigning;
   final VoidCallback onSign, onOpen, onDetail, onEdit, onSend, onReanalyze, onDelete;
+  /// Revoca la firma registrada en blockchain (solo documentos firmados)
+  final VoidCallback? onRevoke;
   /// En la tabla de escritorio se muestran accesos rápidos (ver / detalles / enviar)
   final bool quick;
   /// Solo el menú ⋯ (la tarjeta del celular tiene sus propios botones)
   final bool menuOnly;
 
-  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onOpen, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete, this.quick = false, this.menuOnly = false});
+  const _DocActions({required this.info, required this.isSigning, required this.onSign, required this.onOpen, required this.onDetail, required this.onEdit, required this.onSend, required this.onReanalyze, required this.onDelete, this.onRevoke, this.quick = false, this.menuOnly = false});
 
   Widget _quick(IconData icon, String tip, VoidCallback onTap) => Padding(
         padding: const EdgeInsets.only(right: 6),
@@ -1436,6 +1460,7 @@ class _DocActions extends StatelessWidget {
           if (v == 'edit') onEdit();
           if (v == 'send') onSend();
           if (v == 'ai') onReanalyze();
+          if (v == 'revoke') onRevoke?.call();
           if (v == 'delete') onDelete();
         },
         itemBuilder: (_) => [
@@ -1444,6 +1469,8 @@ class _DocActions extends StatelessWidget {
           PopupMenuItem(value: 'edit', child: _MenuItem(Icons.edit_outlined, 'Editar datos', AppTheme.text)),
           PopupMenuItem(value: 'send', child: _MenuItem(Icons.send_outlined, 'Enviar o pedir revisión', AppTheme.text)),
           PopupMenuItem(value: 'ai', child: _MenuItem(Icons.manage_search_rounded, 'Analizar contenido', AppTheme.text)),
+          if (onRevoke != null && (info.status == 'signed' || info.status == 'verified'))
+            PopupMenuItem(value: 'revoke', child: _MenuItem(Icons.block_rounded, 'Revocar firma', BSColors.danger)),
           PopupMenuDivider(),
           PopupMenuItem(value: 'delete', child: _MenuItem(Icons.delete_outline_rounded, 'Eliminar', BSColors.danger)),
         ],

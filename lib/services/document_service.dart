@@ -223,6 +223,21 @@ class DocumentService {
     }
   }
 
+  /// Revoca la firma registrada en blockchain (DELETE /api/signing/:id/revoke)
+  static Future<Map<String, dynamic>> revokeSignature(String docId) async {
+    try {
+      final headers = await _authHeaders();
+      final res = await http.delete(Uri.parse('${AppConfig.apiUrl}/api/signing/$docId/revoke'), headers: headers).timeout(const Duration(seconds: 60));
+      if (res.body.isEmpty) return {'error': 'Servidor sin respuesta'};
+      final data = jsonDecode(res.body);
+      if (data is! Map) return {'error': 'Respuesta inesperada del servidor'};
+      if (res.statusCode >= 400 && !data.containsKey('error')) return {'error': 'Error ${res.statusCode}'};
+      return Map<String, dynamic>.from(data);
+    } catch (e) {
+      return {'error': 'Error: $e'};
+    }
+  }
+
   static Future<Map<String, dynamic>> getStats() async {
     try {
       final headers = await _authHeaders();
