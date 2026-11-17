@@ -634,9 +634,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
                           : null,
                       filled: true,
                       fillColor: AppTheme.card,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
@@ -813,7 +813,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
         decoration: floating
             ? BoxDecoration(
                 color: AppTheme.card,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppTheme.border),
                 boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 20, offset: const Offset(0, 6))],
               )
@@ -959,7 +959,7 @@ class _DropOverlay extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
           decoration: BoxDecoration(
             color: AppTheme.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 24, offset: const Offset(0, 8))],
           ),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -986,7 +986,7 @@ class _BulkProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppTheme.card,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 360),
         child: Padding(
@@ -1075,7 +1075,7 @@ class _StatusTabState extends State<_StatusTab> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             color: sel ? AppTheme.primary : AppTheme.card,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: sel ? AppTheme.primary : (_hover ? AppTheme.primary.withOpacity(0.35) : AppTheme.border)),
             boxShadow: sel ? [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 14, offset: const Offset(0, 6))] : null,
           ),
@@ -1262,7 +1262,7 @@ class _DocTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final meta = [info.ext.toUpperCase(), info.sizeStr, if (info.pages != null) '${info.pages} pág.', info.dateStr].join(' · ');
-    final btnShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(10));
+    final btnShape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(14));
     final second = info.canSign
         ? ElevatedButton.icon(
             onPressed: isSigning ? null : onSign,
@@ -1319,7 +1319,7 @@ class _DocTile extends StatelessWidget {
                     height: 36,
                     decoration: BoxDecoration(
                       color: selected ? AppTheme.primary : AppTheme.card,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: selected ? AppTheme.primary : AppTheme.border, width: 1.5),
                     ),
                     child: selected ? const Icon(Icons.check_rounded, color: Colors.white, size: 22) : null,
@@ -1428,7 +1428,7 @@ class _DocActions extends StatelessWidget {
       PopupMenuButton<String>(
         tooltip: 'Más acciones',
         color: AppTheme.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         icon: Icon(Icons.more_horiz_rounded, color: AppTheme.hint),
         onSelected: (v) {
           if (v == 'open') onOpen();
@@ -1530,7 +1530,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 Container(
                   width: 44,
                   height: 44,
-                  decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(16)),
                   child: Icon(Icons.draw_rounded, color: AppTheme.primary, size: 22),
                 ),
                 const SizedBox(width: 14),
@@ -1556,7 +1556,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 // Documento
                 Container(
                   padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+                  decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
                   child: Row(children: [
                     BSInitialBox(
                       text: ext.toUpperCase(),
@@ -1598,7 +1598,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                   height: narrow ? 110 : 130,
                   decoration: BoxDecoration(
                     color: AppTheme.card,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: hasSig ? AppTheme.border : BSColors.warning, width: hasSig ? 1 : 1.4),
                   ),
                   child: Stack(children: [
@@ -1647,7 +1647,7 @@ class _SignConfirmDialogState extends State<_SignConfirmDialog> {
                 // Aceptación
                 InkWell(
                   onTap: hasSig ? () => setState(() => _agree = !_agree) : null,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(14),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

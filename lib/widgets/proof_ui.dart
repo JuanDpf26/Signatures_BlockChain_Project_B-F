@@ -94,7 +94,7 @@ class HuellaField extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
       decoration: BoxDecoration(
         color: BSColors.page,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(children: [
@@ -237,9 +237,9 @@ class _TechDetailsState extends State<TechDetails> {
   Widget build(BuildContext context) {
     if (widget.rows.isEmpty) return const SizedBox.shrink();
     return Container(
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(14)),
       foregroundDecoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.border),
       ),
       clipBehavior: Clip.antiAlias,
@@ -363,7 +363,7 @@ class StatusSeal extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.22)),
       ),
       child: Row(children: [

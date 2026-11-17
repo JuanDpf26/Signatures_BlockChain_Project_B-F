@@ -146,7 +146,7 @@ class _BSCardState extends State<BSCard> {
       transform: Matrix4.translationValues(0, lifted ? -2 : 0, 0),
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
         border: Border.all(color: widget.borderColor ?? (lifted ? AppTheme.primary.withOpacity(0.25) : AppTheme.border)),
         boxShadow: lifted ? AppTheme.hoverShadow : AppTheme.cardShadow,
       ),
@@ -234,7 +234,7 @@ class _BSKpiCardState extends State<BSKpiCard> {
           padding: EdgeInsets.fromLTRB(narrow ? 14 : 18, narrow ? 14 : 16, narrow ? 12 : 16, narrow ? 14 : 16),
           decoration: BoxDecoration(
             color: AppTheme.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
             border: Border.all(color: _hover ? c.withOpacity(0.35) : AppTheme.border),
             boxShadow: _hover
                 ? [BoxShadow(color: c.withOpacity(0.16), blurRadius: 20, offset: const Offset(0, 8))]
@@ -254,10 +254,15 @@ class _BSKpiCardState extends State<BSKpiCard> {
                   turns: _hover ? -0.03 : 0,
                   duration: const Duration(milliseconds: 250),
                   child: Container(
-                    width: narrow ? 32 : 38,
-                    height: narrow ? 32 : 38,
-                    decoration: BoxDecoration(color: c.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
-                    child: Icon(widget.icon, color: c, size: narrow ? 17 : 19),
+                    width: narrow ? 36 : 44,
+                    height: narrow ? 36 : 44,
+                    // Insignia circular rellena, con brillo suave del mismo color
+                    decoration: BoxDecoration(
+                      color: c,
+                      shape: BoxShape.circle,
+                      boxShadow: [BoxShadow(color: c.withOpacity(0.28), blurRadius: 12, offset: const Offset(0, 5))],
+                    ),
+                    child: Icon(widget.icon, color: Colors.white, size: narrow ? 18 : 21),
                   ),
                 ),
               ],
@@ -351,11 +356,11 @@ class BSPill extends StatelessWidget {
   Widget build(BuildContext context) {
     // Píldora blanca con borde y punto de color (estilo de los mockups)
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      // Píldora suave: fondo teñido del color de estado, sin borde
       decoration: BoxDecoration(
-        color: AppTheme.card,
+        color: color.withOpacity(AppTheme.isDark ? 0.18 : 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color, width: 1.4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -411,7 +416,7 @@ class BSInfoBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.15)),
       ),
       child: Row(
@@ -498,7 +503,7 @@ class BSInitialBox extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: icon != null
           ? Icon(icon, color: color, size: 18)
@@ -539,7 +544,7 @@ class BSFilterDropdown extends StatelessWidget {
         padding: const EdgeInsets.only(left: 12, right: 8),
         decoration: BoxDecoration(
           color: active ? AppTheme.primary.withOpacity(0.06) : AppTheme.card,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: active ? AppTheme.primary.withOpacity(0.45) : AppTheme.border),
         ),
         child: DropdownButtonHideUnderline(
@@ -548,7 +553,7 @@ class BSFilterDropdown extends StatelessWidget {
             isExpanded: true,
             isDense: true,
             dropdownColor: AppTheme.card,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(14),
             icon: Icon(Icons.keyboard_arrow_down_rounded, color: active ? AppTheme.primary : AppTheme.hint, size: 18),
             selectedItemBuilder: (_) => options
                 .map((o) => Column(
@@ -579,7 +584,7 @@ class BSFilterDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: active ? AppTheme.primary.withOpacity(0.06) : AppTheme.card,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: active ? AppTheme.primary.withOpacity(0.45) : AppTheme.border),
       ),
       child: DropdownButtonHideUnderline(
@@ -587,7 +592,7 @@ class BSFilterDropdown extends StatelessWidget {
           value: value,
           isDense: true,
           dropdownColor: AppTheme.card,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           icon: Icon(Icons.keyboard_arrow_down_rounded,
               color: active ? AppTheme.primary : AppTheme.hint, size: 18),
           selectedItemBuilder: (_) => options
@@ -643,7 +648,7 @@ class BSPrimaryButton extends StatelessWidget {
           // El tema global usa ancho infinito; aquí el botón se ajusta a su contenido
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         icon: loading
             ? const SizedBox(
@@ -679,7 +684,7 @@ class BSOutlineButton extends StatelessWidget {
           side: BorderSide(color: c, width: 1.4),
           minimumSize: const Size(0, 44),
           padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         icon: Icon(icon ?? Icons.arrow_forward_rounded, size: 18),
         // Una sola línea: si el botón es angosto (celular) el texto se reduce un poco

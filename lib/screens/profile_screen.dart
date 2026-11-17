@@ -234,7 +234,7 @@ class _SettingsCard extends StatelessWidget {
     ]);
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: border)),
+      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: border)),
       clipBehavior: Clip.antiAlias,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Padding(
@@ -963,9 +963,9 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
             Container(
               height: 130, width: double.infinity,
               decoration: BoxDecoration(color: const Color(0xFFFFFFFF), // papel blanco: la firma es tinta oscura
-                  borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+                  borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
                 child: Image.network(_savedSignatureUrl!, fit: BoxFit.contain,
                   loadingBuilder: (ctx, child, progress) => progress == null ? child : Center(child: CircularProgressIndicator(color: AppTheme.primary)),
                   errorBuilder: (_, __, ___) => Center(child: Icon(Icons.broken_image_rounded, color: AppTheme.hint)),
@@ -1001,7 +1001,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
 
           // Tabs: Dibujar / Subir
           Container(
-            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
             child: TabBar(
               controller: _tabController,
               indicatorColor: AppTheme.primary,
@@ -1029,7 +1029,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                     child: RepaintBoundary(
                       key: _canvasKey,
                       child: Container(
-                        decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border, width: 1.5)),
+                        decoration: BoxDecoration(color: const Color(0xFFFFFFFF), borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border, width: 1.5)),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(11),
                           // El recognizer "eager" reclama el gesto para que la página
@@ -1076,7 +1076,7 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     color: BSColors.page,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppTheme.border),
                   ),
                   child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -1229,7 +1229,7 @@ class _KeysCardState extends State<_KeysCard> {
                   // Llave pública en bloque oscuro, con copiar
                   Container(
                     padding: const EdgeInsets.fromLTRB(14, 10, 8, 14),
-                    decoration: BoxDecoration(color: const Color(0xFF0F1B33), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: const Color(0xFF0F1B33), borderRadius: BorderRadius.circular(14)),
                     child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                       Row(children: [
                         Expanded(child: Text('Llave pública (PEM)', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w700))),

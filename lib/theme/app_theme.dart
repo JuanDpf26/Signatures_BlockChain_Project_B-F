@@ -101,12 +101,16 @@ class AppTheme {
   // Colores fijos
   static const Color featureBlue = Color(0xFF7E9FDB); // azul claro (series secundarias)
   static const Color featureCyan = Color(0xFF1565C0);
+  // Radios de la nueva estética: tarjetas muy redondeadas y controles suaves
+  static const double radiusCard = 22;
+  static const double radiusControl = 14;
+
   static const Color error = Color(0xFFD32F2F);
   static const Color success = Color(0xFF2E7D32);
 
   // Sombras suaves en capas: dan profundidad sin verse pesadas (en oscuro casi no se usan)
   static List<BoxShadow> get cardShadow => [
-        BoxShadow(color: const Color(0xFF0F172A).withOpacity(isDark ? 0.0 : 0.025), blurRadius: 6, offset: const Offset(0, 1)),
+        BoxShadow(color: const Color(0xFF0F172A).withOpacity(isDark ? 0.0 : 0.04), blurRadius: 20, offset: const Offset(0, 6)),
       ];
 
   static List<BoxShadow> get hoverShadow => [
@@ -173,7 +177,7 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: card,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
       bottomSheetTheme: BottomSheetThemeData(backgroundColor: card, surfaceTintColor: Colors.transparent),
       popupMenuTheme: PopupMenuThemeData(
@@ -181,13 +185,13 @@ class AppTheme {
         textStyle: TextStyle(color: text),
         surfaceTintColor: Colors.transparent,
         elevation: 8,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       textButtonTheme: TextButtonThemeData(
         style: ButtonStyle(
           foregroundColor: WidgetStateProperty.all(primary),
           overlayColor: overlay(primary),
-          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(style: ButtonStyle(overlayColor: overlay(primary))),
@@ -207,7 +211,7 @@ class AppTheme {
           backgroundColor: primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ).copyWith(
@@ -221,7 +225,7 @@ class AppTheme {
           foregroundColor: text,
           side: BorderSide(color: border, width: 1),
           minimumSize: const Size(double.infinity, 56),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ).copyWith(overlayColor: overlay(primary)),
       ),
@@ -230,23 +234,23 @@ class AppTheme {
         fillColor: surface,
         hoverColor: primary.withOpacity(0.03),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: error),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: error, width: 2),
         ),
         labelStyle: TextStyle(color: hint),
@@ -257,7 +261,7 @@ class AppTheme {
         backgroundColor: surface,
         contentTextStyle: TextStyle(color: text),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: border),
         ),
         behavior: SnackBarBehavior.floating,

@@ -298,7 +298,7 @@ class _DocumentDetailPanelState extends State<DocumentDetailPanel> with SingleTi
         tooltip: 'Más acciones',
         color: AppTheme.card,
         position: PopupMenuPosition.under,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         onSelected: _more,
         itemBuilder: (_) => [
           const PopupMenuItem(value: 'edit', child: _MoreItem(Icons.edit_outlined, 'Editar datos', 'Nombre, categoría, etiquetas…')),
@@ -566,7 +566,7 @@ class _ActionTile extends StatelessWidget {
         Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(16)),
           child: Icon(icon, size: 20, color: AppTheme.primary),
         ),
         const SizedBox(height: 5),
@@ -574,7 +574,7 @@ class _ActionTile extends StatelessWidget {
       ]),
     );
     if (onTap == null) return body;
-    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: body);
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(16), child: body);
   }
 }
 
@@ -615,7 +615,7 @@ class _SignedPdfCard extends StatelessWidget {
     ]);
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
       child: narrow
           ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
               Row(children: [Icon(Icons.qr_code_2_rounded, color: AppTheme.primary, size: 30), const SizedBox(width: 12), Expanded(child: text)]),
@@ -659,7 +659,7 @@ class _NextStepCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.25)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -667,7 +667,7 @@ class _NextStepCard extends StatelessWidget {
           Container(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(16)),
             child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: 14),
@@ -767,7 +767,7 @@ class DocAiCard extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+            decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
             child: Icon(Icons.manage_search_rounded, color: AppTheme.hint, size: 24),
           ),
           const SizedBox(width: 14),
@@ -1114,9 +1114,9 @@ class _EditTabState extends State<_EditTab> {
         fillColor: AppTheme.card,
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.6)),
       );
 
   Widget _label(String text, [String? help]) => Padding(
@@ -1306,7 +1306,7 @@ class _EditTabState extends State<_EditTab> {
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
         color: _dirty ? BSColors.selected : AppTheme.card,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _dirty ? AppTheme.primary.withOpacity(0.35) : AppTheme.border),
       ),
       child: Wrap(
@@ -1394,14 +1394,14 @@ class _LevelOption extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         hoverColor: color.withOpacity(0.06),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: selected ? color.withOpacity(0.09) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: selected ? color : AppTheme.border, width: selected ? 1.6 : 1),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1599,7 +1599,7 @@ class _StatTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: BSColors.page,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppTheme.border),
       ),
       child: Row(children: [

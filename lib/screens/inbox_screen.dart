@@ -309,7 +309,7 @@ class _Panel extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         decoration: BoxDecoration(
           color: AppTheme.card,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppTheme.border),
           boxShadow: AppTheme.cardShadow,
         ),
@@ -349,7 +349,7 @@ class _FolderRail extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: BSColors.warning.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: BSColors.warning.withOpacity(0.3)),
                 ),
                 child: Stack(alignment: Alignment.center, children: [
@@ -386,7 +386,7 @@ class _FolderRail extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: BSColors.warning.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: BSColors.warning.withOpacity(0.25)),
             ),
             child: Row(children: [
@@ -436,7 +436,7 @@ class _FolderTileState extends State<_FolderTile> {
               margin: const EdgeInsets.only(bottom: 4),
               decoration: BoxDecoration(
                 color: sel ? BSColors.selected : (_hover ? BSColors.page : Colors.transparent),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Stack(alignment: Alignment.center, children: [
                 Icon(widget.folder.icon, size: 21, color: sel ? AppTheme.primary : AppTheme.hint),
@@ -615,8 +615,8 @@ class _ListPane extends StatelessWidget {
                 filled: true,
                 fillColor: BSColors.page,
                 contentPadding: EdgeInsets.zero,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
               ),
             ),
            )),
@@ -632,7 +632,7 @@ class _ListPane extends StatelessWidget {
                    elevation: 0,
                    minimumSize: const Size(0, 40),
                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                  ),
                  icon: const Icon(Icons.edit_square, size: 17),
                  label: const Text('Nuevo', style: TextStyle(fontWeight: FontWeight.w800)),
@@ -733,7 +733,7 @@ class _FocusTab extends StatelessWidget {
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppTheme.primary, borderRadius: BorderRadius.circular(14)),
               child: Text('$badge', style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)),
             ),
           ],
@@ -1434,7 +1434,7 @@ class _ReadingState extends State<_Reading> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: BSColors.warning.withOpacity(0.07),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: BSColors.warning.withOpacity(0.35)),
       ),
       child: LayoutBuilder(builder: (context, c) => narrow || c.maxWidth < 620
@@ -1463,7 +1463,7 @@ class _ReadingState extends State<_Reading> {
     final pending = total - ok - no;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           Icon(Icons.fact_check_outlined, color: AppTheme.primary, size: 20),
@@ -1656,9 +1656,9 @@ class _ComposeDialogState extends State<_ComposeDialog> {
         hintStyle: TextStyle(color: AppTheme.hint, fontSize: 13),
         filled: true,
         fillColor: AppTheme.card,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
       );
 
   @override
@@ -1748,7 +1748,7 @@ class _RespondDialogState extends State<_RespondDialog> {
               Container(
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
                 child: Icon(ok ? Icons.check_rounded : Icons.close_rounded, color: color),
               ),
               const SizedBox(width: 12),
@@ -1772,9 +1772,9 @@ class _RespondDialogState extends State<_RespondDialog> {
                 errorText: _err,
                 filled: true,
                 fillColor: AppTheme.card,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: color, width: 1.5)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: color, width: 1.5)),
               ),
             ),
             const SizedBox(height: 6),
@@ -1870,7 +1870,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
                   filled: true,
                   fillColor: BSColors.page,
                   contentPadding: EdgeInsets.zero,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
                 ),
               ),
             ),
@@ -1895,7 +1895,7 @@ class _PickDocumentDialogState extends State<_PickDocumentDialog> {
                           final signed = ['signed', 'verified'].contains(d['status']);
                           return ListTile(
                             onTap: () => Navigator.pop(context, d),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                             leading: Container(
                               width: 38,
                               height: 38,
@@ -1943,7 +1943,7 @@ class _DocumentCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.border),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -1952,7 +1952,7 @@ class _DocumentCard extends StatelessWidget {
           Container(
             width: 48,
             height: 48,
-            decoration: BoxDecoration(color: tint.withOpacity(0.09), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: tint.withOpacity(0.09), borderRadius: BorderRadius.circular(14)),
             child: Icon(pdf ? Icons.picture_as_pdf_outlined : Icons.article_outlined, color: tint),
           ),
           const SizedBox(width: 12),

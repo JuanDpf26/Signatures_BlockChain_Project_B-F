@@ -310,12 +310,12 @@ class _LiveKpi extends StatelessWidget {
     final compact = MediaQuery.of(context).size.width < 560;
     return Container(
       padding: EdgeInsets.all(compact ? 12 : 16),
-      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppTheme.border)),
       child: Row(children: [
         if (!compact) Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
           child: Icon(icon, color: color, size: 22),
         ),
         if (!compact) const SizedBox(width: 12),
@@ -536,7 +536,7 @@ class _UserDetailState extends State<_UserDetail> {
     Widget stat(String label, int v, {Color? color}) => Container(
           width: _statW,
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('$v', style: TextStyle(color: color ?? AppTheme.text, fontSize: 20, fontWeight: FontWeight.w800)),
             Text(label, maxLines: 2, style: TextStyle(color: AppTheme.hint, fontSize: 11.5)),

@@ -71,10 +71,10 @@ class _NotificationBellState extends State<NotificationBell> {
               color: AppTheme.card,
               elevation: 12,
               shadowColor: Colors.black.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(20),
               clipBehavior: Clip.antiAlias,
               child: Container(
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), border: Border.all(color: AppTheme.border)),
                 child: panel,
               ),
             ),
@@ -315,7 +315,7 @@ class _NotificationPanelState extends State<_NotificationPanel> {
           padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           decoration: BoxDecoration(
             color: AppTheme.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppTheme.border),
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

@@ -292,7 +292,7 @@ class _AuditScreenState extends State<AuditScreen> {
       Container(
         width: 38,
         height: 38,
-        decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: BSColors.selected, borderRadius: BorderRadius.circular(14)),
         child: Icon(iconFor(action), size: 19, color: AppTheme.primary),
       ),
       const SizedBox(width: 12),
@@ -396,20 +396,20 @@ class _ExportDialogState extends State<_ExportDialog> {
     final sel = _format == value;
     return InkWell(
       onTap: () => setState(() => _format = value),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: sel ? AppTheme.primary.withOpacity(0.07) : AppTheme.card,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: sel ? AppTheme.primary : AppTheme.border, width: sel ? 1.6 : 1),
         ),
         child: Row(children: [
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
             child: Icon(icon, color: AppTheme.primary, size: 20),
           ),
           const SizedBox(width: 12),

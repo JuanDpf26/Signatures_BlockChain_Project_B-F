@@ -320,9 +320,8 @@ class _WebShellState extends State<_WebShell> {
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    // En pantallas medianas (tablet / laptop pequeña) el menú arranca contraído
-    final collapsed = _userCollapsed ?? width < 1200;
+    // Menú compacto de iconos por defecto (como en el diseño de referencia); el usuario puede expandirlo
+    final collapsed = _userCollapsed ?? true;
 
     return Scaffold(
       backgroundColor: BSColors.page,
@@ -386,30 +385,24 @@ class _Sidebar extends StatelessWidget {
     Widget section(String text) => c
         ? Padding(
             padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
-            child: Container(height: 1, color: Colors.white.withOpacity(0.14)),
+            child: Container(height: 1, color: AppTheme.border),
           )
         : Padding(
             padding: const EdgeInsets.fromLTRB(26, 18, 16, 8),
-            child: Text(text, style: TextStyle(color: Colors.white.withOpacity(0.55), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
+            child: Text(text, style: TextStyle(color: AppTheme.hint.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.9)),
           );
 
+    // Menú lateral claro y limpio: fondo suave, borde fino y selección en tono primario
     return AnimatedContainer(
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
       width: w,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          // En modo oscuro, azul noche para no encandilar
-          colors: AppTheme.isDark ? const [Color(0xFF13203A), Color(0xFF0D1117)] : [AppTheme.primary, AppTheme.primaryDark],
-        ),
+        color: AppTheme.surface,
+        border: Border(right: BorderSide(color: AppTheme.border)),
       ),
       child: ClipRect(
         child: Stack(fit: StackFit.expand, children: [
-          // Círculos decorativos (mismo lenguaje que la pantalla de inicio de sesión)
-          Positioned(top: -70, right: -80, child: _Ring(size: 220, opacity: 0.07)),
-          Positioned(bottom: 120, left: -90, child: _Ring(size: 200, opacity: 0.05)),
           OverflowBox(
             alignment: Alignment.topLeft,
             minWidth: w,
@@ -419,15 +412,15 @@ class _Sidebar extends StatelessWidget {
               Padding(
                 padding: EdgeInsets.fromLTRB(c ? 0 : 22, 24, c ? 0 : 16, 4),
                 child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
-                  const _LogoMark(size: 46, onBlue: true),
+                  _LogoMark(size: 46, onBlue: AppTheme.isDark),
                   if (!c) ...[
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        const BrandWordmark(fontSize: 24, onDark: true),
+                        BrandWordmark(fontSize: 24, onDark: AppTheme.isDark),
                         Text('Firma digital con blockchain',
                             maxLines: 1, overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12, fontWeight: FontWeight.w500)),
+                            style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w500)),
                       ]),
                     ),
                   ],
@@ -482,19 +475,19 @@ class _Sidebar extends StatelessWidget {
                     type: MaterialType.transparency,
                     child: InkWell(
                       onTap: onToggle,
-                      borderRadius: BorderRadius.circular(10),
-                      hoverColor: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(14),
+                      hoverColor: AppTheme.primary.withOpacity(0.07),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
                         child: Row(mainAxisAlignment: c ? MainAxisAlignment.center : MainAxisAlignment.start, children: [
                           AnimatedRotation(
                             turns: c ? 0.5 : 0,
                             duration: const Duration(milliseconds: 260),
-                            child: Icon(Icons.keyboard_double_arrow_left_rounded, color: Colors.white.withOpacity(0.75), size: 20),
+                            child: Icon(Icons.keyboard_double_arrow_left_rounded, color: AppTheme.hint, size: 20),
                           ),
                           if (!c) ...[
                             const SizedBox(width: 10),
-                            Text('Contraer menú', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12, fontWeight: FontWeight.w600)),
+                            Text('Contraer menú', style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
                           ],
                         ]),
                       ),
@@ -508,20 +501,6 @@ class _Sidebar extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Aro decorativo translúcido
-class _Ring extends StatelessWidget {
-  final double size, opacity;
-  const _Ring({required this.size, required this.opacity});
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(opacity), width: 28)),
-        ),
-      );
 }
 
 /// Tarjeta del usuario al final del menú: avatar, nombre, correo y salir
@@ -553,8 +532,9 @@ class _UserCard extends StatelessWidget {
       padding: EdgeInsets.all(collapsed ? 6 : 10),
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 18, offset: const Offset(0, 8))],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: collapsed
           ? Column(children: [
@@ -633,7 +613,7 @@ class _NavItemState extends State<_NavItem> {
   Widget build(BuildContext context) {
     final sel = widget.selected;
     final c = widget.collapsed;
-    final fg = sel ? AppTheme.primary : Colors.white.withOpacity(_hover ? 1 : 0.86);
+    final fg = sel ? AppTheme.primary : (_hover ? AppTheme.text : AppTheme.hint);
 
     Widget icon = Icon(sel ? (widget.activeIcon ?? widget.icon) : widget.icon, color: fg, size: c ? 23 : 21);
     if (widget.badge > 0) {
@@ -671,11 +651,11 @@ class _NavItemState extends State<_NavItem> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: sel ? widget.badgeColor.withOpacity(0.14) : Colors.white.withOpacity(0.16),
+                    color: sel ? widget.badgeColor.withOpacity(0.16) : AppTheme.primary.withOpacity(0.10),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text('${widget.badge}',
-                      style: TextStyle(color: sel ? (widget.badgeColor == BSColors.warning ? BSColors.warning : AppTheme.primary) : Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: sel ? (widget.badgeColor == BSColors.warning ? BSColors.warning : AppTheme.primary) : AppTheme.primary, fontSize: 12, fontWeight: FontWeight.w800)),
                 ),
               ),
           ]);
@@ -698,9 +678,8 @@ class _NavItemState extends State<_NavItem> {
             height: c ? 64 : 48,
             padding: EdgeInsets.symmetric(horizontal: c ? 4 : 16),
             decoration: BoxDecoration(
-              color: sel ? AppTheme.card : (_hover ? Colors.white.withOpacity(0.1) : Colors.transparent),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: sel ? [BoxShadow(color: Colors.black.withOpacity(0.16), blurRadius: 14, offset: const Offset(0, 6))] : null,
+              color: sel ? BSColors.selected : (_hover ? AppTheme.primary.withOpacity(0.06) : Colors.transparent),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: content,
           ),
@@ -784,9 +763,9 @@ class _TopBarState extends State<_TopBar> {
                   filled: true,
                   fillColor: BSColors.page,
                   contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.border)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.border)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
                 ),
                 onChanged: (_) => setState(() {}),
               ),
@@ -1234,8 +1213,8 @@ class _HeroCard extends StatelessWidget {
     ];
 
     final ring = SizedBox(
-      width: narrow ? 74 : 104,
-      height: narrow ? 74 : 104,
+      width: narrow ? 64 : 84,
+      height: narrow ? 64 : 84,
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: loading ? 0 : pct),
         duration: const Duration(milliseconds: 900),
@@ -1244,103 +1223,68 @@ class _HeroCard extends StatelessWidget {
           SizedBox.expand(
             child: CircularProgressIndicator(
               value: x,
-              strokeWidth: narrow ? 7 : 9,
-              backgroundColor: Colors.white.withOpacity(0.18),
-              valueColor: const AlwaysStoppedAnimation(Colors.white),
+              strokeWidth: narrow ? 7 : 8,
+              backgroundColor: AppTheme.primary.withOpacity(0.12),
+              valueColor: AlwaysStoppedAnimation(AppTheme.primary),
               strokeCap: StrokeCap.round,
             ),
           ),
           Column(mainAxisSize: MainAxisSize.min, children: [
-            Text('${(x * 100).round()} %', style: TextStyle(color: Colors.white, fontSize: narrow ? 17 : 22, fontWeight: FontWeight.w900)),
-            Text('firmado', style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: narrow ? 10.5 : 12, fontWeight: FontWeight.w600)),
+            Text('${(x * 100).round()} %', style: TextStyle(color: AppTheme.text, fontSize: narrow ? 15 : 18, fontWeight: FontWeight.w800)),
+            Text('firmado', style: TextStyle(color: AppTheme.hint, fontSize: narrow ? 10.5 : 11, fontWeight: FontWeight.w600)),
           ]),
         ]),
       ),
     );
 
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF0B45B5), Color(0xFF08368F), Color(0xFF062A6E)],
-        ),
-        boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.25), blurRadius: 24, offset: const Offset(0, 10))],
-      ),
-      child: Stack(children: [
-        // Círculos decorativos
-        Positioned(right: -60, top: -70, child: _HeroRing(size: 220)),
-        Positioned(right: 120, bottom: -90, child: _HeroRing(size: 160)),
-        Padding(
-          padding: EdgeInsets.all(narrow ? 18 : 26),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    showGreeting ? (first.isEmpty ? '${bsSaludo(DateTime.now())}' : '${bsSaludo(DateTime.now())}, $first') : 'Tu resumen de hoy',
-                    style: TextStyle(color: Colors.white, fontSize: narrow ? 20 : 26, fontWeight: FontWeight.w900, height: 1.15),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(resumen, style: TextStyle(color: Colors.white.withOpacity(0.88), fontSize: narrow ? 13.5 : 15, height: 1.45)),
-                  if (!narrow) ...[
-                    const SizedBox(height: 14),
-                    _HeroButton(label: 'Actualizar', icon: Icons.refresh_rounded, onTap: loading ? null : () => onRefresh()),
-                  ],
-                ]),
-              ),
-              const SizedBox(width: 16),
-              ring,
-            ]),
-            SizedBox(height: narrow ? 16 : 22),
-            Text('EL RECORRIDO DE TUS DOCUMENTOS',
-                style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.9)),
-            const SizedBox(height: 10),
-            LayoutBuilder(builder: (context, c) {
-              final cols = c.maxWidth < 520 ? 2 : 4;
-              final w = (c.maxWidth - (cols - 1) * (cols == 4 ? 26 : 10)) / cols;
-              return Wrap(
-                spacing: cols == 4 ? 0 : 10,
-                runSpacing: 10,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  for (var i = 0; i < steps.length; i++) ...[
-                    SizedBox(
-                      width: w,
-                      child: _HeroStep(
-                        n: i + 1,
-                        label: cols == 4 ? steps[i].$1 : steps[i].$5,
-                        value: loading ? null : steps[i].$2,
-                        icon: steps[i].$3,
-                        onTap: () => onOpenDocs(steps[i].$4),
-                      ),
-                    ),
-                    if (cols == 4 && i < steps.length - 1)
-                      SizedBox(width: 26, child: Icon(Icons.chevron_right_rounded, color: Colors.white.withOpacity(0.55))),
-                  ],
-                ],
-              );
-            }),
+    // Encabezado limpio sobre la página + cuatro tarjetas de estado con icono circular
+    final stepColors = [BSColors.neutral, BSColors.warning, AppTheme.primary, BSColors.success];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(
+              showGreeting ? (first.isEmpty ? '${bsSaludo(DateTime.now())}' : '${bsSaludo(DateTime.now())}, $first') : 'Tu resumen de hoy',
+              style: TextStyle(color: AppTheme.text, fontSize: narrow ? 22 : 30, fontWeight: FontWeight.w600, letterSpacing: -0.6, height: 1.15),
+            ),
+            const SizedBox(height: 8),
+            Text(resumen, style: TextStyle(color: AppTheme.hint, fontSize: narrow ? 13.5 : 15, height: 1.45)),
+            if (!narrow) ...[
+              const SizedBox(height: 14),
+              _HeroButton(label: 'Actualizar', icon: Icons.refresh_rounded, onTap: loading ? null : () => onRefresh()),
+            ],
           ]),
         ),
+        const SizedBox(width: 16),
+        ring,
       ]),
-    );
+      SizedBox(height: narrow ? 16 : 24),
+      LayoutBuilder(builder: (context, c) {
+        final cols = c.maxWidth < 520 ? 2 : 4;
+        const gap = 14.0;
+        final w = (c.maxWidth - (cols - 1) * gap) / cols;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (var i = 0; i < steps.length; i++)
+              SizedBox(
+                width: w,
+                child: _HeroStep(
+                  label: cols == 4 ? steps[i].$1 : steps[i].$5,
+                  value: loading ? null : steps[i].$2,
+                  icon: steps[i].$3,
+                  color: stepColors[i],
+                  outlined: i == 0,
+                  onTap: () => onOpenDocs(steps[i].$4),
+                ),
+              ),
+          ],
+        );
+      }),
+    ]);
   }
-}
-
-class _HeroRing extends StatelessWidget {
-  final double size;
-  const _HeroRing({required this.size});
-  @override
-  Widget build(BuildContext context) => IgnorePointer(
-        child: Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withOpacity(0.08), width: 26)),
-        ),
-      );
 }
 
 class _HeroButton extends StatelessWidget {
@@ -1352,28 +1296,30 @@ class _HeroButton extends StatelessWidget {
   Widget build(BuildContext context) => BSPressable(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.14),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withOpacity(0.25)),
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            border: Border.all(color: AppTheme.border),
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, color: Colors.white, size: 17),
+            Icon(icon, color: AppTheme.primary, size: 17),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+            Text(label, style: TextStyle(color: AppTheme.text, fontSize: 13, fontWeight: FontWeight.w600)),
           ]),
         ),
       );
 }
 
+/// Tarjeta de estado: icono en círculo de color, título y cuántos documentos hay
 class _HeroStep extends StatelessWidget {
-  final int n;
   final String label;
   final int? value;
   final IconData icon;
+  final Color color;
+  final bool outlined;
   final VoidCallback onTap;
-  const _HeroStep({required this.n, required this.label, required this.value, required this.icon, required this.onTap});
+  const _HeroStep({required this.label, required this.value, required this.icon, required this.color, required this.outlined, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1382,33 +1328,30 @@ class _HeroStep extends StatelessWidget {
       child: BSPressable(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+          width: double.infinity,
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.11),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.18)),
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+            border: Border.all(color: AppTheme.border),
+            boxShadow: AppTheme.cardShadow,
           ),
-          child: Row(children: [
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(9)),
-              child: Icon(icon, color: AppTheme.primary, size: 19),
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: outlined ? AppTheme.card : color,
+                shape: BoxShape.circle,
+                border: outlined ? Border.all(color: AppTheme.border) : null,
+                boxShadow: outlined ? null : [BoxShadow(color: color.withOpacity(0.28), blurRadius: 12, offset: const Offset(0, 5))],
+              ),
+              child: Icon(icon, color: outlined ? AppTheme.text : Colors.white, size: 22),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: (value ?? 0).toDouble()),
-                  duration: const Duration(milliseconds: 700),
-                  curve: Curves.easeOutCubic,
-                  builder: (_, x, __) => Text(value == null ? '–' : '${x.round()}',
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, height: 1.1)),
-                ),
-                Text('$n. $label', maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 12, fontWeight: FontWeight.w600)),
-              ]),
-            ),
+            const SizedBox(height: 22),
+            Text(label, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.2)),
+            const SizedBox(height: 3),
+            Text(value == null ? '–' : '$value ${value == 1 ? 'documento' : 'documentos'}', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           ]),
         ),
       ),
@@ -1558,7 +1501,7 @@ class _TodoItemState extends State<_TodoItem> {
             Container(
               width: 40,
               height: 40,
-              decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: c.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
               child: Icon(widget.icon, color: c, size: 21),
             ),
             const SizedBox(width: 12),
@@ -1620,7 +1563,7 @@ class _QuickLinks extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: l.$5.withOpacity(0.06),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(color: l.$5.withOpacity(0.16)),
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1628,7 +1571,7 @@ class _QuickLinks extends StatelessWidget {
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: BoxDecoration(color: l.$5, borderRadius: BorderRadius.circular(10)),
+                        decoration: BoxDecoration(color: l.$5, borderRadius: BorderRadius.circular(14)),
                         child: Icon(l.$4, color: Colors.white, size: 19),
                       ),
                       const Spacer(),
@@ -1824,7 +1767,7 @@ class _CountTileState extends State<_CountTile> {
           transform: Matrix4.translationValues(0, _hover ? -2 : 0, 0),
           decoration: BoxDecoration(
             color: c.withOpacity(_hover ? 0.12 : 0.07),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: c.withOpacity(_hover ? 0.35 : 0.12)),
           ),
           child: Column(children: [
@@ -2131,7 +2074,7 @@ class _RecentRowState extends State<_RecentRow> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: _hover ? BSColors.page : AppTheme.card,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: _hover ? AppTheme.primary.withOpacity(0.25) : AppTheme.border),
           ),
           child: widget.wide ? Row(children: [

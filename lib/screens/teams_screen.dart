@@ -134,9 +134,9 @@ class _TeamsScreenState extends State<TeamsScreen> {
                     filled: true,
                     fillColor: AppTheme.card,
                     contentPadding: EdgeInsets.zero,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
                   ),
                 ),
               ),
@@ -232,7 +232,7 @@ class _TeamCardState extends State<_TeamCard> {
           transform: Matrix4.translationValues(0, _hover ? -3 : 0, 0),
           decoration: BoxDecoration(
             color: AppTheme.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: _hover ? color.withOpacity(0.4) : AppTheme.border),
             boxShadow: _hover ? AppTheme.hoverShadow : AppTheme.cardShadow,
           ),
@@ -246,7 +246,7 @@ class _TeamCardState extends State<_TeamCard> {
                   Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
                     alignment: Alignment.center,
                     child: Text(bsIniciales(name), style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 16)),
                   ),
@@ -321,12 +321,12 @@ class _NewTeamCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         hoverColor: BSColors.selected,
         child: Container(
           height: 168,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppTheme.primary.withOpacity(0.35), width: 1.4),
           ),
           child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -354,7 +354,7 @@ class _EmptyTeams extends StatelessWidget {
             Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
               child: Icon(i, size: 17, color: AppTheme.primary),
             ),
             const SizedBox(width: 12),
@@ -517,9 +517,9 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
         filled: true,
         fillColor: AppTheme.card,
         counterText: '',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
       );
 
   Widget _label(String t, [String? hint]) => Padding(
@@ -544,7 +544,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
       duration: const Duration(milliseconds: 250),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(colors: [color, Color.lerp(color, Colors.black, 0.25)!], begin: Alignment.topLeft, end: Alignment.bottomRight),
       ),
       child: Row(children: [
@@ -650,7 +650,7 @@ class _TeamFormDialogState extends State<_TeamFormDialog> {
             margin: const EdgeInsets.only(top: 6),
             decoration: BoxDecoration(
               color: AppTheme.card,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppTheme.border),
               boxShadow: AppTheme.cardShadow,
             ),
@@ -747,7 +747,7 @@ class _MemberChipRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
-      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14)),
       child: Row(children: [
         owner
             ? Container(
@@ -942,7 +942,7 @@ class _TeamDetailState extends State<_TeamDetail> {
         Container(
           width: 52,
           height: 52,
-          decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.18), borderRadius: BorderRadius.circular(20)),
           alignment: Alignment.center,
           child: Text(bsIniciales(_team!['name']?.toString()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20)),
         ),
@@ -1007,9 +1007,9 @@ class _TeamDetailState extends State<_TeamDetail> {
                     filled: true,
                     fillColor: AppTheme.card,
                     contentPadding: EdgeInsets.zero,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
                   ),
                 ),
               ),
@@ -1020,7 +1020,7 @@ class _TeamDetailState extends State<_TeamDetail> {
           if (_suggest.isNotEmpty)
             Container(
               margin: const EdgeInsets.only(top: 6),
-              decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
+              decoration: BoxDecoration(color: AppTheme.card, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border), boxShadow: AppTheme.cardShadow),
               child: Column(children: [
                 for (final u in _suggest)
                   ListTile(
@@ -1071,7 +1071,7 @@ class _TeamDetailState extends State<_TeamDetail> {
         const SizedBox(height: 14),
         Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+          decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('¿Qué puede hacer cada rol?', style: TextStyle(color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
@@ -1110,7 +1110,7 @@ class _TeamDetailState extends State<_TeamDetail> {
                     Container(
                       width: 38,
                       height: 38,
-                      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                      decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
                       child: Icon(Icons.description_outlined, color: AppTheme.primary, size: 19),
                     ),
                     const SizedBox(width: 12),

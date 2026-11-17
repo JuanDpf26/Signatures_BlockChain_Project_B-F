@@ -209,7 +209,7 @@ class _CosignCardState extends State<CosignCard> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: BSColors.success.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: BSColors.success.withOpacity(0.35)),
             ),
             child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -470,7 +470,7 @@ class _RequestDialogState extends State<_RequestDialog> {
             if (_list.isEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14)),
                 child: Text('Agrega al menos dos firmantes.', textAlign: TextAlign.center, style: TextStyle(color: AppTheme.hint, fontSize: 13)),
               )
             else
@@ -478,7 +478,7 @@ class _RequestDialogState extends State<_RequestDialog> {
                 Container(
                   margin: const EdgeInsets.only(bottom: 6),
                   padding: const EdgeInsets.only(left: 10),
-                  decoration: BoxDecoration(border: Border.all(color: AppTheme.border), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(border: Border.all(color: AppTheme.border), borderRadius: BorderRadius.circular(14)),
                   child: Row(children: [
                     CircleAvatar(radius: 12, backgroundColor: AppTheme.primary, child: Text('${i + 1}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800))),
                     const SizedBox(width: 10),

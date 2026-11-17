@@ -302,12 +302,12 @@ class _VerifyScreenState extends State<VerifyScreen> {
     final picked = _fileName != null;
     return InkWell(
       onTap: _running ? null : _pickFile,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
         decoration: BoxDecoration(
           color: AppTheme.primary.withOpacity(0.035),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppTheme.primary.withOpacity(0.35), width: 1.4),
         ),
         child: Column(children: [
@@ -361,9 +361,9 @@ class _VerifyScreenState extends State<VerifyScreen> {
           fillColor: AppTheme.card,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.border)),
-          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.border)),
+          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: AppTheme.primary, width: 1.5)),
           suffixIcon: IconButton(
             tooltip: 'Pegar',
             icon: const Icon(Icons.content_paste_rounded, size: 18),
@@ -429,7 +429,7 @@ class _ModeSwitch extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10), border: Border.all(color: AppTheme.border)),
+      decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppTheme.border)),
       child: Row(children: [
         seg(_Mode.file, Icons.upload_file_rounded, 'Subir archivo'),
         const SizedBox(width: 4),
@@ -492,7 +492,7 @@ class _VerdictCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.card,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.35), width: 1.4),
         boxShadow: [BoxShadow(color: color.withOpacity(0.10), blurRadius: 18, offset: const Offset(0, 6))],
       ),
@@ -649,7 +649,7 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: BSColors.page, borderRadius: BorderRadius.circular(14)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label, style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w600)),
           const SizedBox(height: 4),
@@ -675,7 +675,7 @@ class _HowItWorksCard extends StatelessWidget {
             Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppTheme.primary.withOpacity(0.08), borderRadius: BorderRadius.circular(14)),
               child: Icon(icon, size: 17, color: AppTheme.primary),
             ),
             const SizedBox(width: 12),
