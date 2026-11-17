@@ -2,6 +2,7 @@ import java.util.Properties
 
 plugins {
     id("com.android.application")
+    id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -23,7 +24,7 @@ kotlin {
     }
 }
 
-android {
+extensions.configure<com.android.build.gradle.internal.dsl.BaseAppModuleExtension>("android") {
     namespace = "com.example.frontend"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
