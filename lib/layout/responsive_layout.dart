@@ -129,7 +129,7 @@ class ResponsiveLayout extends StatelessWidget {
 
                         // Subtítulo
                         Text(
-                          'Firma digital segura\nimpulsada por blockchain.',
+                          'Firma electrónica segura\nimpulsada por blockchain.',
                           style: TextStyle(
                             color: subtitleColor,
                             fontSize: 20,

@@ -820,7 +820,7 @@ class _AccountSectionState extends State<_AccountSection> {
 }
 
 // ─────────────────────────────────────────
-// TAB 3: FIRMA DIGITAL — Canvas + Subir imagen
+// TAB 3: FIRMA ELECTRÓNICA — Canvas + Subir imagen
 // ─────────────────────────────────────────
 class _SignatureTab extends StatefulWidget {
   const _SignatureTab();
@@ -987,14 +987,14 @@ class _SignatureTabState extends State<_SignatureTab> with SingleTickerProviderS
             Icon(Icons.draw_outlined, color: BSColors.warning, size: 28),
             SizedBox(width: 12),
             Expanded(
-              child: Text('Todavía no tienes una firma. Créala en el panel "Crear firma digital" para poder firmar documentos.',
+              child: Text('Todavía no tienes una firma. Créala en el panel "Crear firma electrónica" para poder firmar documentos.',
                   style: TextStyle(color: AppTheme.hint, fontSize: 13, height: 1.45)),
             ),
           ]),
         ),
     ], right: [
       BSCard(
-        title: _savedSignatureUrl != null ? 'Actualizar firma' : 'Crear firma digital',
+        title: _savedSignatureUrl != null ? 'Actualizar firma' : 'Crear firma electrónica',
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('Dibuja tu firma o sube una imagen PNG/JPG.', style: TextStyle(color: AppTheme.hint, fontSize: 13)),
           const SizedBox(height: 14),

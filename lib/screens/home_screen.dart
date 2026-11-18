@@ -418,7 +418,7 @@ class _Sidebar extends StatelessWidget {
                     Expanded(
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         BrandWordmark(fontSize: 24, onDark: AppTheme.isDark),
-                        Text('Firma digital con blockchain',
+                        Text('Firma electrónica con blockchain',
                             maxLines: 1, overflow: TextOverflow.ellipsis,
                             style: TextStyle(color: AppTheme.hint, fontSize: 12, fontWeight: FontWeight.w500)),
                       ]),

@@ -145,7 +145,7 @@ class _BrandPanel extends StatelessWidget {
               children: [
                 const BSEntrance(
                   child: Text(
-                    'Firma digital\ncon blockchain',
+                    'Firma electrónica\ncon blockchain',
                     style: TextStyle(color: Colors.white, fontSize: 44, fontWeight: FontWeight.w800, height: 1.15, letterSpacing: -0.8),
                   ),
                 ),
@@ -255,7 +255,7 @@ class _BrandMark extends StatelessWidget {
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         BrandWordmark(fontSize: 22, onDark: dark),
         const SizedBox(height: 3),
-        Text('Firma digital con blockchain',
+        Text('Firma electrónica con blockchain',
             style: TextStyle(color: dark ? Colors.white.withOpacity(0.8) : AppTheme.hint, fontSize: 11.5)),
       ]),
     ]);

@@ -452,7 +452,7 @@ class _VerdictCard extends StatelessWidget {
     final (Color color, IconData icon, String title) = switch (verdict) {
       'authentic' => (BSColors.success, Icons.verified_rounded, 'Documento auténtico'),
       'revoked' => (BSColors.danger, Icons.gpp_bad_rounded, 'Firma revocada'),
-      'invalid_signature' => (BSColors.danger, Icons.gpp_bad_rounded, 'Firma digital inválida'),
+      'invalid_signature' => (BSColors.danger, Icons.gpp_bad_rounded, 'Firma electrónica inválida'),
       'pending' => (BSColors.warning, Icons.hourglass_top_rounded, 'Firma en proceso'),
       'unavailable' => (BSColors.warning, Icons.cloud_off_rounded, 'Blockchain no disponible'),
       'invalid' => (BSColors.danger, Icons.error_outline_rounded, 'Huella inválida'),
